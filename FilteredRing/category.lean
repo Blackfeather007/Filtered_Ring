@@ -21,7 +21,14 @@ instance : Category (FilModCat R F) where
   id _ := ⟨LinearMap.id, by intro i; simp⟩
   comp f g := ⟨g.1.comp f.1, by
     intro i
-    sorry⟩
+    rename_i X Y Z
+    have aux1 := f.2 i
+    have aux2 := g.2 i
+    suffices g.1 '' (f.1 '' (X.fil i)) ≤ (Z.fil i) from by
+      simp_all only [Set.le_eq_subset, Set.image_subset_iff, LinearMap.coe_comp, Function.comp_apply]
+      exact this
+    simp_all only [Set.le_eq_subset, Set.image_subset_iff]
+    exact fun _ hx ↦ aux2 <| aux1 hx⟩
   id_comp _ := rfl
   comp_id _ := rfl
   assoc f g h := rfl
