@@ -6,7 +6,7 @@ open Pointwise
 
 variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] [DecidableEq ι]
 
-class FilteredRing (F : ι → AddSubgroup R)where
+class FilteredRing (F : ι → AddSubgroup R) where
   mono : ∀ i ≤ j, F i ≤ F j
   one : 1 ∈ F 0
   mul_mem : ∀ i j : ι, (F i : Set R) * F j ≤ F (i + j)
