@@ -22,12 +22,6 @@ protected lemma Filtration.iSup_le {i : ι} : ⨆ k < i, F k ≤ F i :=
 protected lemma Filtration.iSup_le' {i : ι} : ⨆ k < i, (F k : Set R) ≤ F i :=
   iSup_le fun k ↦ iSup_le fun hk ↦ FilteredRing.mono k (le_of_lt hk)
 
-lemma Filtration.sup_le_add {i j : ι} :
-    F_lt F i ⊔ F_lt F j ≤ F_lt F (i + j) := by
-  dsimp [F_lt]
-
-  sorry
-
 variable {F} in
 lemma Filtration.flt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ F j) :
     x * y ∈ F_lt F (i + j) := by
@@ -41,7 +35,6 @@ lemma Filtration.flt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ 
   | hmul _ _ _ _ ih₁ ih₂ =>
     rw [add_mul]
     exact add_mem ih₁ ih₂
-
 
 variable {F} in
 lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt F j) :
@@ -66,6 +59,24 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
   have eq : - (x₁.1 * y₁) + x₂ * y₂ = (- x₁ + x₂) * y₁ + x₂ * (- y₁ + y₂) := by noncomm_ring
   rw [eq]
   exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
+
+instance : DirectSum.GSemiring (GradedPiece F) where
+  mul := gradedMul F
+  mul_zero a := sorry
+  zero_mul := sorry
+  mul_add := sorry
+  add_mul := sorry
+  one := sorry
+  one_mul := sorry
+  mul_one := sorry
+  mul_assoc := sorry
+  gnpow := sorry
+  gnpow_zero' := sorry
+  gnpow_succ' := sorry
+  natCast := sorry
+  natCast_zero := sorry
+  natCast_succ := sorry
+
 
 /-
 variable [PredOrder ι]
