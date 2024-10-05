@@ -6,10 +6,39 @@ suppress_compilation
 
 variable {R : Type u} [Ring R]
 
-variable {ι : Type v} [OrderedAddCommMonoid ι] [DecidableEq ι] [PredOrder ι]
+variable {ι : Type v} [OrderedAddCommMonoid ι] [DecidableEq ι]
 
 variable (F : ι → AddSubgroup R) [fil : FilteredRing F]
 
+open BigOperators Pointwise
+
+abbrev F_lt (i : ι) := (⨆ k < i, F k).addSubgroupOf (F i)
+
+abbrev GradedPiece (i : ι) : Type u := (F i) ⧸ (F_lt F i)
+
+lemma Filtration.iSup_mul_mem (i j : ι) :
+    (⨆ k < i, F k : Set R) * F j ≤ ⨆ k < (i + j), F k:= by
+  -- intro x hx
+  -- obtain ⟨y, hy, z, hz, eq⟩ := Set.mem_mul.mpr hx
+
+  sorry
+
+
+def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
+  intro x y
+  refine Quotient.map₂' (fun x y ↦ ⟨x.1 * y.1, Filtration.mul_mem F i j (Set.mul_mem_mul x.2 y.2)⟩)
+    ?_ x y
+  intro x₁ x₂ hx y₁ y₂ hy
+  simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf] at hx hy ⊢
+  have eq : - (x₁.1 * y₁) + x₂ * y₂ = (- x₁ + x₂) * y₁ + x₂ * (- y₁ + y₂) := by noncomm_ring
+  rw [eq]
+
+
+  sorry
+
+
+/-
+variable [PredOrder ι]
 abbrev GradedPiece (i : ι) : Type u := (F i) ⧸ (F (Order.pred i)).addSubgroupOf (F i)
 
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
@@ -22,7 +51,12 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
   rw [eq]
   obtain h1 := Filtration.mul_mem F (Order.pred i) j (Set.mul_mem_mul hx y₁.2)
   obtain h2 := Filtration.mul_mem F i (Order.pred j) (Set.mul_mem_mul x₂.2 hy)
-  have : Order.pred i + j ≤ Order.pred (i + j) := sorry
+
+  have le1 : (AddSubgroup.map (F i).subtype (F_lt F i) : Set R) * F j ≤ ((AddSubgroup.map (F (i + j)).subtype (F_lt F (i + j)) : Set R)) := by
+    sorry
+  have : Order.pred i + j ≤ Order.pred (i + j) := by
+    apply PredOrder.le_pred_of_lt
+    sorry
   sorry
 
 
@@ -61,31 +95,4 @@ instance (F : ι → AddSubgroup R) [FilteredRing F] : DirectSum.GSemiring (Grad
 -- --   match decEq i (Order.pred i) with
 -- --   | isTrue _ => ⊥
 -- --   | isFalse _ => F (Order.pred i)
-
--- variable {i : ι}
-
--- def gradedMap (F : ι → AddSubgroup R) [fil : FilteredRing R F] (i : ι) : AddSubgroup R := by
---   let aux : (F i) ⧸ (F (pred i)).addSubgroupOf (F i) →+ R :=
---     { toFun := fun x => x.out'.1
---       map_zero' := by
---         dsimp
-
---         sorry
---       map_add' := by
---         dsimp
---         sorry }
---   exact AddMonoidHom.range aux
-
-
--- -- instance : GradedRing (gradedMap F) := sorry
-
--- variable (F  : ι → AddSubgroup R) [FilteredRing R F] {i : ι}
--- #check GradedRing
-
-
--- #check QuotientAddGroup.Quotient.addGroup
--- #check QuotientAddGroup.mk'
-
--- #check AddSubgroup.map
--- #check QuotientAddGroup.mk' (F i)
--- #check AddSubgroup.map (QuotientAddGroup.mk' (F i)) (F i)
+-/
