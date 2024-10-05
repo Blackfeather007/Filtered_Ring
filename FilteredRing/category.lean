@@ -23,12 +23,7 @@ instance : Category (FilModCat R F) where
 
 instance {M N : FilModCat R F} : FunLike (M ⟶ N) M.1 N.1 where
   coe f := f.1.toFun
-  coe_injective' f g h := by
-    cases f
-    cases g
-    exact propext Subtype.val_inj |>.symm.mpr <| DFunLike.coe_injective' h
-
-
+  coe_injective' _ _ h := propext Subtype.val_inj |>.symm.mpr <| DFunLike.coe_injective' h
 
 /-- ! To-do
 
@@ -91,9 +86,7 @@ theorem comp_def (f : M ⟶ N) (g : N ⟶ U) : f ≫ g = g.comp f :=
   rfl
 
 @[simp] lemma forget_map (f : M ⟶ N) : (forget (ModuleCat R)).map f = (f : M → N) := rfl
-
 -/
-
 
 instance FilModCat.HomAddSemigroup {M N : FilModCat R F} : AddSemigroup (M ⟶ N) where
   add f g := ⟨f.1 + g.1, by
