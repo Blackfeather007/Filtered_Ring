@@ -102,9 +102,78 @@ theorem comp_def (f : M ⟶ N) (g : N ⟶ U) : f ≫ g = g.comp f :=
 
 @[simp] lemma forget_map (f : M ⟶ N) : (forget (ModuleCat R)).map f = (f : M → N) := rfl
 
+-/
 
+instance {M N : FilModCat R F} : AddCommGroup (M ⟶ N) where
+  add f g := ⟨f.1 + g.1, by
+    simp only [Set.le_eq_subset, LinearMap.add_apply, Set.image_subset_iff]
+    intro i x hx
+    have aux1 := f.2 i
+    have aux2 := g.2 i
+    simp_all only [SetLike.mem_coe, Set.le_eq_subset, Set.image_subset_iff, Set.mem_preimage]
+    exact AddMemClass.add_mem (aux1 hx) (aux2 hx)⟩
+  add_assoc a b c:= by
+    suffices a.1 + b.1 + c.1 = a.1 + (b.1 + c.1) from Subtype.val_inj.1 this
+    rw [add_assoc]
+  zero := ⟨0, by simp⟩
+  zero_add a := by
+    suffices 0 + a.1 = a.1 from Subtype.val_inj.1 this
+    rw [zero_add]
+  add_zero a := by
+    suffices a.1 + 0 = a.1 from Subtype.val_inj.1 this
+    rw [add_zero]
+  nsmul k f := ⟨k • f.1, by
+    simp only [Set.le_eq_subset, LinearMap.smul_apply, Set.image_subset_iff]
+    intro i x hx
+    have aux := f.2 i
+    simp_all only [SetLike.mem_coe, Set.le_eq_subset, Set.image_subset_iff, Set.mem_preimage]
+    exact Submodule.smul_of_tower_mem (N.fil i) k (aux hx)⟩
+  neg a := ⟨-a.1, by
+    simp only [Set.le_eq_subset, LinearMap.neg_apply, Set.image_subset_iff]
+    intro i x hx
+    have aux := a.2 i
+    simp_all only [SetLike.mem_coe, Set.le_eq_subset, Set.image_subset_iff, Set.mem_preimage,
+      neg_mem_iff]
+    exact aux hx⟩
+  zsmul k f := ⟨k • f.1, by
+    simp only [Set.le_eq_subset, LinearMap.smul_apply, Set.image_subset_iff]
+    intro i x hx
+    have aux := f.2 i
+    simp_all only [SetLike.mem_coe, Set.le_eq_subset, Set.image_subset_iff, Set.mem_preimage]
+    exact Submodule.smul_of_tower_mem (N.fil i) k (aux hx)⟩
+  neg_add_cancel a := by
+    suffices -a.1 + a.1 = 0 from Subtype.val_inj.1 this
+    rw [neg_add_cancel]
+  add_comm a b := by
+    suffices a.1 + b.1 = b.1 + a.1 from Subtype.val_inj.1 this
+    rw [add_comm]
+  nsmul_zero x := by
+    simp only [Set.le_eq_subset, zero_smul]; rfl
+  nsmul_succ n x := by
+    suffices (n + 1) • x.1 = n • x.1 + x.1 from Subtype.val_inj.1 this
+    rw [succ_nsmul]
+  zsmul_zero' a := by
+    simp only [Set.le_eq_subset, zero_smul]; rfl
+  zsmul_succ' n x := by
+    simp only [Set.le_eq_subset, Nat.succ_eq_add_one, Int.ofNat_eq_coe]
+    suffices Int.ofNat (n + 1) • x.1 = Int.ofNat n • x.1 + x.1 from Subtype.val_inj.1 this
+    rw [Int.ofNat_eq_coe, Int.ofNat_eq_coe, ← Int.ofNat_add_out, add_zsmul]
+    suffices Int.ofNat 1 • x.1 = x.1 from by
+      apply_fun fun j ↦ Int.ofNat n • x.1 + j at this
+      exact this
+    simp_all only [Int.ofNat_eq_coe, Nat.cast_one, Set.le_eq_subset, one_smul]
+  zsmul_neg' n a := by
+    simp only [Set.le_eq_subset, negSucc_zsmul, Nat.succ_eq_add_one]
+    suffices -((n + 1) • a.1) = -(Int.ofNat (n + 1) • a.1) from Subtype.val_inj.1 this
+    suffices (n + 1) • a.1 = Int.ofNat (n + 1) • a.1 from by
+      apply_fun fun j ↦ -j at this
+      exact this
+    suffices (n + 1) = Int.ofNat (n + 1) from by
+      apply_fun fun j ↦ j • a.1 at this
+      rw [← this]
+      norm_cast
+    simp_all only [Int.ofNat_eq_coe, Nat.cast_add, Nat.cast_one]
 
-instance {M N : ModuleCat.{v} R} : AddCommGroup (M ⟶ N) := LinearMap.addCommGroup
 
 instance : Preadditive (ModuleCat.{v} R) where
   add_comp P Q R f f' g := by
@@ -112,6 +181,3 @@ instance : Preadditive (ModuleCat.{v} R) where
     dsimp
     erw [map_add]
     rfl
-
-
--/
