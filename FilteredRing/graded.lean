@@ -6,36 +6,66 @@ suppress_compilation
 
 variable {R : Type u} [Ring R]
 
-variable {ι : Type v} [OrderedAddCommMonoid ι] [DecidableEq ι]
+variable {ι : Type v} [OrderedCancelAddCommMonoid ι] [DecidableEq ι]
 
 variable (F : ι → AddSubgroup R) [fil : FilteredRing F]
 
 open BigOperators Pointwise
 
-abbrev F_lt (i : ι) := (⨆ k < i, F k).addSubgroupOf (F i)
+def F_lt (i : ι) := ⨆ k < i, F k
 
-abbrev GradedPiece (i : ι) : Type u := (F i) ⧸ (F_lt F i)
+abbrev GradedPiece (i : ι) : Type u := (F i) ⧸ (F_lt F i).addSubgroupOf (F i)
 
-lemma Filtration.iSup_mul_mem (i j : ι) :
-    (⨆ k < i, F k : Set R) * F j ≤ ⨆ k < (i + j), F k:= by
-  -- intro x hx
-  -- obtain ⟨y, hy, z, hz, eq⟩ := Set.mem_mul.mpr hx
+protected lemma Filtration.iSup_le {i : ι} : ⨆ k < i, F k ≤ F i :=
+  iSup_le fun k ↦ iSup_le fun hk ↦ FilteredRing.mono k (le_of_lt hk)
+
+protected lemma Filtration.iSup_le' {i : ι} : ⨆ k < i, (F k : Set R) ≤ F i :=
+  iSup_le fun k ↦ iSup_le fun hk ↦ FilteredRing.mono k (le_of_lt hk)
+
+lemma Filtration.sup_le_add {i j : ι} :
+    F_lt F i ⊔ F_lt F j ≤ F_lt F (i + j) := by
+  dsimp [F_lt]
 
   sorry
 
+variable {F} in
+lemma Filtration.flt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ F j) :
+    x * y ∈ F_lt F (i + j) := by
+  rw [F_lt, iSup_subtype'] at hx ⊢
+  induction hx using AddSubgroup.iSup_induction' with
+  | hp i x hx =>
+    exact AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_right i.2 _⟩ (FilteredRing.mul_mem hx hy)
+  | h1 =>
+    rw [zero_mul]
+    exact zero_mem _
+  | hmul _ _ _ _ ih₁ ih₂ =>
+    rw [add_mul]
+    exact add_mem ih₁ ih₂
+
+
+variable {F} in
+lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt F j) :
+    x * y ∈ F_lt F (i + j) := by
+  rw [F_lt, iSup_subtype'] at hy ⊢
+  induction hy using AddSubgroup.iSup_induction' with
+  | hp j y hy =>
+    exact AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_left j.2 _⟩ (FilteredRing.mul_mem hx hy)
+  | h1 =>
+    rw [mul_zero]
+    exact zero_mem _
+  | hmul _ _ _ _ ih₁ ih₂ =>
+    rw [mul_add]
+    exact add_mem ih₁ ih₂
 
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
   intro x y
-  refine Quotient.map₂' (fun x y ↦ ⟨x.1 * y.1, Filtration.mul_mem F i j (Set.mul_mem_mul x.2 y.2)⟩)
+  refine Quotient.map₂' (fun x y ↦ ⟨x.1 * y.1, FilteredRing.mul_mem x.2 y.2⟩)
     ?_ x y
   intro x₁ x₂ hx y₁ y₂ hy
   simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf] at hx hy ⊢
   have eq : - (x₁.1 * y₁) + x₂ * y₂ = (- x₁ + x₂) * y₁ + x₂ * (- y₁ + y₂) := by noncomm_ring
   rw [eq]
-
-
-  sorry
-
+  exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
 
 /-
 variable [PredOrder ι]
