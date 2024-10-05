@@ -156,3 +156,7 @@ instance FilModCat.HomAddCommGroup {M N : FilModCat R F} : AddCommGroup (M ⟶ N
     <| neg_add_cancel f.1
   add_comm f g := propext Subtype.val_inj |>.symm.mpr
     <| AddCommMagma.add_comm f.1 g.1
+
+instance : Preadditive (FilModCat R F) where
+  add_comp P Q R f f' g := by
+    exact propext Subtype.val_inj |>.symm.mpr <| LinearMap.comp_add f.1 f'.1 g.1
