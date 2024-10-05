@@ -1,7 +1,7 @@
 import FilteredRing.Basic
 open Pointwise CategoryTheory
 
-variable (R : Type u) {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] [DecidableEq ι]
+variable (R : Type u) {ι : Type v} [Ring R] [OrderedAddCommMonoid ι]
 variable (F : ι → AddSubgroup R)
 
 structure FilModCat where
@@ -11,7 +11,7 @@ structure FilModCat where
 
 instance : Category (FilModCat R F) where
   Hom M N := {f : M.Mod →ₗ[R] N.Mod // ∀ i, f '' M.fil i ≤ N.fil i}
-  id _ := ⟨LinearMap.id, by intro i; simp⟩
+  id _ := ⟨LinearMap.id, fun i ↦ by simp only [LinearMap.id_coe, id_eq, Set.image_id', le_refl]⟩
   comp f g := ⟨g.1.comp f.1, fun i ↦ by
     have aux1 := f.2 i
     have aux2 := g.2 i
