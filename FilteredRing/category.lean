@@ -151,7 +151,7 @@ instance FilModCat.HomSubNegMonoid {M N : FilModCat R F} : SubNegMonoid (M ⟶ N
       neg_inj]
     norm_cast
 
-instance FilModCat.HomAddGroup {M N : FilModCat R F} : AddCommGroup (M ⟶ N) where
+instance FilModCat.HomAddCommGroup {M N : FilModCat R F} : AddCommGroup (M ⟶ N) where
   neg_add_cancel f := propext Subtype.val_inj |>.symm.mpr
     <| neg_add_cancel f.1
   add_comm f g := propext Subtype.val_inj |>.symm.mpr
