@@ -155,43 +155,43 @@ instance : Preadditive (FilModCat F) where
   add_comp P Q R f f' g := by
     exact propext Subtype.val_inj |>.symm.mpr <| LinearMap.comp_add f.1 f'.1 g.1
 
--- instance [Category (FilModCat R F)] : FilteredRing F := by
+private def F' (m : ModuleCat.{w, u} R) := fun i ↦ AddSubgroup.closure {x | ∃ r ∈ F i, ∃ a : m.1, x = r • a}
 
---   sorry
+private def proofGP (m : ModuleCat.{w, u} R) (i j : ι) (x : R) : AddSubgroup m.1 := {
+  carrier := {z | x • z ∈ F' F m (j + i)}
+  add_mem' := by
+    intro a b ha hb
+    simp only [F', Set.mem_setOf_eq, smul_add]
+    exact (AddSubgroup.add_mem_cancel_right (AddSubgroup.closure
+      {x | ∃ r ∈ F (j + i), ∃ a, x = r • a}) hb).mpr ha
+  zero_mem' :=
+    congrArg (Membership.mem (F' F m (j + i))) (smul_zero x) |>.mpr <| AddSubgroup.zero_mem (F' F m (j + i))
+  neg_mem' := by
+    simp only [Set.mem_setOf_eq, smul_neg, neg_mem_iff, imp_self, implies_true] }
 
--- -- instance (m : ModuleCat.{w, u} R) : FilteredModule F m (fun i ↦ (F i : Set R) • (⊤ : Submodule R m.1)) where
--- --   mono := by
--- --     intro j i hij
--- --     intro x hx
-
--- instance toFilRing (_ : FilModCat R F) : FilteredRing F :=
---   instFilteredRingOfCategoryFilModCat.{u, v, u, u} R F
-
-def toFun (m : (ModuleCat.{w, u} R)) := fun i ↦ {k : m.1 // ∃ k₁ : F i, ∃ k₂ : m.1, k = (k₁ : R) • k₂}
-
-instance (m : (ModuleCat.{w, u} R)) [hfilR : FilteredRing F] :
-  FilteredModule F m fun i ↦ (F i : Set R) • (⊤ : Submodule R m.1) where
-  mono := fun i hij ↦ Submodule.set_smul_mono_left ⊤ <| hfilR.mono i hij
+instance toFilMod (m : ModuleCat.{w, u} R) [hfilR : FilteredRing F] : FilteredModule F m (F' F m) where
+  mono := fun i hij ↦ by
+    simp only [F', AddSubgroup.closure_le]
+    rintro x ⟨r, ⟨hr, ⟨a, ha⟩⟩⟩
+    exact AddSubgroup.mem_closure.mpr fun K hk ↦ hk <| Exists.intro r ⟨hfilR.mono i hij hr, Exists.intro a ha⟩
   smul_mem := by
     intro j i x y hx hy
-    -- (F (i + j) : Set R) • (⊤ : Submodule R m.1)
-    let S : Submodule R m.1 := {
-      carrier := {z | x • z ∈ (F (i + j) : Set R) • (⊤ : Submodule R m.1)}
-      add_mem' := fun hu hv ↦ by simp only [Set.mem_setOf_eq, smul_add, add_mem hu.out hv.out]
-      zero_mem' := by simp only [Set.mem_setOf_eq, smul_zero, Submodule.zero_mem]
-      smul_mem' := by
-        intro r z hz
-        simp
-        sorry
-    }
-    sorry
+    have : F' F m i ≤ proofGP F m i j x := by
+      apply (AddSubgroup.closure_le <| proofGP F m i j x).mpr
+      rintro h ⟨r', hr', ⟨a, ha⟩⟩
+      exact ha.symm ▸ AddSubgroup.mem_closure.mpr fun K hk ↦ hk ⟨x * r', ⟨hfilR.mul_mem hx hr', ⟨a, smul_smul x r' a⟩⟩⟩
+    exact this hy
 
-
-/-
-include F in
-instance (hcat : FilModCat R F) : CategoryTheory.Functor (ModuleCat.{w, u} R) (FilModCat R F) where
-  obj m := {
-    Mod := m
-    fil := fun i ↦ (F i : Set R) • (⊤ : Submodule R m.1)
-    }
-    -/
+instance DeducedFunctor [FilteredRing F] : CategoryTheory.Functor (ModuleCat.{w, u} R) (FilModCat F) where
+  obj m := { Mod := m, fil := F' F m, f := toFilMod F m }
+  map := by
+    intro X Y hom
+    exact ⟨hom, by
+      rintro i p ⟨x, ⟨hx1, hx2⟩⟩
+      set toAddGP := (AddSubgroup.closure {x : Y.1 | ∃ r ∈ F i, ∃ a, x = r • a}).comap hom.toAddMonoidHom
+      suffices x ∈ toAddGP from hx2.symm ▸ this
+      suffices AddSubgroup.closure {x | ∃ r ∈ F i, ∃ a, x = r • a} ≤ toAddGP from this hx1
+      suffices {x : X.1 | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ hom ⁻¹' {x : Y.1 | ∃ r ∈ F i, ∃ a, x = r • a} from (propext (AddSubgroup.closure_le toAddGP)).mpr fun ⦃a⦄ t ↦ AddSubgroup.subset_closure (this t)
+      simp only [Set.preimage_setOf_eq, Set.setOf_subset_setOf, forall_exists_index, and_imp]
+      exact fun a x hx x' hx' ↦ ⟨x, ⟨hx, (congrArg (fun t ↦ ∃ a, hom t = x • a) hx').mpr
+        <| (congrArg (fun t ↦ ∃ a, t = x • a) (map_smul hom x x')).mpr <| exists_apply_eq_apply' (HSMul.hSMul x) (hom x')⟩⟩⟩
