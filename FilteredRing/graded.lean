@@ -122,6 +122,28 @@ instance : DirectSum.GSemiring (GradedPiece F) where
   natCast_succ := sorry
 
 
+section integer
+
+variable (F : ℤ → AddSubgroup R) [fil : FilteredRing F] (i : ℤ)
+
+@[simp]
+theorem fil_Z (i : ℤ) : F_lt F i = F (i - 1) := by
+  dsimp [F_lt]
+  ext x
+  simp only [Iff.symm Int.le_sub_one_iff]
+  constructor
+  · exact fun hx ↦ (iSup_le fun k ↦ iSup_le fun hk ↦ fil.mono k hk) hx
+  · intro hx
+    have : F (i - 1) ≤ ⨆ k, ⨆ (_ : k ≤ i - 1), F k := by
+      apply le_iSup_of_le (i - 1)
+      simp only [le_refl, iSup_pos]
+    exact this hx
+
+@[simp]
+theorem GradedPiece_Z (i : ℤ) : GradedPiece F i = ((F i) ⧸ (F (i - 1)).addSubgroupOf (F i)) := by
+  simp only [GradedPiece, fil_Z]
+
+end integer
 
 /-
 variable [PredOrder ι]
