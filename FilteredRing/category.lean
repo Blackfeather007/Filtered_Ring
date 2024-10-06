@@ -72,21 +72,11 @@ theorem coe_comp {M N U : FilModCat F} (f : M ⟶ N) (g : N ⟶ U) : (f ≫ g : 
 
 /-- ! To-do
 
-instance moduleConcreteCategory : ConcreteCategory.{v} (ModuleCat.{v} R) where
-  forget :=
-    { obj := fun R => R
-      map := fun f => f.toFun }
-  forget_faithful := ⟨fun h => LinearMap.ext (fun x => by
-    dsimp at h
-    rw [h])⟩
-
 instance : Inhabited (ModuleCat R) :=
   ⟨of R PUnit⟩
 
 instance ofUnique {X : Type v} [AddCommGroup X] [Module R X] [i : Unique X] : Unique (of R X) :=
   i
-
-@[simp] lemma forget_map (f : M ⟶ N) : (forget (ModuleCat R)).map f = (f : M → N) := rfl
 -/
 
 instance FilModCat.HomAddSemigroup {M N : FilModCat F} : AddSemigroup (M ⟶ N) where
@@ -195,3 +185,14 @@ instance DeducedFunctor [FilteredRing F] : CategoryTheory.Functor (ModuleCat.{w,
       simp only [Set.preimage_setOf_eq, Set.setOf_subset_setOf, forall_exists_index, and_imp]
       exact fun a x hx x' hx' ↦ ⟨x, ⟨hx, (congrArg (fun t ↦ ∃ a, hom t = x • a) hx').mpr
         <| (congrArg (fun t ↦ ∃ a, t = x • a) (map_smul hom x x')).mpr <| exists_apply_eq_apply' (HSMul.hSMul x) (hom x')⟩⟩⟩
+
+instance modFilConcreteCategory : ConcreteCategory (FilModCat F) where
+  forget :=
+    { obj := fun R ↦ R.Mod
+      map := fun f ↦ f.val }
+  forget_faithful := {
+    map_injective := fun {X Y} ⦃t1 t2⦄ ht ↦ Subtype.val_inj.mp (LinearMap.ext_iff.mpr (congrFun ht))
+  }
+
+@[simp] lemma forget_map {M N : FilModCat F} (f : M ⟶ N) : (forget (FilModCat F)).map f =
+  (f : M.Mod → N.Mod) := rfl
