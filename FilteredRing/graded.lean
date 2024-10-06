@@ -37,6 +37,21 @@ lemma Filtration.flt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ 
     exact add_mem ih₁ ih₂
 
 variable {F} in
+lemma Filtration.flt_mul_mem' {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ F j) :
+    x * y ∈ F_lt F (i + j) := by
+  let S : AddSubgroup R := {
+    carrier := {x | x * y ∈ F_lt F (i + j) }
+    add_mem' := fun hu hv ↦ by simp only [Set.mem_setOf_eq, add_mul , add_mem hu.out hv.out]
+    zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
+    neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true] }
+  have : F_lt F i ≤ S := by
+    simp only [F_lt, iSup_le_iff]
+    intro a ha b hb
+    have le : F (a + j) ≤ F_lt F (i + j) := le_biSup F (add_lt_add_right ha j)
+    exact le (FilteredRing.mul_mem hb hy)
+  exact this hx
+
+variable {F} in
 lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt F j) :
     x * y ∈ F_lt F (i + j) := by
   rw [F_lt, iSup_subtype'] at hy ⊢
@@ -49,6 +64,21 @@ lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt 
   | hmul _ _ _ _ ih₁ ih₂ =>
     rw [mul_add]
     exact add_mem ih₁ ih₂
+
+variable {F} in
+lemma Filtration.mul_flt_mem' {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt F j) :
+    x * y ∈ F_lt F (i + j) := by
+  let S : AddSubgroup R := {
+    carrier := {y | x * y ∈ F_lt F (i + j) }
+    add_mem' := fun hu hv ↦ by simp only [Set.mem_setOf_eq, mul_add , add_mem hu.out hv.out]
+    zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
+    neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true] }
+  have : F_lt F j ≤ S := by
+    simp only [F_lt, iSup_le_iff]
+    intro a ha b hb
+    have le : F (i + a) ≤ F_lt F (i + j) := le_biSup F (add_lt_add_left ha i)
+    exact le (FilteredRing.mul_mem hx hb)
+  exact this hy
 
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
   intro x y
