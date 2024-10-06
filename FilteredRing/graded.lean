@@ -61,10 +61,32 @@ instance : GradedMonoid.GMul (GradedPiece F) where
 instance : GradedMonoid.GOne (GradedPiece F) where
   one := by sorry
 
+
 instance : DirectSum.GSemiring (GradedPiece F) where
-  mul_zero := sorry
-  zero_mul := sorry
-  mul_add := sorry
+  mul_zero := by
+    intro i j a
+    show gradedMul F a (0 : GradedPiece F j) = 0
+    unfold gradedMul
+    rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
+    induction a using Quotient.ind'
+    change Quotient.mk'' _ = Quotient.mk'' _
+    rw [Quotient.eq'']
+    simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
+    exact zero_mem _
+  zero_mul := by sorry
+  mul_add := by
+    intro i j a b c
+    show gradedMul F a (b + c) = gradedMul F a b + gradedMul F a c
+    unfold gradedMul
+    induction a using Quotient.ind'
+    induction b using Quotient.ind'
+    induction c using Quotient.ind'
+    change Quotient.mk'' _ = Quotient.mk'' _
+    rw [Quotient.eq'']
+    simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
+    rw [mul_add, neg_add_eq_zero.mpr]
+    exact zero_mem _
+    rfl
   add_mul := sorry
   one_mul := sorry
   mul_one := sorry
@@ -76,20 +98,46 @@ instance : DirectSum.GSemiring (GradedPiece F) where
   natCast_zero := sorry
   natCast_succ := sorry
 
-instance : Semiring (⨁ i, GradedPiece F i) := by infer_instance
-
+section integer
 variable {i : ι}
 #check DirectSum.of (GradedPiece F) i
 
+variable (F : ℤ → AddSubgroup R) [fil : FilteredRing F] (i : ℤ)
 abbrev GradedPieces := GradedPiece F '' Set.univ
 
+@[simp]
+theorem fil_Z (i : ℤ) : F_lt F i = F (i - 1) := by
+  dsimp [F_lt]
+  ext x
+  simp only [Iff.symm Int.le_sub_one_iff]
+  constructor
+  · exact fun hx ↦ (iSup_le fun k ↦ iSup_le fun hk ↦ fil.mono k hk) hx
+  · intro hx
+    have : F (i - 1) ≤ ⨆ k, ⨆ (_ : k ≤ i - 1), F k := by
+      apply le_iSup_of_le (i - 1)
+      simp only [le_refl, iSup_pos]
+    exact this hx
 
-instance : SetLike (GradedPieces F) (⨁ i, GradedPiece F i) where
-  coe := by
-    intro x
+@[simp]
+theorem GradedPiece_Z (i : ℤ) : GradedPiece F i = ((F i) ⧸ (F (i - 1)).addSubgroupOf (F i)) := by
+  simp only [GradedPiece, fil_Z]
 
-    sorry
-  coe_injective' := sorry
+end integer
+
+-- instance : Semiring (⨁ i, GradedPiece F i) := by infer_instance
+
+-- variable {i : ι}
+-- #check DirectSum.of (GradedPiece F) i
+
+-- abbrev GradedPieces := GradedPiece F '' Set.univ
+
+
+-- instance : SetLike (GradedPieces F) (⨁ i, GradedPiece F i) where
+--   coe := by
+--     intro x
+
+--     sorry
+--   coe_injective' := sorry
 
 /-
 variable [PredOrder ι]
