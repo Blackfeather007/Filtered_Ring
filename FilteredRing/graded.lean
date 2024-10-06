@@ -6,7 +6,7 @@ suppress_compilation
 
 variable {R : Type u} [Ring R]
 
-variable {ι : Type v} [OrderedCancelAddCommMonoid ι] [DecidableEq ι]
+variable {ι : Type v} [OrderedCancelAddCommMonoid ι]
 
 variable (F : ι → AddSubgroup R) [FilteredRing F]
 
@@ -99,7 +99,7 @@ instance : DirectSum.GSemiring (GradedPiece F) where
   natCast_succ := sorry
 
 section integer
-variable {i : ι}
+variable [DecidableEq ι] {i : ι}
 #check DirectSum.of (GradedPiece F) i
 
 variable (F : ℤ → AddSubgroup R) [fil : FilteredRing F] (i : ℤ)
@@ -111,7 +111,7 @@ theorem fil_Z (i : ℤ) : F_lt F i = F (i - 1) := by
   ext x
   simp only [Iff.symm Int.le_sub_one_iff]
   constructor
-  · exact fun hx ↦ (iSup_le fun k ↦ iSup_le fun hk ↦ fil.mono k hk) hx
+  · exact fun hx ↦ (iSup_le fun k ↦ iSup_le fil.mono) hx
   · intro hx
     have : F (i - 1) ≤ ⨆ k, ⨆ (_ : k ≤ i - 1), F k := by
       apply le_iSup_of_le (i - 1)

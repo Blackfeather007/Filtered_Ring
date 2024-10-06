@@ -10,7 +10,7 @@ variable (F : ι → AddSubgroup R)
 structure FilModCat where
   Mod : ModuleCat.{w, u} R
   fil : ι → AddSubgroup Mod.carrier
-  [f : FilteredModule F Mod.carrier fil]
+  [f : FilteredModule F fil]
 
 instance : Category (FilModCat F) where
   Hom M N := {f : M.Mod →ₗ[R] N.Mod // ∀ i, f '' M.fil i ≤ N.fil i}
@@ -30,7 +30,7 @@ instance {M N : FilModCat F} : FunLike (M ⟶ N) M.1 N.1 where
 
 /-- The object in the category of R-filt associated to an filtered R-module -/
 def of (X : Type w) [AddCommGroup X] [Module R X] (filX : ι → AddSubgroup X)
-  [FilteredModule F X filX] : FilModCat F where
+  [FilteredModule F filX] : FilModCat F where
     Mod := ModuleCat.of R X
     fil := by
       simp only [ModuleCat.coe_of]
@@ -40,19 +40,19 @@ def of (X : Type w) [AddCommGroup X] [Module R X] (filX : ι → AddSubgroup X)
 @[simp] theorem of_coe (X : FilModCat F) : @of R _ _ _ F X.1 _ _ X.2 X.3 = X := rfl
 
 @[simp] theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] (filX : ι → AddSubgroup X)
-  [FilteredModule F X filX] : (of F X filX).1 = X := rfl
+  [FilteredModule F filX] : (of F X filX).1 = X := rfl
 
 /-- A `LinearMap` with degree 0 is a morphism in `Module R`. -/
 def ofHom {X Y : Type w} [AddCommGroup X] [Module R X] {filX : ι → AddSubgroup X}
-  [FilteredModule F X filX] [AddCommGroup Y] [Module R Y] {filY : ι → AddSubgroup Y}
-  [FilteredModule F Y filY] (f : X →ₗ[R] Y) (deg0 : ∀ i, f '' filX i ≤ filY i) :
+  [FilteredModule F filX] [AddCommGroup Y] [Module R Y] {filY : ι → AddSubgroup Y}
+  [FilteredModule F filY] (f : X →ₗ[R] Y) (deg0 : ∀ i, f '' filX i ≤ filY i) :
   of F X filX ⟶ of F Y filY :=
     ⟨f, deg0⟩
 
 @[simp 1100]
 theorem ofHom_apply {X Y : Type w} [AddCommGroup X] [Module R X] {filX : ι → AddSubgroup X}
-  [FilteredModule F X filX] [AddCommGroup Y] [Module R Y] {filY : ι → AddSubgroup Y}
-  [FilteredModule F Y filY] (f : X →ₗ[R] Y) (deg0 : ∀ i, f '' filX i ≤ filY i) (x : X) :
+  [FilteredModule F filX] [AddCommGroup Y] [Module R Y] {filY : ι → AddSubgroup Y}
+  [FilteredModule F filY] (f : X →ₗ[R] Y) (deg0 : ∀ i, f '' filX i ≤ filY i) (x : X) :
   ofHom F f deg0 x = f x := rfl
 
 /-- Forgetting to the underlying type and then building the bundled object returns the original
@@ -169,11 +169,11 @@ private def proofGP (m : ModuleCat.{w, u} R) (i j : ι) (x : R) : AddSubgroup m.
   neg_mem' := by
     simp only [Set.mem_setOf_eq, smul_neg, neg_mem_iff, imp_self, implies_true] }
 
-instance toFilMod (m : ModuleCat.{w, u} R) [hfilR : FilteredRing F] : FilteredModule F m (F' F m) where
-  mono := fun i hij ↦ by
+instance toFilMod (m : ModuleCat.{w, u} R) [hfilR : FilteredRing F] : FilteredModule F (F' F m) where
+  mono := fun hij ↦ by
     simp only [F', AddSubgroup.closure_le]
     rintro x ⟨r, ⟨hr, ⟨a, ha⟩⟩⟩
-    exact AddSubgroup.mem_closure.mpr fun K hk ↦ hk <| Exists.intro r ⟨hfilR.mono i hij hr, Exists.intro a ha⟩
+    exact AddSubgroup.mem_closure.mpr fun K hk ↦ hk <| Exists.intro r ⟨hfilR.mono hij hr, Exists.intro a ha⟩
   smul_mem := by
     intro j i x y hx hy
     have : F' F m i ≤ proofGP F m i j x := by
