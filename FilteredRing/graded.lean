@@ -108,7 +108,17 @@ instance : DirectSum.GSemiring (GradedPiece F) where
   zero_mul := by sorry
   mul_add := by
     intro i j a b c
-    sorry
+    show gradedMul F a (b + c) = gradedMul F a b + gradedMul F a c
+    unfold gradedMul
+    induction a using Quotient.ind'
+    induction b using Quotient.ind'
+    induction c using Quotient.ind'
+    change Quotient.mk'' _ = Quotient.mk'' _
+    rw [Quotient.eq'']
+    simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
+    rw [mul_add, neg_add_eq_zero.mpr]
+    exact zero_mem _
+    rfl
   add_mul := sorry
   one := sorry
   one_mul := sorry
