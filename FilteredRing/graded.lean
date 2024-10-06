@@ -90,22 +90,37 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
   rw [eq]
   exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
 
-instance : DirectSum.GSemiring (GradedPiece F) where
+
+instance : GradedMonoid.GMul (GradedPiece F) where
   mul := gradedMul F
-  mul_zero a := sorry
-  zero_mul := sorry
-  mul_add := sorry
+
+instance : DirectSum.GSemiring (GradedPiece F) where
+  mul_zero := by
+    intro i j a
+    show gradedMul F a (0 : GradedPiece F j) = 0
+    unfold gradedMul
+    rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
+    induction a using Quotient.ind'
+    change Quotient.mk'' _ = Quotient.mk'' _
+    rw [Quotient.eq'']
+    simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
+    exact zero_mem _
+  zero_mul := by sorry
+  mul_add := by
+    intro i j a b c
+    sorry
   add_mul := sorry
   one := sorry
   one_mul := sorry
   mul_one := sorry
   mul_assoc := sorry
-  gnpow := sorry
-  gnpow_zero' := sorry
+  gnpow := by sorry
+  gnpow_zero' := by sorry
   gnpow_succ' := sorry
   natCast := sorry
   natCast_zero := sorry
   natCast_succ := sorry
+
 
 
 /-
