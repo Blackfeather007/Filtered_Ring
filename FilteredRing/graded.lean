@@ -94,17 +94,22 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
 instance : GradedMonoid.GMul (GradedPiece F) where
   mul := gradedMul F
 
+instance : GradedMonoid.GOne (GradedPiece F) where
+  one := (⟨1, FilteredRing.one⟩ : F 0)
+
 instance : DirectSum.GSemiring (GradedPiece F) where
   mul_zero := by
-    intro i j a
-    show gradedMul F a (0 : GradedPiece F j) = 0
-    unfold gradedMul
-    rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
-    induction a using Quotient.ind'
-    change Quotient.mk'' _ = Quotient.mk'' _
-    rw [Quotient.eq'']
-    simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
-    exact zero_mem _
+
+    sorry
+    -- intro i j a
+    -- show gradedMul F a (0 : GradedPiece F j) = 0
+    -- unfold gradedMul
+    -- rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
+    -- induction a using Quotient.ind'
+    -- change Quotient.mk'' _ = Quotient.mk'' _
+    -- rw [Quotient.eq'']
+    -- simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
+    -- exact zero_mem _
   zero_mul := by sorry
   mul_add := by
     intro i j a b c
@@ -120,10 +125,16 @@ instance : DirectSum.GSemiring (GradedPiece F) where
     exact zero_mem _
     rfl
   add_mul := sorry
-  one := sorry
-  one_mul := sorry
+  one_mul := by
+    intro a
+
+    -- show gradedMul F (Quotient.mk'' (⟨1, FilteredRing.one⟩ : F 0)) a = a
+    sorry
   mul_one := sorry
-  mul_assoc := sorry
+  mul_assoc := by
+    intro a b c
+
+    sorry
   gnpow := by sorry
   gnpow_zero' := by sorry
   gnpow_succ' := sorry
