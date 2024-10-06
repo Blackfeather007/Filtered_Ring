@@ -12,7 +12,7 @@ class FilteredRing (F : ι → AddSubgroup R) where
 variable (F : ι → AddSubgroup R) [fil : FilteredRing F]
 variable (M : Type w) [AddCommGroup M] [Module R M]
 
-class FilteredModule (F' : ι → Submodule R M) where
+class FilteredModule (F' : ι → AddSubgroup M) where
   mono : ∀ i ≤ j, F' i ≤ F' j
   smul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F' j → x • y ∈ F' (i + j)
 
