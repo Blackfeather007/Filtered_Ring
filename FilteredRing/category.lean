@@ -85,6 +85,10 @@ theorem id_apply {M : FilteredModuleCat F} (m : M.1) : (𝟙 M : M.1 → M.1) m 
 theorem coe_comp {M N U : FilteredModuleCat F} (f : M ⟶ N) (g : N ⟶ U) : (f ≫ g : M.1 → U.1) = g ∘ f :=
   rfl
 
+instance : Inhabited (FilteredModuleCat F) := {
+  default := ⟨ModuleCat.of R PUnit, fun _ ↦ ⊤⟩
+}
+
 private instance {M N : FilteredModuleCat F} : AddSemigroup (M ⟶ N) where
   add f g := ⟨f.1 + g.1, by
     simp only [Set.le_eq_subset, LinearMap.add_apply, Set.image_subset_iff]

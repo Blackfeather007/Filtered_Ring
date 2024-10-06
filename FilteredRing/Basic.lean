@@ -81,4 +81,10 @@ instance trivialModuleFiltration (comparable_with_zero : ∀ i : ι, Decidable (
     · simp only [ge_iff_le, ige0, reduceIte, AddSubgroup.mem_bot] at hr
       simp only [ge_iff_le, hr, zero_smul, AddSubgroup.zero_mem (if 0 ≤ i + j then ⊤ else ⊥)]
 
+variable (M) in
+instance trivialModuleFiltration' :
+  FilteredModule F (fun (_ : ι) ↦ (⊤ : AddSubgroup M)) where
+    mono := fun {_ _} _ ⦃_⦄ a ↦ a
+    smul_mem := fun {_ _} {_} {_} _ a ↦ a
+
 end FilteredModule
