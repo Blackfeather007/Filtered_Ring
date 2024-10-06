@@ -155,6 +155,43 @@ instance : Preadditive (FilModCat R F) where
   add_comp P Q R f f' g := by
     exact propext Subtype.val_inj |>.symm.mpr <| LinearMap.comp_add f.1 f'.1 g.1
 
--- instance : CategoryTheory.Functor (ModuleCat.{w, u} R) (FilModCat R F) where
---   obj m := by
---     have := m.3
+-- instance [Category (FilModCat R F)] : FilteredRing F := by
+
+--   sorry
+
+-- -- instance (m : ModuleCat.{w, u} R) : FilteredModule F m (fun i ↦ (F i : Set R) • (⊤ : Submodule R m.1)) where
+-- --   mono := by
+-- --     intro j i hij
+-- --     intro x hx
+
+-- instance toFilRing (_ : FilModCat R F) : FilteredRing F :=
+--   instFilteredRingOfCategoryFilModCat.{u, v, u, u} R F
+
+def toFun (m : (ModuleCat.{w, u} R)) := fun i ↦ {k : m.1 // ∃ k₁ : F i, ∃ k₂ : m.1, k = (k₁ : R) • k₂}
+
+instance (m : (ModuleCat.{w, u} R)) [hfilR : FilteredRing F] :
+  FilteredModule F m fun i ↦ (F i : Set R) • (⊤ : Submodule R m.1) where
+  mono := fun i hij ↦ Submodule.set_smul_mono_left ⊤ <| hfilR.mono i hij
+  smul_mem := by
+    intro j i x y hx hy
+    -- (F (i + j) : Set R) • (⊤ : Submodule R m.1)
+    let S : Submodule R m.1 := {
+      carrier := {z | x • z ∈ (F (i + j) : Set R) • (⊤ : Submodule R m.1)}
+      add_mem' := fun hu hv ↦ by simp only [Set.mem_setOf_eq, smul_add, add_mem hu.out hv.out]
+      zero_mem' := by simp only [Set.mem_setOf_eq, smul_zero, Submodule.zero_mem]
+      smul_mem' := by
+        intro r z hz
+        simp
+        sorry
+    }
+    sorry
+
+
+/-
+include F in
+instance (hcat : FilModCat R F) : CategoryTheory.Functor (ModuleCat.{w, u} R) (FilModCat R F) where
+  obj m := {
+    Mod := m
+    fil := fun i ↦ (F i : Set R) • (⊤ : Submodule R m.1)
+    }
+    -/
