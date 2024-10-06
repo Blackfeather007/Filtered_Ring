@@ -8,19 +8,14 @@ variable {R : Type u} [Ring R]
 
 variable {ι : Type v} [OrderedCancelAddCommMonoid ι] [DecidableEq ι]
 
-variable (F : ι → AddSubgroup R) [fil : FilteredRing F]
+variable (F : ι → AddSubgroup R) [FilteredRing F]
 
-open BigOperators Pointwise
+open BigOperators Pointwise DirectSum
 
 def F_lt (i : ι) := ⨆ k < i, F k
 
-abbrev GradedPiece (i : ι) : Type u := (F i) ⧸ (F_lt F i).addSubgroupOf (F i)
 
-protected lemma Filtration.iSup_le {i : ι} : ⨆ k < i, F k ≤ F i :=
-  iSup_le fun k ↦ iSup_le fun hk ↦ FilteredRing.mono k (le_of_lt hk)
-
-protected lemma Filtration.iSup_le' {i : ι} : ⨆ k < i, (F k : Set R) ≤ F i :=
-  iSup_le fun k ↦ iSup_le fun hk ↦ FilteredRing.mono k (le_of_lt hk)
+abbrev GradedPiece (i : ι) := (F i) ⧸ (F_lt F i).addSubgroupOf (F i)
 
 variable {F} in
 lemma Filtration.flt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ F j) :
@@ -37,21 +32,6 @@ lemma Filtration.flt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ 
     exact add_mem ih₁ ih₂
 
 variable {F} in
-lemma Filtration.flt_mul_mem' {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ F j) :
-    x * y ∈ F_lt F (i + j) := by
-  let S : AddSubgroup R := {
-    carrier := {x | x * y ∈ F_lt F (i + j) }
-    add_mem' := fun hu hv ↦ by simp only [Set.mem_setOf_eq, add_mul , add_mem hu.out hv.out]
-    zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
-    neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true] }
-  have : F_lt F i ≤ S := by
-    simp only [F_lt, iSup_le_iff]
-    intro a ha b hb
-    have le : F (a + j) ≤ F_lt F (i + j) := le_biSup F (add_lt_add_right ha j)
-    exact le (FilteredRing.mul_mem hb hy)
-  exact this hx
-
-variable {F} in
 lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt F j) :
     x * y ∈ F_lt F (i + j) := by
   rw [F_lt, iSup_subtype'] at hy ⊢
@@ -65,21 +45,6 @@ lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt 
     rw [mul_add]
     exact add_mem ih₁ ih₂
 
-variable {F} in
-lemma Filtration.mul_flt_mem' {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt F j) :
-    x * y ∈ F_lt F (i + j) := by
-  let S : AddSubgroup R := {
-    carrier := {y | x * y ∈ F_lt F (i + j) }
-    add_mem' := fun hu hv ↦ by simp only [Set.mem_setOf_eq, mul_add , add_mem hu.out hv.out]
-    zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
-    neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true] }
-  have : F_lt F j ≤ S := by
-    simp only [F_lt, iSup_le_iff]
-    intro a ha b hb
-    have le : F (i + a) ≤ F_lt F (i + j) := le_biSup F (add_lt_add_left ha i)
-    exact le (FilteredRing.mul_mem hx hb)
-  exact this hy
-
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
   intro x y
   refine Quotient.map₂' (fun x y ↦ ⟨x.1 * y.1, FilteredRing.mul_mem x.2 y.2⟩)
@@ -90,81 +55,41 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
   rw [eq]
   exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
 
-
 instance : GradedMonoid.GMul (GradedPiece F) where
   mul := gradedMul F
 
 instance : GradedMonoid.GOne (GradedPiece F) where
-  one := (⟨1, FilteredRing.one⟩ : F 0)
+  one := by sorry
 
 instance : DirectSum.GSemiring (GradedPiece F) where
-  mul_zero := by
-
-    sorry
-    -- intro i j a
-    -- show gradedMul F a (0 : GradedPiece F j) = 0
-    -- unfold gradedMul
-    -- rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
-    -- induction a using Quotient.ind'
-    -- change Quotient.mk'' _ = Quotient.mk'' _
-    -- rw [Quotient.eq'']
-    -- simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
-    -- exact zero_mem _
-  zero_mul := by sorry
-  mul_add := by
-    intro i j a b c
-    show gradedMul F a (b + c) = gradedMul F a b + gradedMul F a c
-    unfold gradedMul
-    induction a using Quotient.ind'
-    induction b using Quotient.ind'
-    induction c using Quotient.ind'
-    change Quotient.mk'' _ = Quotient.mk'' _
-    rw [Quotient.eq'']
-    simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
-    rw [mul_add, neg_add_eq_zero.mpr]
-    exact zero_mem _
-    rfl
+  mul_zero := sorry
+  zero_mul := sorry
+  mul_add := sorry
   add_mul := sorry
-  one_mul := by
-    intro a
-
-    -- show gradedMul F (Quotient.mk'' (⟨1, FilteredRing.one⟩ : F 0)) a = a
-    sorry
+  one_mul := sorry
   mul_one := sorry
-  mul_assoc := by
-    intro a b c
-
-    sorry
-  gnpow := by sorry
-  gnpow_zero' := by sorry
+  mul_assoc := sorry
+  gnpow := sorry
+  gnpow_zero' := sorry
   gnpow_succ' := sorry
   natCast := sorry
   natCast_zero := sorry
   natCast_succ := sorry
 
+instance : Semiring (⨁ i, GradedPiece F i) := by infer_instance
 
-section integer
+variable {i : ι}
+#check DirectSum.of (GradedPiece F) i
 
-variable (F : ℤ → AddSubgroup R) [fil : FilteredRing F] (i : ℤ)
+abbrev GradedPieces := GradedPiece F '' Set.univ
 
-@[simp]
-theorem fil_Z (i : ℤ) : F_lt F i = F (i - 1) := by
-  dsimp [F_lt]
-  ext x
-  simp only [Iff.symm Int.le_sub_one_iff]
-  constructor
-  · exact fun hx ↦ (iSup_le fun k ↦ iSup_le fun hk ↦ fil.mono k hk) hx
-  · intro hx
-    have : F (i - 1) ≤ ⨆ k, ⨆ (_ : k ≤ i - 1), F k := by
-      apply le_iSup_of_le (i - 1)
-      simp only [le_refl, iSup_pos]
-    exact this hx
 
-@[simp]
-theorem GradedPiece_Z (i : ℤ) : GradedPiece F i = ((F i) ⧸ (F (i - 1)).addSubgroupOf (F i)) := by
-  simp only [GradedPiece, fil_Z]
+instance : SetLike (GradedPieces F) (⨁ i, GradedPiece F i) where
+  coe := by
+    intro x
 
-end integer
+    sorry
+  coe_injective' := sorry
 
 /-
 variable [PredOrder ι]
