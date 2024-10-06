@@ -9,8 +9,8 @@ variable (F : ι → AddSubgroup R)
 
 structure FilModCat where
   Mod : ModuleCat.{w, u} R
-  fil : ι → Submodule R Mod
-  [f : FilteredModule F Mod fil]
+  fil : ι → Submodule R Mod.carrier
+  [f : FilteredModule F Mod.carrier fil]
 
 instance : Category (FilModCat R F) where
   Hom M N := {f : M.Mod →ₗ[R] N.Mod // ∀ i, f '' M.fil i ≤ N.fil i}
@@ -28,6 +28,48 @@ instance {M N : FilModCat R F} : FunLike (M ⟶ N) M.1 N.1 where
   coe f := f.1.toFun
   coe_injective' _ _ h := propext Subtype.val_inj |>.symm.mpr <| DFunLike.coe_injective' h
 
+/-- The object in the category of R-filt associated to an filtered R-module -/
+def of (X : Type w) [AddCommGroup X] [Module R X] (filX : ι → Submodule R X)
+  [FilteredModule F X filX] : FilModCat R F where
+    Mod := ModuleCat.of R X
+    fil := by
+      simp only [ModuleCat.coe_of]
+      use filX
+    f := by simpa [ModuleCat.coe_of]
+
+@[simp] theorem of_coe (X : FilModCat R F) : @of R _ _ _ F X.1 _ _ X.2 X.3 = X := rfl
+
+@[simp] theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] (filX : ι → Submodule R X)
+  [FilteredModule F X filX] : (of R F X filX).1 = X := rfl
+
+/-- A `LinearMap` with degree 0 is a morphism in `Module R`. -/
+def ofHom {X Y : Type w} [AddCommGroup X] [Module R X] {filX : ι → Submodule R X}
+  [FilteredModule F X filX] [AddCommGroup Y] [Module R Y] {filY : ι → Submodule R Y}
+  [FilteredModule F Y filY] (f : X →ₗ[R] Y) (deg0 : ∀ i, f '' filX i ≤ filY i) :
+  of R F X filX ⟶ of R F Y filY :=
+    ⟨f, deg0⟩
+
+@[simp 1100]
+theorem ofHom_apply {X Y : Type w} [AddCommGroup X] [Module R X] {filX : ι → Submodule R X}
+  [FilteredModule F X filX] [AddCommGroup Y] [Module R Y] {filY : ι → Submodule R Y}
+  [FilteredModule F Y filY] (f : X →ₗ[R] Y) (deg0 : ∀ i, f '' filX i ≤ filY i) (x : X) :
+  ofHom R F f deg0 x = f x := rfl
+
+/-- Forgetting to the underlying type and then building the bundled object returns the original
+filtered module. -/
+-- Have no idea what ↑ means...
+@[simps]
+def ofSelfIso (M : FilModCat R F) : @of R _ _ _ F M.1 _ _ M.2 M.3 ≅ M where
+  hom := 𝟙 M
+  inv := 𝟙 M
+
+@[simp]
+theorem id_apply {M : FilModCat R F} (m : M.1) : (𝟙 M : M.1 → M.1) m = m := rfl
+
+@[simp]
+theorem coe_comp {M N U : FilModCat R F} (f : M ⟶ N) (g : N ⟶ U) : (f ≫ g : M.1 → U.1) = g ∘ f :=
+  rfl
+
 /-- ! To-do
 
 instance moduleConcreteCategory : ConcreteCategory.{v} (ModuleCat.{v} R) where
@@ -38,55 +80,11 @@ instance moduleConcreteCategory : ConcreteCategory.{v} (ModuleCat.{v} R) where
     dsimp at h
     rw [h])⟩
 
-
-/-- The object in the category of R-modules associated to an R-module -/
-def of (X : Type v) [AddCommGroup X] [Module R X] : ModuleCat R :=
-  ⟨X⟩
-
-
-/-- Typecheck a `LinearMap` as a morphism in `Module R`. -/
-def ofHom {R : Type u} [Ring R] {X Y : Type v} [AddCommGroup X] [Module R X] [AddCommGroup Y]
-    [Module R Y] (f : X →ₗ[R] Y) : of R X ⟶ of R Y :=
-  f
-
-@[simp 1100]
-theorem ofHom_apply {R : Type u} [Ring R] {X Y : Type v} [AddCommGroup X] [Module R X]
-    [AddCommGroup Y] [Module R Y] (f : X →ₗ[R] Y) (x : X) : ofHom f x = f x :=
-  rfl
-
 instance : Inhabited (ModuleCat R) :=
   ⟨of R PUnit⟩
 
 instance ofUnique {X : Type v} [AddCommGroup X] [Module R X] [i : Unique X] : Unique (of R X) :=
   i
-
-@[simp] theorem of_coe (X : ModuleCat R) : of R X = X := rfl
-
--- Porting note: the simpNF linter complains, but we really need this?!
--- @[simp, nolint simpNF]
-theorem coe_of (X : Type v) [AddCommGroup X] [Module R X] : (of R X : Type v) = X :=
-  rfl
-
-variable {R}
-
-/-- Forgetting to the underlying type and then building the bundled object returns the original
-module. -/
-@[simps]
-def ofSelfIso (M : ModuleCat R) : ModuleCat.of R M ≅ M where
-  hom := 𝟙 M
-  inv := 𝟙 M
-
-
-@[simp]
-theorem id_apply (m : M) : (𝟙 M : M → M) m = m :=
-  rfl
-
-@[simp]
-theorem coe_comp (f : M ⟶ N) (g : N ⟶ U) : (f ≫ g : M → U) = g ∘ f :=
-  rfl
-
-theorem comp_def (f : M ⟶ N) (g : N ⟶ U) : f ≫ g = g.comp f :=
-  rfl
 
 @[simp] lemma forget_map (f : M ⟶ N) : (forget (ModuleCat R)).map f = (f : M → N) := rfl
 -/
