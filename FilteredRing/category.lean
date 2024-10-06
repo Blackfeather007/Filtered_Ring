@@ -1,11 +1,14 @@
 import FilteredRing.Basic
+
+universe u v w
+
 open Pointwise CategoryTheory
 
 variable (R : Type u) {ι : Type v} [Ring R] [OrderedAddCommMonoid ι]
 variable (F : ι → AddSubgroup R)
 
 structure FilModCat where
-  Mod : ModuleCat R
+  Mod : ModuleCat.{w, u} R
   fil : ι → Submodule R Mod
   [f : FilteredModule F Mod fil]
 
@@ -153,3 +156,7 @@ instance FilModCat.HomAddCommGroup {M N : FilModCat R F} : AddCommGroup (M ⟶ N
 instance : Preadditive (FilModCat R F) where
   add_comp P Q R f f' g := by
     exact propext Subtype.val_inj |>.symm.mpr <| LinearMap.comp_add f.1 f'.1 g.1
+
+-- instance : CategoryTheory.Functor (ModuleCat.{w, u} R) (FilModCat R F) where
+--   obj m := by
+--     have := m.3
