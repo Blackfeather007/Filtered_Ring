@@ -82,12 +82,10 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
       have : ∀ k ≤ i, 𝒜 k ≤ ⨆ k, ⨆ (_ : k ≤ j), 𝒜 k := fun k hk ↦ le_biSup 𝒜 (Preorder.le_trans k i j hk h)
       iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
     exact this hx
-  one := by
+  one :=
     have t1 : 𝒜 0 ≤ ⨆ k, ⨆ (_ : k ≤ 0), 𝒜 k := (le_biSup 𝒜 (Preorder.le_refl 0))
     have t2 : 1 ≤ 𝒜 0 := Submodule.one_le.mpr SetLike.GradedOne.one_mem
-    refine Submodule.one_le.mp ?_
-    apply t2.trans
-    exact t1
+    Submodule.one_le.mp (t2.trans t1)
   mul_mem := by
     intro i j x y hx hy
     let S : Submodule R A := {
@@ -117,9 +115,7 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
         have : 𝒜 (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), 𝒜 k := by
           apply le_biSup
           exact add_le_add hk hl
-        apply this
-        #check SetLike.GradedMul.mul_mem
-        sorry
+        apply this (SetLike.GradedMul.mul_mem hw hv)
       exact (this hy).out
     exact this hx
 
