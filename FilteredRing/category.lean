@@ -4,18 +4,25 @@ universe u v w
 
 open Pointwise CategoryTheory
 
-variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι]
-variable (F : ι → AddSubgroup R)
+variable {R : Type u} [Ring R]
+variable {ι : Type v} [OrderedAddCommMonoid ι] [DecidableRel LE.le (α := ι)]
+variable {σR : Type*} [SetLike σR R] [AddSubmonoidClass σR R]
+variable (F : ι → σR)
 
 structure FilteredModuleCat where
   Mod : ModuleCat.{w, u} R
-  fil : ι → AddSubgroup Mod.carrier
+  {σMod : Type*}
+  [name : SetLike σMod Mod.carrier]
+  [name' : AddSubmonoidClass σMod Mod.carrier]
+  fil : ι → σMod
   [f : FilteredModule F fil]
 
 namespace FilteredModuleCat
 
 instance filteredModuleCategory : Category (FilteredModuleCat F) where
-  Hom M N := {f : M.Mod →ₗ[R] N.Mod // ∀ i, f '' M.fil i ≤ N.fil i}
+  Hom M N := {f : M.Mod →ₗ[R] N.Mod //
+    ∀ i, f '' Set.range (@AddSubmonoidClass.subtype _ _ _ M.name M.name' (M.fil i)) ≤
+    Set.range (@AddSubmonoidClass.subtype _ _ _ N.name N.name' (N.fil i))}
   id _ := ⟨LinearMap.id, fun i ↦ by simp only [LinearMap.id_coe, id_eq, Set.image_id', le_refl]⟩
   comp f g := ⟨g.1.comp f.1, fun i ↦ by
     have aux1 := f.2 i
@@ -35,33 +42,36 @@ instance filteredModuleConcreteCategory : ConcreteCategory (FilteredModuleCat F)
     { obj := fun R ↦ R.Mod
       map := fun f ↦ f.val }
   forget_faithful := {
-    map_injective := fun {X Y} ⦃t1 t2⦄ ht ↦ Subtype.val_inj.mp (LinearMap.ext_iff.mpr (congrFun ht)) }
+    map_injective := fun {X Y} ⦃t1 t2⦄ ht ↦ Subtype.val_inj.mp (LinearMap.ext_iff.mpr (congrFun ht))}
 
 @[simp]
 lemma forget_map {M N : FilteredModuleCat F} (f : M ⟶ N) :
   (forget (FilteredModuleCat F)).map f = (f : M.Mod → N.Mod) := rfl
 
 /-- The object in the category of R-filt associated to an filtered R-module -/
-def of {X : Type w} [AddCommGroup X] [Module R X] (filX : ι → AddSubgroup X)
-  [FilteredModule F filX] : FilteredModuleCat F where
+def of {X : Type w} [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
+  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] : FilteredModuleCat F where
     Mod := ModuleCat.of R X
+    σMod := σX
+    name := by trivial
+    name' := by trivial
     fil := by simpa only [ModuleCat.coe_of]
     f := by simpa [ModuleCat.coe_of]
 
-instance {X : FilteredModuleCat F} : FilteredModule F X.fil := X.f
+instance {X : FilteredModuleCat F} : @FilteredModule _ _ _ _ _ F _ _ _ _ _ _ _ X.name X.fil := X.f
 
 @[simp]
-theorem of_coe (X : FilteredModuleCat F) : of F X.fil = X := rfl
+theorem of_coe (X : FilteredModuleCat F) : @of _ _ _ _ _ _ F _ _ _ _ X.name X.name' X.fil _ = X := rfl
 
 @[simp]
-theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] (filX : ι → AddSubgroup X)
-  [FilteredModule F filX] : (of F filX).1 = X := rfl
+theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
+  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] : (of F filX).1 = X := rfl
 
 /-- A `LinearMap` with degree 0 is a morphism in `Module R`. -/
-def ofHom {X Y : Type w} [AddCommGroup X] [Module R X] {filX : ι → AddSubgroup X}
-  [FilteredModule F filX] [AddCommGroup Y] [Module R Y] {filY : ι → AddSubgroup Y}
-  [FilteredModule F filY] (f : X →ₗ[R] Y) (deg0 : ∀ i, f '' filX i ≤ filY i) :
-  of F filX ⟶ of F filY :=
+def ofHom {X Y : Type w} [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
+  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] [AddCommGroup Y] [Module R Y]
+  {σY : Type*} [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) [FilteredModule F filY]
+  (f : X →ₗ[R] Y) (deg0 : ∀ i, f '' filX i ≤ filY i) : of F filX ⟶ of F filY :=
     ⟨f, deg0⟩
 
 -- @[simp 1100] ← 有lint错误
@@ -74,7 +84,7 @@ theorem ofHom_apply {X Y : Type w} [AddCommGroup X] [Module R X] {filX : ι → 
 filtered module. -/
 -- Have no idea what ↑ means...
 @[simps]
-def ofSelfIso (M : FilteredModuleCat F) : of F M.fil ≅ M where
+def ofSelfIso (M : FilteredModuleCat F) : @of _ _ _ _ _ _ F _ _ _ _ M.name M.name' M.fil _ ≅ M where
   hom := 𝟙 M
   inv := 𝟙 M
 
