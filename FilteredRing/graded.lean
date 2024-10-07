@@ -6,14 +6,24 @@ suppress_compilation
 
 variable {R : Type u} [Ring R]
 
-variable {ι : Type v} [OrderedCancelAddCommMonoid ι]
+variable {ι : Type v} [OrderedCancelAddCommMonoid ι]  [DecidableEq ι]
 
-variable (F : ι → AddSubgroup R) [fil : FilteredRing (fun i ↦ (F i).toAddSubmonoid)]
+variable {σ : Type w} [SetLike σ R] [AddSubmonoidClass σ R]
+
+variable (F : ι → AddSubgroup R) [fil : FilteredRing F]
 
 open BigOperators Pointwise DirectSum
 
+def F_le (i : ι) := ⨆ k ≤ i, F k
+
 def F_lt (i : ι) := ⨆ k < i, F k
 
+def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i ↦ F_le R₀ i
+
+instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
+  mono := sorry
+  one := sorry
+  mul_mem := sorry
 
 abbrev GradedPiece (i : ι) := (F i) ⧸ (F_lt F i).addSubgroupOf (F i)
 
@@ -44,6 +54,8 @@ lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt 
   | hmul _ _ _ _ ih₁ ih₂ =>
     rw [mul_add]
     exact add_mem ih₁ ih₂
+
+
 
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
   intro x y

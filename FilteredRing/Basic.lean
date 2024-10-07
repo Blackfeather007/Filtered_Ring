@@ -3,10 +3,13 @@ import Mathlib
 universe u v w
 
 variable {R : Type u} {ιR : Type v} [Semiring R] [OrderedAddCommMonoid ιR]
-[DecidableRel LE.le (α := ιR)]
+[DecidableRel LE.le (α := ιR)] [DecidableEq ιR]
+
+variable {σ : Type w} [SetLike σ R] [AddSubmonoidClass σ R]
+
 section FilteredRing
 
-class FilteredRing (F : ιR → AddSubmonoid R) where
+class FilteredRing (F : ιR → σ) where
   mono {i j} : i ≤ j → F i ≤ F j
   one : 1 ∈ F 0
   mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)
@@ -32,25 +35,23 @@ instance trivialRingFiltration :
 variable (F : ιR → AddSubmonoid R) [FilteredRing F]
 
 variable {F} in
-private def F0 : Subsemiring R where
-  __ := F 0
-  mul_mem' hx hy := by simpa [zero_add] using FilteredRing.mul_mem hx hy
-  one_mem' := FilteredRing.one
+private def F0 : Subsemiring R := sorry--where
+  -- __ := F 0
+  -- mul_mem' hx hy := by simpa [zero_add] using FilteredRing.mul_mem hx hy
+  -- one_mem' := FilteredRing.one
 
-instance : Semiring (F 0) := inferInstanceAs (Semiring F0)
+instance : Semiring (F 0) := sorry--inferInstanceAs (Semiring F0)
 
-instance Module_of_zero_fil (i : ιR) : Module (F 0) (F i) where
-  smul := fun x y ↦ ⟨x * y, by
-    simpa [zero_add] using FilteredRing.mul_mem (SetLike.coe_mem x) (SetLike.coe_mem y)⟩
-  one_smul := fun x ↦ SetLike.coe_eq_coe.mp (one_mul (x : R))
-  mul_smul := fun x y a ↦ SetLike.coe_eq_coe.mp (mul_assoc (x : R) y a)
-  smul_zero := fun x ↦ SetLike.coe_eq_coe.mp (mul_zero (x : R))
-  smul_add := fun x a b ↦ SetLike.coe_eq_coe.mp (LeftDistribClass.left_distrib (x : R) a b)
-  add_smul := fun x y a ↦ SetLike.coe_eq_coe.mp (RightDistribClass.right_distrib (x : R) y a)
-  zero_smul := fun x ↦ SetLike.coe_eq_coe.mp (zero_mul (x : R))
+instance Module_of_zero_fil (i : ιR) : Module (F 0) (F i) := sorry--where
+  -- smul := fun x y ↦ ⟨x * y, by
+  --   simpa [zero_add] using FilteredRing.mul_mem (SetLike.coe_mem x) (SetLike.coe_mem y)⟩
+  -- one_smul := fun x ↦ SetLike.coe_eq_coe.mp (one_mul (x : R))
+  -- mul_smul := fun x y a ↦ SetLike.coe_eq_coe.mp (mul_assoc (x : R) y a)
+  -- smul_zero := fun x ↦ SetLike.coe_eq_coe.mp (mul_zero (x : R))
+  -- smul_add := fun x a b ↦ SetLike.coe_eq_coe.mp (LeftDistribClass.left_distrib (x : R) a b)
+  -- add_smul := fun x y a ↦ SetLike.coe_eq_coe.mp (RightDistribClass.right_distrib (x : R) y a)
+  -- zero_smul := fun x ↦ SetLike.coe_eq_coe.mp (zero_mul (x : R))
 
-
--- def Exhaustive_Separated_filtration (GradedRing R) : sorry := sorry
 
 
 end FilteredRing
