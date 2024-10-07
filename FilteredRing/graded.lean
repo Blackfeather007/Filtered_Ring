@@ -8,7 +8,7 @@ variable {R : Type u} [Ring R]
 
 variable {ι : Type v} [OrderedCancelAddCommMonoid ι]
 
-variable (F : ι → AddSubgroup R) [FilteredRing F]
+variable (F : ι → AddSubgroup R) [fil : FilteredRing (fun i ↦ (F i).toAddSubmonoid)]
 
 open BigOperators Pointwise DirectSum
 
@@ -23,7 +23,7 @@ lemma Filtration.flt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ 
   rw [F_lt, iSup_subtype'] at hx ⊢
   induction hx using AddSubgroup.iSup_induction' with
   | hp i x hx =>
-    exact AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_right i.2 _⟩ (FilteredRing.mul_mem hx hy)
+    apply AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_right i.2 _⟩ (fil.mul_mem hx hy)
   | h1 =>
     rw [zero_mul]
     exact zero_mem _
@@ -37,7 +37,7 @@ lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt 
   rw [F_lt, iSup_subtype'] at hy ⊢
   induction hy using AddSubgroup.iSup_induction' with
   | hp j y hy =>
-    exact AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_left j.2 _⟩ (FilteredRing.mul_mem hx hy)
+    exact AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_left j.2 _⟩ (fil.mul_mem hx hy)
   | h1 =>
     rw [mul_zero]
     exact zero_mem _
@@ -47,7 +47,7 @@ lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt 
 
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
   intro x y
-  refine Quotient.map₂' (fun x y ↦ ⟨x.1 * y.1, FilteredRing.mul_mem x.2 y.2⟩)
+  refine Quotient.map₂' (fun x y ↦ ⟨x.1 * y.1, fil.mul_mem x.2 y.2⟩)
     ?_ x y
   intro x₁ x₂ hx y₁ y₂ hy
   simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf] at hx hy ⊢
@@ -102,7 +102,7 @@ section integer
 variable [DecidableEq ι] {i : ι}
 #check DirectSum.of (GradedPiece F) i
 
-variable (F : ℤ → AddSubgroup R) [fil : FilteredRing F] (i : ℤ)
+variable (F : ℤ → AddSubgroup R) [fil : FilteredRing (fun i ↦ (F i).toAddSubmonoid)] (i : ℤ)
 abbrev GradedPieces := GradedPiece F '' Set.univ
 
 @[simp]
@@ -111,7 +111,9 @@ theorem fil_Z (i : ℤ) : F_lt F i = F (i - 1) := by
   ext x
   simp only [Iff.symm Int.le_sub_one_iff]
   constructor
-  · exact fun hx ↦ (iSup_le fun k ↦ iSup_le fil.mono) hx
+  · exact fun hx ↦ by (
+    have : ⨆ i_1, ⨆ (_ : i_1 ≤ i - 1), F i_1 ≤ F (i - 1) := iSup_le (fun k ↦ iSup_le fil.mono)
+    exact this hx)
   · intro hx
     have : F (i - 1) ≤ ⨆ k, ⨆ (_ : k ≤ i - 1), F k := by
       apply le_iSup_of_le (i - 1)
