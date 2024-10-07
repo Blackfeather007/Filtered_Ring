@@ -23,7 +23,6 @@ def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i �
 instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
   mono := by
     intro i j h x hx
-    dsimp only [induced_fil, F_le] at hx ⊢
     have : ⨆ k ≤ i, R₀ k ≤ ⨆ k ≤ j, R₀ k := by
       have : ∀ k ≤ i, R₀ k ≤ ⨆ k, ⨆ (_ : k ≤ j), R₀ k := fun k hk ↦ le_biSup R₀ (Preorder.le_trans k i j hk h)
       exact iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
@@ -52,15 +51,11 @@ instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRi
         intro l hl
         intro v hv
         simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
-        dsimp [induced_fil, F_le]
         have : R₀ (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := by
           apply le_biSup
           exact add_le_add hk hl
         exact this (SetLike.GradedMul.mul_mem hw hv)
-      dsimp [induced_fil, F_le] at this hy ⊢
-
-
-      sorry
+      exact (this hy).out
     exact this hx
 
 abbrev GradedPiece (i : ι) := (F i) ⧸ (F_lt F i).addSubgroupOf (F i)
