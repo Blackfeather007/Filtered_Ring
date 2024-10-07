@@ -23,9 +23,9 @@ def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i �
 instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
   mono := by
     intro i j h x hx
-    have : ⨆ k ≤ i, R₀ k ≤ ⨆ k ≤ j, R₀ k := by
+    have : ⨆ k ≤ i, R₀ k ≤ ⨆ k ≤ j, R₀ k :=
       have : ∀ k ≤ i, R₀ k ≤ ⨆ k, ⨆ (_ : k ≤ j), R₀ k := fun k hk ↦ le_biSup R₀ (Preorder.le_trans k i j hk h)
-      exact iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
+      iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
     exact this hx
   one :=
     have : R₀ 0 ≤ ⨆ k, ⨆ (_ : k ≤ 0), R₀ k := (le_biSup R₀ (Preorder.le_refl 0))
