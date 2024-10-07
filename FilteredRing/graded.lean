@@ -3,21 +3,21 @@ universe u v w
 
 suppress_compilation
 
-variable {R : Type u} [Ring R]
+-- variable {R : Type u} [Ring R]
 
-variable {ι : Type v} [OrderedCancelAddCommMonoid ι]  [DecidableEq ι]
+-- variable {ι : Type v} [OrderedCancelAddCommMonoid ι]  [DecidableEq ι]
 
-variable {σ : Type w} [SetLike σ R] [AddSubmonoidClass σ R]
+-- variable {σ : Type w} [SetLike σ R] [AddSubmonoidClass σ R]
 
-variable [CompleteLattice σ] (F : ι → σ) [fil : FilteredRing F]
+-- variable [CompleteLattice σ] (F : ι → σ) [fil : FilteredRing F]
 
-open BigOperators Pointwise DirectSum
+-- open BigOperators Pointwise DirectSum
 
-def F_le (i : ι) := ⨆ k ≤ i, F k
+-- def F_le (i : ι) := ⨆ k ≤ i, F k
 
-def F_lt (i : ι) := ⨆ k < i, F k
+-- def F_lt (i : ι) := ⨆ k < i, F k
 
-def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i ↦ F_le R₀ i
+-- def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i ↦ F_le R₀ i
 -- section part1
 
 -- instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
@@ -64,20 +64,19 @@ def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i �
 
 section part2
 
-variable {R : Type u} [CommRing R] {A : Type w} [Semiring A] [Algebra R A]
-variable [DecidableEq ι] [AddMonoid ι] [CommSemiring R] [Semiring A] [Algebra R A]
-variable [SetLike σ A] [AddSubmonoidClass σ A] (𝒜 : ι → σ)
+variable {R : Type u} [CommSemiring R]
+  {ι : Type v} [DecidableEq ι] [OrderedAddCommMonoid ι]
+  {A : Type w} [Semiring A] [Algebra R A]
+  {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A] [CompleteLattice σ]
+
+variable (𝒜 : ι → σ)
 
 variable (𝒜 : ι → Submodule R A) [GradedAlgebra 𝒜]
 
--- variable [CompleteLattice σ] (F : ι → σ)
+def F_le' (F : ι → σ) (i : ι) := ⨆ k ≤ i, F k
 
-def F_le' (i : ι) := ⨆ k ≤ i, F k
-
--- -- #check F_le'
 def induced_fil' (𝒜 : ι → σ) := fun i ↦ F_le' 𝒜 i
 
--- #check induced_fil 𝒜
 instance : FilteredAlgebra (induced_fil' 𝒜) where
   mono := by
     intro i j h x hx
@@ -90,9 +89,8 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
     have t2 : 1 ≤ 𝒜 0 := Submodule.one_le.mpr SetLike.GradedOne.one_mem
     refine Submodule.one_le.mp ?_
     apply t2.trans
-
-    -- exact t1--Why it can't work???so stranged
-    sorry
+    unfold induced_fil'
+    exact t1
   mul_mem := by
     intro i j x y hx hy
     let S : Submodule R A := {
