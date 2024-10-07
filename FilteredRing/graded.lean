@@ -22,7 +22,9 @@ def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i �
 
 instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
   mono := sorry
-  one := sorry
+  one :=
+    have : R₀ 0 ≤ ⨆ k, ⨆ (_ : k ≤ 0), R₀ k := (le_biSup R₀ (Preorder.le_refl 0))
+    this SetLike.GradedOne.one_mem
   mul_mem := sorry
 
 abbrev GradedPiece (i : ι) := (F i) ⧸ (F_lt F i).addSubgroupOf (F i)
