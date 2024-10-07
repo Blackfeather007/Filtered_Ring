@@ -52,8 +52,14 @@ instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRi
         intro l hl
         intro v hv
         simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
+        dsimp [induced_fil, F_le]
+        have : R₀ (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := by
+          apply le_biSup
+          exact add_le_add hk hl
+        exact this (SetLike.GradedMul.mul_mem hw hv)
+      dsimp [induced_fil, F_le] at this hy ⊢
 
-        sorry
+
       sorry
     exact this hx
 
