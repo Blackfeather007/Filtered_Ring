@@ -45,8 +45,7 @@ instance trivialRingFiltration [DecidableRel LE.le (α := ι)] :
 
 -- instance : Semiring (F 0) := inferInstanceAs (Semiring F0)
 
-
--- instance Module_of_zero_fil (i : ιR) : Module (F 0) (F i) where
+-- instance Module_of_zero_fil (i : ι) : Module (F 0) (F i) where
 --   smul := fun x y ↦ ⟨x * y, by
 --     simpa [zero_add] using FilteredRing.mul_mem (SetLike.coe_mem x) (SetLike.coe_mem y)⟩
 --   one_smul := fun x ↦ SetLike.coe_eq_coe.mp (one_mul (x : R))
@@ -56,7 +55,7 @@ instance trivialRingFiltration [DecidableRel LE.le (α := ι)] :
 --   add_smul := fun x y a ↦ SetLike.coe_eq_coe.mp (RightDistribClass.right_distrib (x : R) y a)
 --   zero_smul := fun x ↦ SetLike.coe_eq_coe.mp (zero_mul (x : R))
 
--- end FilteredRing
+end FilteredRing
 
 
 -- section FilteredModule
@@ -93,8 +92,6 @@ instance trivialRingFiltration [DecidableRel LE.le (α := ι)] :
 --         simp only [ge_iff_le, hm, smul_zero, AddSubgroup.zero_mem (if 0 ≤ i + j then ⊤ else ⊥)]
 --     · simp only [ge_iff_le, ige0, reduceIte, AddSubmonoid.mem_bot] at hr
 --       simp only [ge_iff_le, hr, zero_smul, AddSubgroup.zero_mem (if 0 ≤ i + j then ⊤ else ⊥)]
-
--- end FilteredModule
 
 
 section FilteredAlgebra
