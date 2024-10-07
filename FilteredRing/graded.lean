@@ -90,8 +90,9 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
     have t2 : 1 ≤ 𝒜 0 := Submodule.one_le.mpr SetLike.GradedOne.one_mem
     refine Submodule.one_le.mp ?_
     apply t2.trans
+    unfold induced_fil' F_le'
 
-    -- exact t1--Why it can't work???so stranged
+    exact t1--Why it can't work???so stranged
     sorry
   mul_mem := by
     intro i j x y hx hy
@@ -99,33 +100,33 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
       carrier := {z | z * y ∈ induced_fil' 𝒜 (i + j)}
       add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
       zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
-      smul_mem' := sorry
+      smul_mem' := by
+        intro r a ha
+        simp only [Set.mem_setOf_eq, Algebra.smul_mul_assoc]
+        unfold induced_fil' F_le'
+        sorry
     }
-    -- {
-    --   carrier :=
-    --   add_mem' :=
-    --   zero_mem' := }
-    --   -- neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
-    -- have : induced_fil R₀ i ≤ S := by
---       simp only [induced_fil, F_le, iSup_le_iff]
---       intro k hk w hw
---       simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, S]
---       let T : AddSubgroup R := {
---         carrier := {u | w * u ∈ induced_fil R₀ (i + j)}
---         add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
---         zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
---         neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true]}
---       have : induced_fil R₀ j ≤ T := by
---         simp only [induced_fil, F_le, iSup_le_iff]
---         intro l hl
---         intro v hv
---         simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
---         have : R₀ (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := by
---           apply le_biSup
---           exact add_le_add hk hl
---         exact this (SetLike.GradedMul.mul_mem hw hv)
---       exact (this hy).out
---     exact this hx
+    have : induced_fil' 𝒜 i ≤ S := by
+      simp only [induced_fil', F_le', iSup_le_iff]
+      intro k hk w hw
+      simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, S]
+      let T : Submodule R A := {
+        carrier := {u | w * u ∈ induced_fil' 𝒜 (i + j)}
+        add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
+        zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
+        smul_mem' := by sorry}
+      have : induced_fil' 𝒜 j ≤ T := by
+        simp only [induced_fil', F_le', iSup_le_iff]
+        intro l hl
+        intro v hv
+        simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
+        have : 𝒜 (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), 𝒜 k := by
+          apply le_biSup
+          exact add_le_add hk hl
+        apply this
+        #check SetLike.GradedMul.mul_mem
+      exact (this hy).out
+    exact this hx
     sorry
 
 end part2
