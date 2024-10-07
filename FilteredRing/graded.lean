@@ -1,5 +1,4 @@
 import FilteredRing.Basic
-
 universe u v w
 
 suppress_compilation
@@ -10,7 +9,7 @@ variable {ι : Type v} [OrderedCancelAddCommMonoid ι]  [DecidableEq ι]
 
 variable {σ : Type w} [SetLike σ R] [AddSubmonoidClass σ R]
 
-variable (F : ι → AddSubgroup R) [fil : FilteredRing F]
+variable [CompleteLattice σ] (F : ι → σ) [fil : FilteredRing F]
 
 open BigOperators Pointwise DirectSum
 
@@ -19,76 +18,118 @@ def F_le (i : ι) := ⨆ k ≤ i, F k
 def F_lt (i : ι) := ⨆ k < i, F k
 
 def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i ↦ F_le R₀ i
+-- section part1
 
-instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
+-- instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
+--   mono := by
+--     intro i j h x hx
+--     have : ⨆ k ≤ i, R₀ k ≤ ⨆ k ≤ j, R₀ k :=
+--       have : ∀ k ≤ i, R₀ k ≤ ⨆ k, ⨆ (_ : k ≤ j), R₀ k := fun k hk ↦ le_biSup R₀ (Preorder.le_trans k i j hk h)
+--       iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
+--     exact this hx
+--   one :=
+--     have : R₀ 0 ≤ ⨆ k, ⨆ (_ : k ≤ 0), R₀ k := (le_biSup R₀ (Preorder.le_refl 0))
+--     this SetLike.GradedOne.one_mem
+--   mul_mem := by
+--     intro i j x y hx hy
+--     let S : AddSubgroup R := {
+--       carrier := {z | z * y ∈ induced_fil R₀ (i + j)}
+--       add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
+--       zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
+--       neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
+--     have : induced_fil R₀ i ≤ S := by
+--       simp only [induced_fil, F_le, iSup_le_iff]
+--       intro k hk w hw
+--       simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, S]
+--       let T : AddSubgroup R := {
+--         carrier := {u | w * u ∈ induced_fil R₀ (i + j)}
+--         add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
+--         zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
+--         neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true]}
+--       have : induced_fil R₀ j ≤ T := by
+--         simp only [induced_fil, F_le, iSup_le_iff]
+--         intro l hl
+--         intro v hv
+--         simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
+--         have : R₀ (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := by
+--           apply le_biSup
+--           exact add_le_add hk hl
+--         exact this (SetLike.GradedMul.mul_mem hw hv)
+--       exact (this hy).out
+--     exact this hx
+-- end part1
+
+
+
+
+section part2
+
+variable {R : Type u} [CommRing R] {A : Type w} [Semiring A] [Algebra R A]
+variable [DecidableEq ι] [AddMonoid ι] [CommSemiring R] [Semiring A] [Algebra R A]
+variable [SetLike σ A] [AddSubmonoidClass σ A] (𝒜 : ι → σ)
+
+variable (𝒜 : ι → Submodule R A) [GradedAlgebra 𝒜]
+
+-- variable [CompleteLattice σ] (F : ι → σ)
+
+def F_le' (i : ι) := ⨆ k ≤ i, F k
+
+-- -- #check F_le'
+def induced_fil' (𝒜 : ι → σ) := fun i ↦ F_le' 𝒜 i
+
+-- #check induced_fil 𝒜
+instance : FilteredAlgebra (induced_fil' 𝒜) where
   mono := by
     intro i j h x hx
-    have : ⨆ k ≤ i, R₀ k ≤ ⨆ k ≤ j, R₀ k :=
-      have : ∀ k ≤ i, R₀ k ≤ ⨆ k, ⨆ (_ : k ≤ j), R₀ k := fun k hk ↦ le_biSup R₀ (Preorder.le_trans k i j hk h)
+    have : ⨆ k ≤ i, 𝒜 k ≤ ⨆ k ≤ j, 𝒜 k :=
+      have : ∀ k ≤ i, 𝒜 k ≤ ⨆ k, ⨆ (_ : k ≤ j), 𝒜 k := fun k hk ↦ le_biSup 𝒜 (Preorder.le_trans k i j hk h)
       iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
     exact this hx
-  one :=
-    have : R₀ 0 ≤ ⨆ k, ⨆ (_ : k ≤ 0), R₀ k := (le_biSup R₀ (Preorder.le_refl 0))
-    this SetLike.GradedOne.one_mem
+  one := by
+    have t1 : 𝒜 0 ≤ ⨆ k, ⨆ (_ : k ≤ 0), 𝒜 k := (le_biSup 𝒜 (Preorder.le_refl 0))
+    have t2 : 1 ≤ 𝒜 0 := Submodule.one_le.mpr SetLike.GradedOne.one_mem
+    refine Submodule.one_le.mp ?_
+    apply t2.trans
+
+    -- exact t1--Why it can't work???so stranged
+    sorry
   mul_mem := by
     intro i j x y hx hy
-    let S : AddSubgroup R := {
-      carrier := {z | z * y ∈ induced_fil R₀ (i + j)}
+    let S : Submodule R A := {
+      carrier := {z | z * y ∈ induced_fil' 𝒜 (i + j)}
       add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
       zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
-      neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
-    have : induced_fil R₀ i ≤ S := by
-      simp only [induced_fil, F_le, iSup_le_iff]
-      intro k hk w hw
-      simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, S]
-      let T : AddSubgroup R := {
-        carrier := {u | w * u ∈ induced_fil R₀ (i + j)}
-        add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
-        zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
-        neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true]}
-      have : induced_fil R₀ j ≤ T := by
-        simp only [induced_fil, F_le, iSup_le_iff]
-        intro l hl
-        intro v hv
-        simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
-        have : R₀ (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := by
-          apply le_biSup
-          exact add_le_add hk hl
-        exact this (SetLike.GradedMul.mul_mem hw hv)
-      exact (this hy).out
-    exact this hx
+      smul_mem' := sorry
+    }
+    -- {
+    --   carrier :=
+    --   add_mem' :=
+    --   zero_mem' := }
+    --   -- neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
+    -- have : induced_fil R₀ i ≤ S := by
+--       simp only [induced_fil, F_le, iSup_le_iff]
+--       intro k hk w hw
+--       simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, S]
+--       let T : AddSubgroup R := {
+--         carrier := {u | w * u ∈ induced_fil R₀ (i + j)}
+--         add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
+--         zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
+--         neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true]}
+--       have : induced_fil R₀ j ≤ T := by
+--         simp only [induced_fil, F_le, iSup_le_iff]
+--         intro l hl
+--         intro v hv
+--         simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
+--         have : R₀ (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := by
+--           apply le_biSup
+--           exact add_le_add hk hl
+--         exact this (SetLike.GradedMul.mul_mem hw hv)
+--       exact (this hy).out
+--     exact this hx
+    sorry
 
-abbrev GradedPiece (i : ι) := (F i) ⧸ (F_lt F i).addSubgroupOf (F i)
-
-variable {F} in
-lemma Filtration.flt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ F j) :
-    x * y ∈ F_lt F (i + j) := by
-  rw [F_lt, iSup_subtype'] at hx ⊢
-  induction hx using AddSubgroup.iSup_induction' with
-  | hp i x hx =>
-    apply AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_right i.2 _⟩ (fil.mul_mem hx hy)
-  | h1 =>
-    rw [zero_mul]
-    exact zero_mem _
-  | hmul _ _ _ _ ih₁ ih₂ =>
-    rw [add_mul]
-    exact add_mem ih₁ ih₂
-
-variable {F} in
-lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt F j) :
-    x * y ∈ F_lt F (i + j) := by
-  rw [F_lt, iSup_subtype'] at hy ⊢
-  induction hy using AddSubgroup.iSup_induction' with
-  | hp j y hy =>
-    exact AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_left j.2 _⟩ (fil.mul_mem hx hy)
-  | h1 =>
-    rw [mul_zero]
-    exact zero_mem _
-  | hmul _ _ _ _ ih₁ ih₂ =>
-    rw [mul_add]
-    exact add_mem ih₁ ih₂
-
-
+end part2
+#exit
 
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
   intro x y
