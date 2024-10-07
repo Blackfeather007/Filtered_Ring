@@ -2,17 +2,17 @@ import Mathlib
 
 universe u v w
 
-variable {R : Type u} {ι : Type v} [Semiring R] [OrderedAddCommMonoid ι]
-
+variable {R : Type u} {ιR : Type v} [Semiring R] [OrderedAddCommMonoid ιR]
+[DecidableRel LE.le (α := ιR)]
 section FilteredRing
 
-class FilteredRing (F : ι → AddSubmonoid R) where
+class FilteredRing (F : ιR → AddSubmonoid R) where
   mono {i j} : i ≤ j → F i ≤ F j
   one : 1 ∈ F 0
   mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)
 
-instance trivialRingFiltration (comparable_with_zero : ∀ i : ι, Decidable (i ≥ 0)) :
-  FilteredRing (fun (i : ι) ↦ if i ≥ 0 then (⊤ : AddSubmonoid R) else (⊥ : AddSubmonoid R)) where
+instance trivialRingFiltration :
+  FilteredRing (fun (i : ιR) ↦ if i ≥ 0 then (⊤ : AddSubmonoid R) else (⊥ : AddSubmonoid R)) where
     mono := by
       intro i j ilej
       by_cases ige0 : i ≥ 0
@@ -29,7 +29,7 @@ instance trivialRingFiltration (comparable_with_zero : ∀ i : ι, Decidable (i 
       · simp only [ge_iff_le, ige0, reduceIte, AddSubmonoid.mem_bot] at hx
         simp only [ge_iff_le, hx, zero_mul, AddSubmonoid.zero_mem (if 0 ≤ i + j then ⊤ else ⊥)]
 
-variable (F : ι → AddSubmonoid R) [FilteredRing F]
+variable (F : ιR → AddSubmonoid R) [FilteredRing F]
 
 variable {F} in
 private def F0 : Subsemiring R where
@@ -39,7 +39,7 @@ private def F0 : Subsemiring R where
 
 instance : Semiring (F 0) := inferInstanceAs (Semiring F0)
 
-instance Module_of_zero_fil (i : ι) : Module (F 0) (F i) where
+instance Module_of_zero_fil (i : ιR) : Module (F 0) (F i) where
   smul := fun x y ↦ ⟨x * y, by
     simpa [zero_add] using FilteredRing.mul_mem (SetLike.coe_mem x) (SetLike.coe_mem y)⟩
   one_smul := fun x ↦ SetLike.coe_eq_coe.mp (one_mul (x : R))
@@ -58,18 +58,18 @@ end FilteredRing
 
 section FilteredModule
 
-variable (F : ι → AddSubmonoid R) [FilteredRing F]
+variable (F : ιR → AddSubmonoid R) [FilteredRing F]
 
-variable {M : Type w} [AddCommGroup M] [Module R M]
+variable {M : Type w} [AddCommGroup M] [Module R M] {ιM : Type v} [OrderedAddCommMonoid ιM]
+[DecidableRel LE.le (α := ιM)] [VAdd ιR ιM]
 
-class FilteredModule (F' : ι → AddSubgroup M) where
+class FilteredModule (F' : ιM → AddSubgroup M) where
   mono : ∀ {i j}, i ≤ j → F' i ≤ F' j
-  smul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F' j → x • y ∈ F' (i + j)
+  smul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F' j → x • y ∈ F' (i +ᵥ j)
 
-instance trivialModuleFiltration (comparable_with_zero : ∀ i : ι, Decidable (i ≥ 0)) :
-    FilteredModule
-      (fun (i : ι) ↦ if i ≥ 0 then (⊤ : AddSubmonoid R) else (⊥ : AddSubmonoid R))
-      (fun (i : ι) ↦ if i ≥ 0 then (⊤ : AddSubgroup M) else (⊥ : AddSubgroup M)) where
+instance trivialModuleFiltration : FilteredModule
+    (fun (i : ιR) ↦ if i ≥ 0 then (⊤ : AddSubmonoid R) else (⊥ : AddSubmonoid R))
+    (fun (i : ιM) ↦ if i ≥ 0 then (⊤ : AddSubgroup M) else (⊥ : AddSubgroup M)) where
   mono := by
     intro i j ilej
     by_cases ige0 : i ≥ 0
@@ -79,15 +79,15 @@ instance trivialModuleFiltration (comparable_with_zero : ∀ i : ι, Decidable (
     intro i j r m hr hm
     by_cases ige0 : i ≥ 0
     · by_cases jge0 : j ≥ 0
-      · simp only [ge_iff_le, Left.add_nonneg ige0 jge0, reduceIte, AddSubgroup.mem_top]
+      · sorry
       · simp only [ge_iff_le, jge0, reduceIte, AddSubgroup.mem_bot] at hm
-        simp only [ge_iff_le, hm, smul_zero, AddSubgroup.zero_mem (if 0 ≤ i + j then ⊤ else ⊥)]
+        simp only [ge_iff_le, hm, smul_zero, AddSubgroup.zero_mem (if 0 ≤ i +ᵥ j then ⊤ else ⊥)]
     · simp only [ge_iff_le, ige0, reduceIte, AddSubmonoid.mem_bot] at hr
-      simp only [ge_iff_le, hr, zero_smul, AddSubgroup.zero_mem (if 0 ≤ i + j then ⊤ else ⊥)]
+      simp only [ge_iff_le, hr, zero_smul, AddSubgroup.zero_mem (if 0 ≤ i +ᵥ j then ⊤ else ⊥)]
 
 variable (M) in
 instance trivialModuleFiltration' :
-  FilteredModule F (fun (_ : ι) ↦ (⊤ : AddSubgroup M)) where
+  FilteredModule F (fun (_ : ιM) ↦ (⊤ : AddSubgroup M)) where
     mono := fun {_ _} _ ⦃_⦄ a ↦ a
     smul_mem := fun {_ _} {_} {_} _ a ↦ a
 
