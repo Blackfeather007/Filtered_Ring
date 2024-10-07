@@ -25,7 +25,43 @@ instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRi
   one :=
     have : R₀ 0 ≤ ⨆ k, ⨆ (_ : k ≤ 0), R₀ k := (le_biSup R₀ (Preorder.le_refl 0))
     this SetLike.GradedOne.one_mem
-  mul_mem := sorry
+  mul_mem := by
+    intro i j x y hx hy
+    --unfold induced_fil F_le at hx hy ⊢
+    let S : AddSubgroup R := {
+      carrier := {z | z * y ∈ induced_fil R₀ (i + j)}
+      add_mem' := sorry
+      zero_mem' := sorry
+      neg_mem' := sorry }
+    have : induced_fil R₀ i ≤ S := by
+      simp only [induced_fil, F_le, iSup_le_iff]
+      intro k hk w hw
+      simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, S]
+      let T : AddSubgroup R := {
+        carrier := {u | w * u ∈ induced_fil R₀ (i + j)}
+        add_mem' := sorry
+        zero_mem' := sorry
+        neg_mem' := sorry
+      }
+      have : induced_fil R₀ j ≤ T := by
+        simp only [induced_fil, F_le, iSup_le_iff]
+        intro l hl
+        intro v hv
+        simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
+
+        sorry
+      sorry
+    sorry
+    /-
+    have hx : ∃ k₁ ≤ i, x ∈ R₀ k₁ := by
+
+      #check le_iSup_iff.mp
+      sorry
+    obtain ⟨k₁, hx₁, hx₂⟩ := hx
+    have hy : ∃ k₂ ≤ j, y ∈ R₀ k₂ := by sorry
+    obtain ⟨k₂, hy₁, hy₂⟩ := hy
+    have : R₀ (k₁ + k₂) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := le_biSup R₀ (add_le_add hx₁ hy₁)
+    exact this (SetLike.GradedMul.mul_mem hx₂ hy₂)-/
 
 abbrev GradedPiece (i : ι) := (F i) ⧸ (F_lt F i).addSubgroupOf (F i)
 
