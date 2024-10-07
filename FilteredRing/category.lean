@@ -4,25 +4,23 @@ universe u v w
 
 open Pointwise CategoryTheory
 
-variable {R : Type u} [Ring R]
-variable {ι : Type v} [OrderedAddCommMonoid ι] [DecidableRel LE.le (α := ι)]
-variable {σR : Type*} [SetLike σR R] [AddSubmonoidClass σR R]
-variable (F : ι → σR)
+variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] [DecidableEq ι]
+  {σ : Type*} [SetLike σ R] [AddSubmonoidClass σ R] (F : ι → σ)
 
 structure FilteredModuleCat where
   Mod : ModuleCat.{w, u} R
   {σMod : Type*}
-  [name : SetLike σMod Mod.carrier]
-  [name' : AddSubmonoidClass σMod Mod.carrier]
+  [instSetLike : SetLike σMod Mod.carrier]
+  [instAddSubmonoidClass : AddSubmonoidClass σMod Mod.carrier]
   fil : ι → σMod
   [f : FilteredModule F fil]
 
 namespace FilteredModuleCat
 
 instance filteredModuleCategory : Category (FilteredModuleCat F) where
-  Hom M N := {f : M.Mod →ₗ[R] N.Mod //
-    ∀ i, f '' Set.range (@AddSubmonoidClass.subtype _ _ _ M.name M.name' (M.fil i)) ≤
-    Set.range (@AddSubmonoidClass.subtype _ _ _ N.name N.name' (N.fil i))}
+  Hom M N := {f : M.Mod →ₗ[R] N.Mod // ∀ i,
+  f '' Set.range (@AddSubmonoidClass.subtype _ _ _ M.instSetLike M.instAddSubmonoidClass (M.fil i))
+  ≤ Set.range (@AddSubmonoidClass.subtype _ _ _ N.instSetLike N.instAddSubmonoidClass (N.fil i))}
   id _ := ⟨LinearMap.id, fun i ↦ by simp only [LinearMap.id_coe, id_eq, Set.image_id', le_refl]⟩
   comp f g := ⟨g.1.comp f.1, fun i ↦ by
     have aux1 := f.2 i
@@ -53,15 +51,17 @@ def of {X : Type w} [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
   [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] : FilteredModuleCat F where
     Mod := ModuleCat.of R X
     σMod := σX
-    name := by trivial
-    name' := by trivial
+    instSetLike := by trivial
+    instAddSubmonoidClass := by trivial
     fil := by simpa only [ModuleCat.coe_of]
     f := by simpa [ModuleCat.coe_of]
 
-instance {X : FilteredModuleCat F} : @FilteredModule _ _ _ _ _ F _ _ _ _ _ _ _ X.name X.fil := X.f
+instance {X : FilteredModuleCat F} :
+  @FilteredModule _ _ _ _ _ F _ _ _ _ _ _ _ X.instSetLike X.fil := X.f
 
 @[simp]
-theorem of_coe (X : FilteredModuleCat F) : @of _ _ _ _ _ _ F _ _ _ _ X.name X.name' X.fil _ = X := rfl
+theorem of_coe (X : FilteredModuleCat F) :
+  @of _ _ _ _ _ _ F _ _ _ _ X.instSetLike X.instAddSubmonoidClass X.fil _ = X := rfl
 
 @[simp]
 theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
@@ -84,16 +84,17 @@ theorem ofHom_apply {X Y : Type w} [AddCommGroup X] [Module R X] {filX : ι → 
 filtered module. -/
 -- Have no idea what ↑ means...
 @[simps]
-def ofSelfIso (M : FilteredModuleCat F) : @of _ _ _ _ _ _ F _ _ _ _ M.name M.name' M.fil _ ≅ M where
-  hom := 𝟙 M
-  inv := 𝟙 M
+def ofSelfIso (M : FilteredModuleCat F) :
+  @of _ _ _ _ _ _ F _ _ _ _ M.instSetLike M.instAddSubmonoidClass M.fil ≅ M where
+    hom := 𝟙 M
+    inv := 𝟙 M
 
 @[simp]
 theorem id_apply {M : FilteredModuleCat F} (m : M.1) : (𝟙 M : M.1 → M.1) m = m := rfl
 
 @[simp]
-theorem coe_comp {M N U : FilteredModuleCat F} (f : M ⟶ N) (g : N ⟶ U) : (f ≫ g : M.1 → U.1) = g ∘ f :=
-  rfl
+theorem coe_comp {M N U : FilteredModuleCat F} (f : M ⟶ N) (g : N ⟶ U) :
+  (f ≫ g : M.1 → U.1) = g ∘ f := rfl
 
 instance : Inhabited (FilteredModuleCat F) := {
   default := ⟨ModuleCat.of R PUnit, fun _ ↦ ⊤⟩
