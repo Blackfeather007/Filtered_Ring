@@ -33,20 +33,19 @@ instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRi
     this SetLike.GradedOne.one_mem
   mul_mem := by
     intro i j x y hx hy
-    --unfold induced_fil F_le at hx hy ⊢
     let S : AddSubgroup R := {
       carrier := {z | z * y ∈ induced_fil R₀ (i + j)}
-      add_mem' := sorry
-      zero_mem' := sorry
-      neg_mem' := sorry }
+      add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
+      zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
+      neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
     have : induced_fil R₀ i ≤ S := by
       simp only [induced_fil, F_le, iSup_le_iff]
       intro k hk w hw
       simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, S]
       let T : AddSubgroup R := {
         carrier := {u | w * u ∈ induced_fil R₀ (i + j)}
-        add_mem' := sorry
-        zero_mem' := sorry
+        add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
+        zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
         neg_mem' := sorry
       }
       have : induced_fil R₀ j ≤ T := by
@@ -58,6 +57,17 @@ instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRi
         sorry
       sorry
     sorry
+    /-
+    have hx : ∃ k₁ ≤ i, x ∈ R₀ k₁ := by
+
+      #check le_iSup_iff.mp
+      sorry
+    obtain ⟨k₁, hx₁, hx₂⟩ := hx
+    have hy : ∃ k₂ ≤ j, y ∈ R₀ k₂ := by sorry
+    obtain ⟨k₂, hy₁, hy₂⟩ := hy
+    have : R₀ (k₁ + k₂) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := le_biSup R₀ (add_le_add hx₁ hy₁)
+    exact this (SetLike.GradedMul.mul_mem hx₂ hy₂)-/
+
     /-
     have hx : ∃ k₁ ≤ i, x ∈ R₀ k₁ := by
 
