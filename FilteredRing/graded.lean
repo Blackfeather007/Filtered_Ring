@@ -3,67 +3,62 @@ universe u v w
 
 suppress_compilation
 
--- variable {R : Type u} [Ring R]
+section FilRing
+variable {R : Type u} [Ring R]
+  {ι : Type v} [OrderedCancelAddCommMonoid ι]  [DecidableEq ι]
+  {σ : Type w} [SetLike σ R] [AddSubmonoidClass σ R]
+  [CompleteLattice σ] (F : ι → σ) [fil : FilteredRing F]
 
--- variable {ι : Type v} [OrderedCancelAddCommMonoid ι]  [DecidableEq ι]
+def F_le (i : ι) := ⨆ k ≤ i, F k
 
--- variable {σ : Type w} [SetLike σ R] [AddSubmonoidClass σ R]
+def F_lt (i : ι) := ⨆ k < i, F k
 
--- variable [CompleteLattice σ] (F : ι → σ) [fil : FilteredRing F]
+def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i ↦ F_le R₀ i
 
--- open BigOperators Pointwise DirectSum
+instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
+  mono := by
+    intro i j h x hx
+    have : ⨆ k ≤ i, R₀ k ≤ ⨆ k ≤ j, R₀ k :=
+      have : ∀ k ≤ i, R₀ k ≤ ⨆ k, ⨆ (_ : k ≤ j), R₀ k := fun k hk ↦ le_biSup R₀ (Preorder.le_trans k i j hk h)
+      iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
+    exact this hx
+  one :=
+    have : R₀ 0 ≤ ⨆ k, ⨆ (_ : k ≤ 0), R₀ k := (le_biSup R₀ (Preorder.le_refl 0))
+    this SetLike.GradedOne.one_mem
+  mul_mem := by
+    intro i j x y hx hy
+    let S : AddSubgroup R := {
+      carrier := {z | z * y ∈ induced_fil R₀ (i + j)}
+      add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
+      zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
+      neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
+    have : induced_fil R₀ i ≤ S := by
+      simp only [induced_fil, F_le, iSup_le_iff]
+      intro k hk w hw
+      simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, S]
+      let T : AddSubgroup R := {
+        carrier := {u | w * u ∈ induced_fil R₀ (i + j)}
+        add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
+        zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
+        neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true]}
+      have : induced_fil R₀ j ≤ T := by
+        simp only [induced_fil, F_le, iSup_le_iff]
+        intro l hl
+        intro v hv
+        simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
+        have : R₀ (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := by
+          apply le_biSup
+          exact add_le_add hk hl
+        exact this (SetLike.GradedMul.mul_mem hw hv)
+      exact (this hy).out
+    exact this hx
 
--- def F_le (i : ι) := ⨆ k ≤ i, F k
-
--- def F_lt (i : ι) := ⨆ k < i, F k
-
--- def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i ↦ F_le R₀ i
--- section part1
-
--- instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
---   mono := by
---     intro i j h x hx
---     have : ⨆ k ≤ i, R₀ k ≤ ⨆ k ≤ j, R₀ k :=
---       have : ∀ k ≤ i, R₀ k ≤ ⨆ k, ⨆ (_ : k ≤ j), R₀ k := fun k hk ↦ le_biSup R₀ (Preorder.le_trans k i j hk h)
---       iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
---     exact this hx
---   one :=
---     have : R₀ 0 ≤ ⨆ k, ⨆ (_ : k ≤ 0), R₀ k := (le_biSup R₀ (Preorder.le_refl 0))
---     this SetLike.GradedOne.one_mem
---   mul_mem := by
---     intro i j x y hx hy
---     let S : AddSubgroup R := {
---       carrier := {z | z * y ∈ induced_fil R₀ (i + j)}
---       add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
---       zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
---       neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
---     have : induced_fil R₀ i ≤ S := by
---       simp only [induced_fil, F_le, iSup_le_iff]
---       intro k hk w hw
---       simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, S]
---       let T : AddSubgroup R := {
---         carrier := {u | w * u ∈ induced_fil R₀ (i + j)}
---         add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
---         zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
---         neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true]}
---       have : induced_fil R₀ j ≤ T := by
---         simp only [induced_fil, F_le, iSup_le_iff]
---         intro l hl
---         intro v hv
---         simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
---         have : R₀ (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := by
---           apply le_biSup
---           exact add_le_add hk hl
---         exact this (SetLike.GradedMul.mul_mem hw hv)
---       exact (this hy).out
---     exact this hx
--- end part1
+end FilRing
 
 
 
 
-section part2
-
+section FilMod
 variable {R : Type u} [CommSemiring R]
   {ι : Type v} [DecidableEq ι] [OrderedAddCommMonoid ι]
   {A : Type w} [Semiring A] [Algebra R A]
@@ -92,7 +87,7 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
       carrier := {z | z * y ∈ induced_fil' 𝒜 (i + j)}
       add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
       zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
-      smul_mem' := by
+      smul_mem' := sorry
         -- intro r a ha
         -- simp only [Set.mem_setOf_eq, Algebra.smul_mul_assoc]
         -- let P : Submodule R A := {
@@ -111,11 +106,9 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
         --     apply le_biSup
         --     exact hl
         --   exact t2 t1
-
         -- #check this (a * y) ha.out
         -- have : r • (a * y) = (r • a) * y := by exact Eq.symm (smul_mul_assoc r a y)
         -- rw[ this]
-        sorry
     }
     have : induced_fil' 𝒜 i ≤ S := by
       simp only [induced_fil', F_le', iSup_le_iff]
@@ -138,8 +131,9 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
       exact (this hy).out
     exact this hx
 
-end part2
-#exit
+end FilMod
+
+section Graded
 
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
   intro x y
@@ -193,6 +187,8 @@ instance : DirectSum.GSemiring (GradedPiece F) where
   natCast := sorry
   natCast_zero := sorry
   natCast_succ := sorry
+
+end Graded
 
 section integer
 variable [DecidableEq ι] {i : ι}
