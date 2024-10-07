@@ -93,9 +93,28 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
       add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
       zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
       smul_mem' := by
-        intro r a ha
-        simp only [Set.mem_setOf_eq, Algebra.smul_mul_assoc]
-        unfold induced_fil' F_le'
+        -- intro r a ha
+        -- simp only [Set.mem_setOf_eq, Algebra.smul_mul_assoc]
+        -- let P : Submodule R A := {
+        --   carrier := {o | r • o ∈ induced_fil' 𝒜 (i + j)}
+        --   add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, smul_add, add_mem ha.out hb.out]
+        --   zero_mem' := by simp only [Set.mem_setOf_eq, smul_zero, Submodule.zero_mem]
+        --   smul_mem' := sorry}
+        -- have : induced_fil' 𝒜 (i + j) ≤ P := by
+        --   simp only [induced_fil', F_le', iSup_le_iff]
+        --   intro l hl
+        --   intro q hq
+        --   simp only [Submodule.mem_mk, AddSubmonoid.mem_mk, AddSubsemigroup.mem_mk,
+        --     Set.mem_setOf_eq, P]
+        --   have t1 : r • q ∈ 𝒜 l := by exact Submodule.smul_mem (𝒜 l) r hq
+        --   have t2 : 𝒜 l ≤ ⨆ k, ⨆ (_ : k ≤ i + j), 𝒜 k := by
+        --     apply le_biSup
+        --     exact hl
+        --   exact t2 t1
+
+        -- #check this (a * y) ha.out
+        -- have : r • (a * y) = (r • a) * y := by exact Eq.symm (smul_mul_assoc r a y)
+        -- rw[ this]
         sorry
     }
     have : induced_fil' 𝒜 i ≤ S := by
