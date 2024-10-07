@@ -20,7 +20,7 @@ def F_lt (i : ι) := ⨆ k < i, F k
 
 def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i ↦ F_le R₀ i
 
-instance Exhaustive_Separated_filtration (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
+instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
   mono := by
     intro i j h x hx
     have : ⨆ k ≤ i, R₀ k ≤ ⨆ k ≤ j, R₀ k :=
