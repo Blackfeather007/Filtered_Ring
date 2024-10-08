@@ -85,6 +85,9 @@ instance trivialModuleFiltration [DecidableRel LE.le (α := ι)] [DecidableRel L
     · simp only [ge_iff_le, ige0, reduceIte, AddSubmonoid.mem_bot] at hr
       simp only [ge_iff_le, hr, zero_smul, AddSubmonoid.zero_mem (if 0 ≤ i +ᵥ j then ⊤ else ⊥)]
 
+instance trivialModuleFiltration' : FilteredModule F fun _ : ιM ↦ (⊤ : AddSubmonoid M) where
+  mono := fun _ ⦃_⦄ a ↦ a
+  smul_mem := fun _ a ↦ a
 
 section FilteredAlgebra
 
