@@ -21,13 +21,9 @@ instance {M : FilteredModuleCat F} : AddSubmonoidClass M.σMod M.Mod.carrier := 
 
 namespace FilteredModuleCat
 
-variable (N : FilteredModuleCat F) (i : ι)
-#check Set.range (AddSubmonoidClass.subtype (N.fil i))
-
 instance {M : FilteredModuleCat F} {i : ι} : AddSubmonoid M.Mod where
   carrier := Set.range (AddSubmonoidClass.subtype (M.fil i))
-  add_mem' := by
-    intro a b ha hb
+  add_mem' {a b} ha hb := by
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq] at *
     exact add_mem ha hb
   zero_mem' := by
@@ -206,8 +202,7 @@ instance toFilteredModule (m : ModuleCat.{w, u} R) [FilteredRing F] : FilteredMo
     simp only [F', closure_le]
     rintro x ⟨r, ⟨hr, ⟨a, ha⟩⟩⟩
     exact mem_closure.mpr fun K hk ↦ hk <| Exists.intro r ⟨FilteredRing.mono hij hr, Exists.intro a ha⟩
-  smul_mem := by
-    intro j i x y hx hy
+  smul_mem {j i x y} hx hy := by
     have : F' F m i ≤ proofGP F m i j x := by
       apply closure_le.2
       rintro h ⟨r', hr', ⟨a, ha⟩⟩
