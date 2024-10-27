@@ -15,18 +15,10 @@ namespace FilteredModuleCat
 
 instance {M : FilteredModuleCat F} (i : ι) : AddSubmonoid M.Mod := IndexedModuleSubmonoid R ι i
 
--- 并不容易直接用IndexedModuleCategory，可能需用forget functor? Not sure...
 instance filteredModuleCategory : Category (FilteredModuleCat F) where
-  Hom M N := {f : M.Mod →ₗ[R] N.Mod //
-    ∀ i, f '' Set.range (AddSubmonoidClass.subtype (M.ind i))
-    ≤ Set.range (AddSubmonoidClass.subtype (N.ind i))}
-  id _ := ⟨LinearMap.id, fun i ↦ by
-    simp only [LinearMap.id_coe, id_eq, Set.image_id', le_refl]⟩
-  comp f g := ⟨g.1.comp f.1, fun i ↦ by
-    have aux1 := f.2 i
-    have aux2 := g.2 i
-    simp only [Set.le_eq_subset, Set.image_subset_iff] at *
-    exact fun _ hx ↦ aux2 <| aux1 hx⟩
+  Hom M N := (IndexedModuleCategory R ι).Hom M.toIndexedModuleCat N.toIndexedModuleCat
+  id M := (IndexedModuleCategory R ι).id M.toIndexedModuleCat
+  comp := (IndexedModuleCategory R ι).comp
   id_comp _ := rfl
   comp_id _ := rfl
   assoc _ _ _ := rfl
