@@ -4,7 +4,8 @@ universe o u v w
 
 open Pointwise CategoryTheory
 
-variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] {σ : Type o} [SetLike σ R] (F : ι → σ)
+variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] {σ : Type o} [SetLike σ R]
+  (F : ι → σ)
 
 structure IndexedModuleCat where
   Mod : ModuleCat.{w, u} R
@@ -16,7 +17,8 @@ structure IndexedModuleCat where
 
 instance {M : IndexedModuleCat F} : SetLike M.σMod M.Mod.carrier := M.instSetLike
 
-instance {M : IndexedModuleCat F} : AddSubmonoidClass M.σMod M.Mod.carrier := M.instAddSubmonoidClass
+instance {M : IndexedModuleCat F} : AddSubmonoidClass M.σMod M.Mod.carrier :=
+  M.instAddSubmonoidClass
 
 instance {M : IndexedModuleCat F} {i : ι} : AddSubmonoid M.Mod where
   carrier := Set.range (AddSubmonoidClass.subtype (M.fil i))
