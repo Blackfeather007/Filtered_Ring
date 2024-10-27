@@ -11,24 +11,24 @@ structure IndexedModuleCat where
   {σMod : Type*}
   [instSetLike : SetLike σMod Mod.carrier]
   [instAddSubmonoidClass : AddSubmonoidClass σMod Mod.carrier]
-  fil : ι → σMod
+  ind : ι → σMod
 
 attribute [instance] IndexedModuleCat.instSetLike IndexedModuleCat.instAddSubmonoidClass
 
-instance {M : IndexedModuleCat R ι} {i : ι} : AddSubmonoid M.Mod where
-  carrier := Set.range (AddSubmonoidClass.subtype (M.fil i))
+instance IndexedModuleSubmonoid {M : IndexedModuleCat R ι} (i : ι) : AddSubmonoid M.Mod where
+  carrier := Set.range (AddSubmonoidClass.subtype (M.ind i))
   add_mem' {a b} ha hb := by
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq] at *
     exact add_mem ha hb
   zero_mem' := by
-    show 0 ∈ Set.range ⇑(AddSubmonoidClass.subtype (M.fil i))
+    show 0 ∈ Set.range ⇑(AddSubmonoidClass.subtype (M.ind i))
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq]
-    exact zero_mem (M.fil i)
+    exact zero_mem (M.ind i)
 
 instance IndexedModuleCategory : Category (IndexedModuleCat R ι) where
   Hom M N := {f : M.Mod →ₗ[R] N.Mod //
-    ∀ i, f '' Set.range (AddSubmonoidClass.subtype (M.fil i))
-    ≤ Set.range (AddSubmonoidClass.subtype (N.fil i))}
+    ∀ i, f '' Set.range (AddSubmonoidClass.subtype (M.ind i))
+    ≤ Set.range (AddSubmonoidClass.subtype (N.ind i))}
   id _ := ⟨LinearMap.id, fun i ↦ by
     simp only [LinearMap.id_coe, id_eq, Set.image_id', le_refl]⟩
   comp f g := ⟨g.1.comp f.1, fun i ↦ by
@@ -40,7 +40,7 @@ instance IndexedModuleCategory : Category (IndexedModuleCat R ι) where
   comp_id _ := rfl
   assoc _ _ _ := rfl
 
-instance {M N : IndexedModuleCat R ι} : FunLike (M ⟶ N) M.1 N.1 where
+instance IndexedModuleFunLike {M N : IndexedModuleCat R ι} : FunLike (M ⟶ N) M.1 N.1 where
   coe f := f.1.toFun
   coe_injective' _ _ h := propext Subtype.val_inj |>.symm.mpr <| DFunLike.coe_injective' h
 
@@ -54,34 +54,34 @@ instance IndexedModuleConcreteCategory : ConcreteCategory (IndexedModuleCat R ι
   (forget <| IndexedModuleCat R ι).map f = (f : M.Mod → N.Mod) := rfl
 
 def of {X : Type w} [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) : IndexedModuleCat R ι where
+  [AddSubmonoidClass σX X] (indX : ι → σX) : IndexedModuleCat R ι where
     Mod := ModuleCat.of R X
     σMod := σX
     instAddSubmonoidClass := by trivial
-    fil := filX
+    ind := indX
 
-@[simp] theorem of_coe (X : IndexedModuleCat R ι) : of R ι X.fil = X := rfl
+@[simp] theorem of_coe (X : IndexedModuleCat R ι) : of R ι X.ind = X := rfl
 
 @[simp] theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) : (of R ι filX).1 = X := rfl
+  [AddSubmonoidClass σX X] (indX : ι → σX) : (of R ι indX).1 = X := rfl
 
 def ofHom {X Y : Type w} {σX σY : Type o} [AddCommGroup X] [Module R X] [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [AddCommGroup Y] [Module R Y]
-  [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) (f : X →ₗ[R] Y)
-  (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (filX i))
-    ≤ Set.range (AddSubmonoidClass.subtype (filY i))) :
-    (of R ι filX) ⟶ (of R ι filY) :=
+  [AddSubmonoidClass σX X] (indX : ι → σX) [AddCommGroup Y] [Module R Y]
+  [SetLike σY Y] [AddSubmonoidClass σY Y] (indY : ι → σY) (f : X →ₗ[R] Y)
+  (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (indX i))
+    ≤ Set.range (AddSubmonoidClass.subtype (indY i))) :
+    (of R ι indX) ⟶ (of R ι indY) :=
     ⟨f, deg0⟩
 
 theorem ofHom_apply {X Y : Type w} {σX σY : Type o} [AddCommGroup X] [Module R X] [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [AddCommGroup Y] [Module R Y]
-  [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) (f : X →ₗ[R] Y)
-  (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (filX i))
-    ≤ Set.range (AddSubmonoidClass.subtype (filY i))) (x : X) :
-  ofHom R ι filX filY f deg0 x = f x := rfl
+  [AddSubmonoidClass σX X] (indX : ι → σX) [AddCommGroup Y] [Module R Y]
+  [SetLike σY Y] [AddSubmonoidClass σY Y] (indY : ι → σY) (f : X →ₗ[R] Y)
+  (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (indX i))
+    ≤ Set.range (AddSubmonoidClass.subtype (indY i))) (x : X) :
+  ofHom R ι indX indY f deg0 x = f x := rfl
 
 @[simps]
-def ofSelfIso (M : IndexedModuleCat R ι) : (of R ι M.fil) ≅ M where
+def ofSelfIso (M : IndexedModuleCat R ι) : (of R ι M.ind) ≅ M where
   hom := 𝟙 M
   inv := 𝟙 M
 
@@ -109,7 +109,7 @@ private instance {M N : IndexedModuleCat R ι} : AddCommMonoid (M ⟶ N) where
     simp only [Set.le_eq_subset]
     repeat rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype]
     rw [Set.image_subset_iff]
-    exact fun a _ ↦ zero_mem (N.fil i)⟩
+    exact fun a _ ↦ zero_mem (N.ind i)⟩
   zero_add a := propext Subtype.val_inj |>.symm.mpr
     <| AddZeroClass.zero_add a.1
   add_zero a := propext Subtype.val_inj |>.symm.mpr
@@ -156,13 +156,13 @@ private instance {M N : IndexedModuleCat R ι} [AddSubgroupClass N.σMod N.Mod.c
     simp only [Set.le_eq_subset, negSucc_zsmul, Nat.cast_add, Nat.cast_one, neg_inj]
     norm_cast
 
-instance {M N : IndexedModuleCat R ι} [AddSubgroupClass N.σMod N.Mod.carrier] :
+instance AddCommGroupMorphisms {M N : IndexedModuleCat R ι} [AddSubgroupClass N.σMod N.Mod.carrier] :
   AddCommGroup (M ⟶ N) where
   neg_add_cancel f := propext Subtype.val_inj |>.symm.mpr
     <| neg_add_cancel f.1
   add_comm := AddCommMagma.add_comm
 
-instance (h : ∀ P : IndexedModuleCat R ι, AddSubgroupClass P.σMod P.Mod.carrier) :
+instance IndexedModulePreadditive (h : ∀ P : IndexedModuleCat R ι, AddSubgroupClass P.σMod P.Mod.carrier) :
   Preadditive (IndexedModuleCat R ι) where
   add_comp P Q R f f' g := by
     exact propext Subtype.val_inj |>.symm.mpr <| LinearMap.comp_add f.1 f'.1 g.1
