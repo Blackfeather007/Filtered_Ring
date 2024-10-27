@@ -1,41 +1,43 @@
 import FilteredRing.Basic
+import FilteredRing.indexed_category
 
 universe o u v w
 
 open Pointwise CategoryTheory
 
-variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] {σ : Type o} [SetLike σ R]
-  (F : ι → σ)
+variable {R : Type u} [Ring R] {ι : Type v} [OrderedAddCommMonoid ι] [DecidableEq ι] {σ : Type o}
+  [SetLike σ R] [AddSubmonoidClass σ R] (F : ι → σ) [GradedRing F]
 
-structure FilteredModuleCat where
-  Mod : ModuleCat.{w, u} R
-  {σMod : Type*}
-  [instSetLike : SetLike σMod Mod.carrier]
-  [instAddSubmonoidClass : AddSubmonoidClass σMod Mod.carrier]
-  fil : ι → σMod
-  [f : FilteredModule F fil]
+variable {M : Type w} [AddCommMonoid M] [Module R M] {ιM : Type v} [OrderedAddCommMonoid ιM]
+  [DecidableEq ιM] [VAdd ι ιM] {σM : Type*} [SetLike σM M] [AddSubmonoidClass σM M]
 
-instance {M : FilteredModuleCat F} : SetLike M.σMod M.Mod.carrier := M.instSetLike
+class GradedModule (F' : ιM → σM) extends SetLike.GradedSMul F F', DirectSum.Decomposition F'
 
-instance {M : FilteredModuleCat F} : AddSubmonoidClass M.σMod M.Mod.carrier :=
-  M.instAddSubmonoidClass
+structure GradedModuleCat extends IndexedModuleCat R ι where
+  [instGradedModule : GradedModule F ind]
 
-namespace FilteredModuleCat
+
+/-
+Todo ↓
+-/
+namespace GradedModuleCat
+
+instance {M : FilteredModuleCat F} (i : ι) : AddSubmonoid M.Mod := IndexedModuleSubmonoid R ι i
 
 instance {M : FilteredModuleCat F} {i : ι} : AddSubmonoid M.Mod where
-  carrier := Set.range (AddSubmonoidClass.subtype (M.fil i))
+  carrier := Set.range (AddSubmonoidClass.subtype (M.ind i))
   add_mem' {a b} ha hb := by
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq] at *
     exact add_mem ha hb
   zero_mem' := by
-    show 0 ∈ Set.range ⇑(AddSubmonoidClass.subtype (M.fil i))
+    show 0 ∈ Set.range ⇑(AddSubmonoidClass.subtype (M.ind i))
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq]
-    exact zero_mem (M.fil i)
+    exact zero_mem (M.ind i)
 
 instance filteredModuleCategory : Category (FilteredModuleCat F) where
   Hom M N := {f : M.Mod →ₗ[R] N.Mod //
-    ∀ i, f '' Set.range (AddSubmonoidClass.subtype (M.fil i))
-    ≤ Set.range (AddSubmonoidClass.subtype (N.fil i))}
+    ∀ i, f '' Set.range (AddSubmonoidClass.subtype (M.ind i))
+    ≤ Set.range (AddSubmonoidClass.subtype (N.ind i))}
   id _ := ⟨LinearMap.id, fun i ↦ by
     simp only [LinearMap.id_coe, id_eq, Set.image_id', le_refl]⟩
   comp f g := ⟨g.1.comp f.1, fun i ↦ by
@@ -47,7 +49,7 @@ instance filteredModuleCategory : Category (FilteredModuleCat F) where
   comp_id _ := rfl
   assoc _ _ _ := rfl
 
-instance {M N : FilteredModuleCat F} : FunLike (M ⟶ N) M.1 N.1 where
+instance {M N : FilteredModuleCat F} : FunLike (M ⟶ N) M.Mod N.Mod where
   coe f := f.1.toFun
   coe_injective' _ _ h := propext Subtype.val_inj |>.symm.mpr <| DFunLike.coe_injective' h
 
@@ -66,14 +68,14 @@ def of {X : Type w} [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
     Mod := ModuleCat.of R X
     σMod := σX
     instAddSubmonoidClass := by trivial
-    fil := filX
+    ind := filX
 
-instance {X : FilteredModuleCat F} : FilteredModule F X.fil := X.f
+instance {X : FilteredModuleCat F} : FilteredModule F X.ind := X.instFilteredModule
 
-@[simp] theorem of_coe (X : FilteredModuleCat F) : of F X.fil = X := rfl
+@[simp] theorem of_coe (X : FilteredModuleCat F) : of F X.ind = X := rfl
 
 @[simp] theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] : (of F filX).1 = X := rfl
+  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] : (of F filX).Mod = X := rfl
 
 /-- A `LinearMap` with degree 0 is a morphism in `Module R`. -/
 def ofHom {X Y : Type w} {σX σY : Type o} [AddCommGroup X] [Module R X] [SetLike σX X]
@@ -96,16 +98,16 @@ theorem ofHom_apply {X Y : Type w} {σX σY : Type o} [AddCommGroup X] [Module R
 filtered module. -/
 -- Have no idea what ↑ means...
 @[simps]
-def ofSelfIso (M : FilteredModuleCat F) : of F M.fil ≅ M where
+def ofSelfIso (M : FilteredModuleCat F) : of F M.ind ≅ M where
   hom := 𝟙 M
   inv := 𝟙 M
 
 @[simp]
-theorem id_apply {M : FilteredModuleCat F} (m : M.1) : (𝟙 M : M.1 → M.1) m = m := rfl
+theorem id_apply {M : FilteredModuleCat F} (m : M.Mod) : (𝟙 M : M.Mod → M.Mod) m = m := rfl
 
 @[simp]
 theorem coe_comp {M N U : FilteredModuleCat F} (f : M ⟶ N) (g : N ⟶ U) :
-  (f ≫ g : M.1 → U.1) = g ∘ f := rfl
+  (f ≫ g : M.Mod → U.Mod) = g ∘ f := rfl
 
 -- instance : Inhabited (FilteredModuleCat F) := {
 --   default := {
@@ -132,7 +134,7 @@ private instance {M N : FilteredModuleCat F} : AddCommMonoid (M ⟶ N) where
     simp only [Set.le_eq_subset]
     repeat rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype]
     rw [Set.image_subset_iff]
-    exact fun a _ ↦ zero_mem (N.fil i)⟩
+    exact fun a _ ↦ zero_mem (N.ind i)⟩
   zero_add a := propext Subtype.val_inj |>.symm.mpr
     <| AddZeroClass.zero_add a.1
   add_zero a := propext Subtype.val_inj |>.symm.mpr
@@ -220,7 +222,7 @@ instance toFilteredModule (m : ModuleCat.{w, u} R) [FilteredRing F] :
 open AddSubmonoid in
 def DeducedFunctor [FilteredRing F] : CategoryTheory.Functor (ModuleCat.{w, u} R)
   (FilteredModuleCat F) where
-    obj m := { Mod := m, fil := F' F m, f := toFilteredModule F m }
+    obj m := { Mod := m, ind := F' F m, instFilteredModule := toFilteredModule F m }
     map := fun {X Y} hom ↦ ⟨hom, by
       rintro i p ⟨x, ⟨hx1, hx2⟩⟩
       set toAddGP := (closure {x : Y.1 | ∃ r ∈ F i, ∃ a, x = r • a}).comap hom.toAddMonoidHom
@@ -245,4 +247,4 @@ instance ofUnique {X : Type v} [AddCommGroup X] [Module R X] [i : Unique X] : Un
   i -/
 example : 1 = 1 := rfl
 
-end FilteredModuleCat
+end GradedModuleCat
