@@ -15,11 +15,13 @@ def F_lt (i : ι) := ⨆ k < i, F k
 
 def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i ↦ F_le R₀ i
 
-instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] : FilteredRing (induced_fil R₀) where
+instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] :
+    FilteredRing (induced_fil R₀) where
   mono := by
     intro i j h x hx
     have : ⨆ k ≤ i, R₀ k ≤ ⨆ k ≤ j, R₀ k :=
-      have : ∀ k ≤ i, R₀ k ≤ ⨆ k, ⨆ (_ : k ≤ j), R₀ k := fun k hk ↦ le_biSup R₀ (Preorder.le_trans k i j hk h)
+      have : ∀ k ≤ i, R₀ k ≤ ⨆ k, ⨆ (_ : k ≤ j), R₀ k :=
+        fun k hk ↦ le_biSup R₀ (Preorder.le_trans k i j hk h)
       iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
     exact this hx
   one :=
@@ -43,8 +45,7 @@ instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] : Fi
         neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true]}
       have : induced_fil R₀ j ≤ T := by
         simp only [induced_fil, F_le, iSup_le_iff]
-        intro l hl
-        intro v hv
+        intro l hl v hv
         simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
         have : R₀ (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), R₀ k := by
           apply le_biSup
@@ -74,7 +75,8 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
   mono := by
     intro i j h x hx
     have : ⨆ k ≤ i, 𝒜 k ≤ ⨆ k ≤ j, 𝒜 k :=
-      have : ∀ k ≤ i, 𝒜 k ≤ ⨆ k, ⨆ (_ : k ≤ j), 𝒜 k := fun k hk ↦ le_biSup 𝒜 (Preorder.le_trans k i j hk h)
+      have : ∀ k ≤ i, 𝒜 k ≤ ⨆ k, ⨆ (_ : k ≤ j), 𝒜 k :=
+        fun k hk ↦ le_biSup 𝒜 (Preorder.le_trans k i j hk h)
       iSup_le (fun k ↦ iSup_le (fun t ↦ this k t))
     exact this hx
   one :=
@@ -106,7 +108,6 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
             apply le_biSup
             exact hl
           exact t2 (Submodule.smul_mem (𝒜 l) r hq)
-        show a * y ∈ P
         simp only [Set.mem_setOf_eq] at ha
         exact this ha
     }
@@ -120,7 +121,7 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
         zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
         smul_mem' := by
           intro c x hx
-          simp at hx ⊢
+          simp only [Set.mem_setOf_eq, Algebra.mul_smul_comm] at hx ⊢
           let P : Submodule R A := {
           carrier := {p | c • p ∈ induced_fil' 𝒜 (i + j)}
           add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, smul_add, add_mem ha.out hb.out]
@@ -136,13 +137,11 @@ instance : FilteredAlgebra (induced_fil' 𝒜) where
               apply le_biSup
               exact hl
             exact t2 (Submodule.smul_mem (𝒜 l) c hq)
-          show w * x ∈ P
           exact this hx}
 
       have : induced_fil' 𝒜 j ≤ T := by
         simp only [induced_fil', F_le', iSup_le_iff]
-        intro l hl
-        intro v hv
+        intro l hl v hv
         simp only [AddSubgroup.mem_mk, Set.mem_setOf_eq, T]
         have : 𝒜 (k + l) ≤ ⨆ k, ⨆ (_ : k ≤ i + j), 𝒜 k := by
           apply le_biSup
