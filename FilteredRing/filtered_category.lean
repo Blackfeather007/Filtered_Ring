@@ -1,4 +1,5 @@
 import FilteredRing.Basic
+import FilteredRing.indexed_category
 
 universe o u v w
 
@@ -15,10 +16,16 @@ structure FilteredModuleCat where
   fil : ι → σMod
   [f : FilteredModule F fil]
 
-instance {M : FilteredModuleCat F} : SetLike M.σMod M.Mod.carrier := M.instSetLike
+attribute [instance] FilteredModuleCat.instSetLike FilteredModuleCat.instAddSubmonoidClass
+  FilteredModuleCat.f
 
-instance {M : FilteredModuleCat F} : AddSubmonoidClass M.σMod M.Mod.carrier :=
-  M.instAddSubmonoidClass
+instance {M : FilteredModuleCat F} : IndexedModuleCat F where
+  Mod := M.Mod
+  σMod := M.σMod
+  instSetLike := M.instSetLike
+  instAddSubmonoidClass := M.instAddSubmonoidClass
+  fil := M.fil
+  f := {smul_mem := fun _ _ _ _ ha hb ↦ M.f.smul_mem ha hb}
 
 namespace FilteredModuleCat
 
