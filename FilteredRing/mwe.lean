@@ -58,7 +58,8 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
   rw [eq]
   exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
 
-
+#check eqRec_heq
+#check Eq.recOn
 set_option pp.proofs true in
 instance : DirectSum.GSemiring (GradedPiece F) where
   mul := gradedMul F
@@ -143,11 +144,13 @@ instance : DirectSum.GSemiring (GradedPiece F) where
   mul_one := sorry
   mul_assoc := by
     intro ⟨i, a⟩ ⟨j, b⟩ ⟨k, c⟩
+    refine Sigma.ext (add_assoc i j k) (eqRec_heq ?_ ?_)
     apply Sigma.ext (add_assoc i j k)
     simp only [QuotientAddGroup.mk_zero, id_eq, ZeroMemClass.coe_zero,
       eq_mpr_eq_cast, cast_eq, AddSubgroup.coe_add, AddMemClass.mk_add_mk, NegMemClass.coe_neg,
       GradedMonoid.fst_mul, GradedMonoid.snd_mul]
     unfold gradedMul
+    simp
 
     sorry
   gnpow := fun n i x => Quotient.mk'' ⟨x.out'.1 ^ n, by
