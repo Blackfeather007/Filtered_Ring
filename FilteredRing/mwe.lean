@@ -67,6 +67,52 @@ lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt 
     rw [mul_add]
     exact add_mem ih₁ ih₂
 
+/-
+-- `More refactors that might make life easier`
+
+variable {F} in
+lemma Filtration.mul_mem_LTSubgroup {i j : ι} {x : F i} {y : F j} (hx : x
+∈ Filtration.LTSubgroup F i) : x * y ∈ Filtration.LTSubgroup F (i + j) :=
+  Filtration.flt_mul_mem hx y.2
+
+variable {F} in
+lemma Filtration.mul_mem_LTSubgroup' {i j : ι} {x : F i} {y : F j} (hy : y ∈ Filtration.LTSubgroup F j): x * y ∈ Filtration.LTSubgroup F (i + j) :=
+  Filtration.mul_flt_mem x.2 hy
+
+theorem Filtration.mul_equiv_mul ⦃x₁ x₂ : F i⦄ (hx : x₁ ≈ x₂) ⦃y₁ y₂ : (F j)⦄ (hy : y₁ ≈ y₂) : x₁ * y₁ ≈ x₂ * y₂ := by
+  simp [HasEquiv.Equiv, QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf, Filtration.LTSubgroup, AddSubgroup.comap] at hx hy ⊢
+  have eq : - (x₁.1 * y₁) + x₂ * y₂ = (- x₁ + x₂) * y₁ + x₂ * (- y₁ + y₂) := by noncomm_ring
+  rw [eq]
+  exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
+
+abbrev GradedPiece (i : ι) : Type u := F i ⧸ (Filtration.LTSubgroup F i)
+
+variable {F} in
+def GradedPiece.mk {i : ι} (x : F i) : GradedPiece F i := ⟦x⟧
+
+-- abbrev GradedPiece (i : ι) := F i ⧸ (F_lt F i).comap (F i).subtype
+
+-- def GradedPiece' (i : ι) := (DirectSum.of (GradedPiece F) i).range
+
+def gradedMul {i j : ι} (x :GradedPiece F i) (y : GradedPiece F j) : GradedPiece F (i + j) := Quotient.map₂ (· * ·) (Filtration.mul_equiv_mul F) x y
+
+instance GradedPiece.hMul {i j : ι} : HMul (GradedPiece F i) (GradedPiece F j) (GradedPiece F (i + j)) where
+  hMul := gradedMul F
+
+open GradedPiece
+
+lemma foo1 {i j : ι} (x : F i) (y : F j) : mk x * mk y = mk (x * y) := rfl
+
+lemma foo2 {i : ι} : mk (0 : F i) = (0 : GradedPiece F i) := rfl
+
+lemma foo3 {i : ι} (x : GradedPiece F i) : ((0 : GradedPiece F 0) * x) = (0 : GradedPiece F (0 + i)) := by
+  sorry
+
+lemma foo4 {i : ι} (x : GradedPiece F i) : HEq ((0 : GradedPiece F 0) * x) (0 : GradedPiece F i) := by
+  let
+  apply fooHEq4
+-/
+
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
   intro x y
   refine Quotient.map₂' (fun x y ↦ ⟨x.1 * y.1, FilteredRing.mul_mem x.2 y.2⟩)
