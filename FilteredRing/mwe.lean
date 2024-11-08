@@ -16,6 +16,25 @@ variable (F : ι → AddSubgroup R) [FilteredRing F]
 
 def F_lt (i : ι) := ⨆ k < i, F k
 
+/-
+-- `Some refactor that might make life easier`
+
+def Filtration.LTSubgroup (i : ι) : AddSubgroup (F i) := (F_lt F i).comap (F i).subtype
+
+-- enables notation `⟦x⟧` for `(x : F i)`
+instance Filtration.LTSetoid (i : ι) : Setoid (F i) := QuotientAddGroup.leftRel (Filtration.LTSubgroup F i)
+
+def Filtration.hMul {i j : ι} (x : F i) (y : F j) : F (i + j) :=
+  ⟨x * y, FilteredRing.mul_mem x.2 y.2⟩
+
+-- enables notation for mulpication between `(x : F i) (y : F j)`
+instance {i j : ι} : HMul (F i) (F j) (F (i + j)) where
+  hMul := Filtration.hMul F
+
+@[simp]
+lemma Filtration.hMul_coe {i j : ι} (x : F i) (y : F j) : ((x * y : F (i + j)) : R) = x * y := rfl
+-/
+
 abbrev GradedPiece (i : ι) := F i ⧸ (F_lt F i).comap (F i).subtype
 
 def GradedPiece' (i : ι) := (DirectSum.of (GradedPiece F) i).range
