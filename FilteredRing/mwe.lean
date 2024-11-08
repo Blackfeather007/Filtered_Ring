@@ -58,8 +58,21 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
   rw [eq]
   exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
 
-#check eqRec_heq
-#check Eq.recOn
+theorem fooHEq1 {i j : ι} {r : R} (h : i = j) (hi : r ∈ F i) (hj : r ∈ F j) : HEq (⟦⟨r, hi⟩⟧ : GradedPiece F i) (⟦⟨r, hj⟩⟧ : GradedPiece F j) :=
+  h ▸ HEq.rfl
+
+theorem fooHEq2 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r : R) (h : i = j) (hi : r ∈ F i) (hj : r ∈ F j) (hx : x = ⟦⟨r, hi⟩⟧) (hy : y = ⟦⟨r, hj⟩⟧) : HEq x y :=
+  hx ▸ hy ▸ h ▸ HEq.rfl
+
+theorem fooHEq3 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r s : R) (h : i = j) (e : r = s) (hi : r ∈ F i) (hj : s ∈ F j) (hx : x = ⟦⟨r, hi⟩⟧) (hy : y = ⟦⟨s, hj⟩⟧) : HEq x y := by
+  rw [hx, hy]
+  subst e
+  exact fooHEq1 F h hi hj
+
+-- Will be more easy to use if HMul intances for F i is added.
+theorem fooHEq4 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r : F i) (s : F j) (h : i = j) (e : (r : R) = s) (hx : x = ⟦r⟧) (hy : y = ⟦s⟧) : HEq x y :=
+  fooHEq3 F r s h e r.2 s.2 hx hy
+
 set_option pp.proofs true in
 instance : DirectSum.GSemiring (GradedPiece F) where
   mul := gradedMul F
@@ -144,14 +157,14 @@ instance : DirectSum.GSemiring (GradedPiece F) where
   mul_one := sorry
   mul_assoc := by
     intro ⟨i, a⟩ ⟨j, b⟩ ⟨k, c⟩
-    refine Sigma.ext (add_assoc i j k) (eqRec_heq ?_ ?_)
     apply Sigma.ext (add_assoc i j k)
-    simp only [QuotientAddGroup.mk_zero, id_eq, ZeroMemClass.coe_zero,
-      eq_mpr_eq_cast, cast_eq, AddSubgroup.coe_add, AddMemClass.mk_add_mk, NegMemClass.coe_neg,
-      GradedMonoid.fst_mul, GradedMonoid.snd_mul]
-    unfold gradedMul
-    simp
-
+    let ra := Quotient.out' a
+    let rb := Quotient.out' b
+    let rc := Quotient.out' c
+    apply fooHEq3 F (ra * rb * rc) (ra * (rb * rc)) (add_assoc i j k) (mul_assoc (ra : R) rb rc)
+    sorry
+    sorry
+    sorry
     sorry
   gnpow := fun n i x => Quotient.mk'' ⟨x.out'.1 ^ n, by
     induction' n with d hd
