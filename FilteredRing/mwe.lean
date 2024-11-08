@@ -16,6 +16,25 @@ variable (F : ι → AddSubgroup R) [FilteredRing F]
 
 def F_lt (i : ι) := ⨆ k < i, F k
 
+/-
+-- `Some refactor that might make life easier`
+
+def Filtration.LTSubgroup (i : ι) : AddSubgroup (F i) := (F_lt F i).comap (F i).subtype
+
+-- enables notation `⟦x⟧` for `(x : F i)`
+instance Filtration.LTSetoid (i : ι) : Setoid (F i) := QuotientAddGroup.leftRel (Filtration.LTSubgroup F i)
+
+def Filtration.hMul {i j : ι} (x : F i) (y : F j) : F (i + j) :=
+  ⟨x * y, FilteredRing.mul_mem x.2 y.2⟩
+
+-- enables notation for mulpication between `(x : F i) (y : F j)`
+instance {i j : ι} : HMul (F i) (F j) (F (i + j)) where
+  hMul := Filtration.hMul F
+
+@[simp]
+lemma Filtration.hMul_coe {i j : ι} (x : F i) (y : F j) : ((x * y : F (i + j)) : R) = x * y := rfl
+-/
+
 abbrev GradedPiece (i : ι) := F i ⧸ (F_lt F i).comap (F i).subtype
 
 def GradedPiece' (i : ι) := (DirectSum.of (GradedPiece F) i).range
@@ -48,6 +67,52 @@ lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt 
     rw [mul_add]
     exact add_mem ih₁ ih₂
 
+/-
+-- `More refactors that might make life easier`
+
+variable {F} in
+lemma Filtration.mul_mem_LTSubgroup {i j : ι} {x : F i} {y : F j} (hx : x
+∈ Filtration.LTSubgroup F i) : x * y ∈ Filtration.LTSubgroup F (i + j) :=
+  Filtration.flt_mul_mem hx y.2
+
+variable {F} in
+lemma Filtration.mul_mem_LTSubgroup' {i j : ι} {x : F i} {y : F j} (hy : y ∈ Filtration.LTSubgroup F j): x * y ∈ Filtration.LTSubgroup F (i + j) :=
+  Filtration.mul_flt_mem x.2 hy
+
+theorem Filtration.mul_equiv_mul ⦃x₁ x₂ : F i⦄ (hx : x₁ ≈ x₂) ⦃y₁ y₂ : (F j)⦄ (hy : y₁ ≈ y₂) : x₁ * y₁ ≈ x₂ * y₂ := by
+  simp [HasEquiv.Equiv, QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf, Filtration.LTSubgroup, AddSubgroup.comap] at hx hy ⊢
+  have eq : - (x₁.1 * y₁) + x₂ * y₂ = (- x₁ + x₂) * y₁ + x₂ * (- y₁ + y₂) := by noncomm_ring
+  rw [eq]
+  exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
+
+abbrev GradedPiece (i : ι) : Type u := F i ⧸ (Filtration.LTSubgroup F i)
+
+variable {F} in
+def GradedPiece.mk {i : ι} (x : F i) : GradedPiece F i := ⟦x⟧
+
+-- abbrev GradedPiece (i : ι) := F i ⧸ (F_lt F i).comap (F i).subtype
+
+-- def GradedPiece' (i : ι) := (DirectSum.of (GradedPiece F) i).range
+
+def gradedMul {i j : ι} (x :GradedPiece F i) (y : GradedPiece F j) : GradedPiece F (i + j) := Quotient.map₂ (· * ·) (Filtration.mul_equiv_mul F) x y
+
+instance GradedPiece.hMul {i j : ι} : HMul (GradedPiece F i) (GradedPiece F j) (GradedPiece F (i + j)) where
+  hMul := gradedMul F
+
+open GradedPiece
+
+lemma foo1 {i j : ι} (x : F i) (y : F j) : mk x * mk y = mk (x * y) := rfl
+
+lemma foo2 {i : ι} : mk (0 : F i) = (0 : GradedPiece F i) := rfl
+
+lemma foo3 {i : ι} (x : GradedPiece F i) : ((0 : GradedPiece F 0) * x) = (0 : GradedPiece F (0 + i)) := by
+  sorry
+
+lemma foo4 {i : ι} (x : GradedPiece F i) : HEq ((0 : GradedPiece F 0) * x) (0 : GradedPiece F i) := by
+  let
+  apply fooHEq4
+-/
+
 def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
   intro x y
   refine Quotient.map₂' (fun x y ↦ ⟨x.1 * y.1, FilteredRing.mul_mem x.2 y.2⟩)
@@ -58,6 +123,55 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
   rw [eq]
   exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
 
+-- If refactor with `GradedPiece.mk`, one should change all `⟦_⟧` to `GradedPiece.mk _`
+theorem fooHEq1 {i j : ι} {r : R} (h : i = j) (hi : r ∈ F i) (hj : r ∈ F j) : HEq (⟦⟨r, hi⟩⟧ : GradedPiece F i) (⟦⟨r, hj⟩⟧ : GradedPiece F j) :=
+  h ▸ HEq.rfl
+
+theorem fooHEq2 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r : R) (h : i = j) (hi : r ∈ F i) (hj : r ∈ F j) (hx : x = ⟦⟨r, hi⟩⟧) (hy : y = ⟦⟨r, hj⟩⟧) : HEq x y :=
+  hx ▸ hy ▸ h ▸ HEq.rfl
+
+theorem fooHEq3 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r s : R) (h : i = j) (e : r = s) (hi : r ∈ F i) (hj : s ∈ F j) (hx : x = ⟦⟨r, hi⟩⟧) (hy : y = ⟦⟨s, hj⟩⟧) : HEq x y := by
+  rw [hx, hy]
+  subst e
+  exact fooHEq1 F h hi hj
+
+-- Will be easier to use if HMul intances for F i is added and some other refactor is done.
+theorem fooHEq4 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r : F i) (s : F j) (h : i = j) (e : (r : R) = s) (hx : x = ⟦r⟧) (hy : y = ⟦s⟧) : HEq x y :=
+  fooHEq3 F r s h e r.2 s.2 hx hy
+
+/-
+lemma foo1 {i j : ι} (x : F i) (y : F j) : mk x * mk y = mk (x * y) := rfl
+
+lemma foo2 {i : ι} : mk (0 : F i) = (0 : GradedPiece F i) := rfl
+
+-- `This lemma make things significantly easier, when one tries to use fooHEq3 or fooHEq4 lemma` (after refactor fooHEq lemmas using `mk`)
+@[local simp]
+lemma foo4 {i j : ι} (r : F i) (s : F j) : mk (r * s) = mk r * mk s := rfl
+
+-- This is an example of using `fooHEq4` lemma (after refactor)
+lemma foo_bar {i : ι} (x : GradedPiece F i) : HEq ((0 : GradedPiece F 0) * x) (0 : GradedPiece F i) := by
+  let rx : F i := Quotient.out' x
+  let r00 : F 0 := ⟨0, zero_mem _⟩
+  let r0i : F i := ⟨0, zero_mem _⟩
+  apply fooHEq4 F (r00 * rx) r0i (zero_add i) (zero_mul (rx : R))
+  convert (foo4 F r00 rx).symm
+  exact (Quotient.out_eq x).symm
+  rfl
+-/
+
+-- Without refactor, the statement contains a proof
+@[local simp]
+lemma foo4 {i j : ι} (r : F i) (s : F j) : ⟦(⟨r * s, FilteredRing.mul_mem r.2 s.2⟩ : F (i + j))⟧ = gradedMul F ⟦r⟧ ⟦s⟧ := rfl
+
+-- This is an example of using `fooHEq4` lemma (without refactor)
+lemma foo_bar {i : ι} (x : GradedPiece F i) : HEq (gradedMul F (0 : GradedPiece F 0) x) (0 : GradedPiece F i) := by
+  let rx : F i := Quotient.out' x
+  let r00 : F 0 := ⟨0, zero_mem _⟩
+  let r0i : F i := ⟨0, zero_mem _⟩
+  apply fooHEq3 F (r00 * rx) r0i (zero_add i) (zero_mul (rx : R))
+  convert (foo4 F r00 rx).symm
+  exact (Quotient.out_eq' x).symm
+  rfl
 
 set_option pp.proofs true in
 instance : DirectSum.GSemiring (GradedPiece F) where
@@ -144,11 +258,13 @@ instance : DirectSum.GSemiring (GradedPiece F) where
   mul_assoc := by
     intro ⟨i, a⟩ ⟨j, b⟩ ⟨k, c⟩
     apply Sigma.ext (add_assoc i j k)
-    simp only [QuotientAddGroup.mk_zero, id_eq, ZeroMemClass.coe_zero,
-      eq_mpr_eq_cast, cast_eq, AddSubgroup.coe_add, AddMemClass.mk_add_mk, NegMemClass.coe_neg,
-      GradedMonoid.fst_mul, GradedMonoid.snd_mul]
-    unfold gradedMul
-
+    let ra := Quotient.out' a
+    let rb := Quotient.out' b
+    let rc := Quotient.out' c
+    apply fooHEq3 F (ra * rb * rc) (ra * (rb * rc)) (add_assoc i j k) (mul_assoc (ra : R) rb rc)
+    sorry
+    sorry
+    sorry
     sorry
   gnpow := fun n i x => Quotient.mk'' ⟨x.out'.1 ^ n, by
     induction' n with d hd
