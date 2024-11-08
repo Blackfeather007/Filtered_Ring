@@ -123,6 +123,7 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
   rw [eq]
   exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
 
+-- If refactor with `GradedPiece.mk`, one should change all `⟦_⟧` to `GradedPiece.mk _`
 theorem fooHEq1 {i j : ι} {r : R} (h : i = j) (hi : r ∈ F i) (hj : r ∈ F j) : HEq (⟦⟨r, hi⟩⟧ : GradedPiece F i) (⟦⟨r, hj⟩⟧ : GradedPiece F j) :=
   h ▸ HEq.rfl
 
@@ -134,9 +135,43 @@ theorem fooHEq3 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r s : R)
   subst e
   exact fooHEq1 F h hi hj
 
--- Will be more easy to use if HMul intances for F i is added.
+-- Will be easier to use if HMul intances for F i is added and some other refactor is done.
 theorem fooHEq4 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r : F i) (s : F j) (h : i = j) (e : (r : R) = s) (hx : x = ⟦r⟧) (hy : y = ⟦s⟧) : HEq x y :=
   fooHEq3 F r s h e r.2 s.2 hx hy
+
+/-
+lemma foo1 {i j : ι} (x : F i) (y : F j) : mk x * mk y = mk (x * y) := rfl
+
+lemma foo2 {i : ι} : mk (0 : F i) = (0 : GradedPiece F i) := rfl
+
+-- `This lemma make things significantly easier, when one tries to use fooHEq3 or fooHEq4 lemma` (after refactor fooHEq lemmas using `mk`)
+@[local simp]
+lemma foo4 {i j : ι} (r : F i) (s : F j) : mk (r * s) = mk r * mk s := rfl
+
+-- This is an example of using `fooHEq4` lemma (after refactor)
+lemma foo_bar {i : ι} (x : GradedPiece F i) : HEq ((0 : GradedPiece F 0) * x) (0 : GradedPiece F i) := by
+  let rx : F i := Quotient.out' x
+  let r00 : F 0 := ⟨0, zero_mem _⟩
+  let r0i : F i := ⟨0, zero_mem _⟩
+  apply fooHEq4 F (r00 * rx) r0i (zero_add i) (zero_mul (rx : R))
+  convert (foo4 F r00 rx).symm
+  exact (Quotient.out_eq x).symm
+  rfl
+-/
+
+-- Without refactor, the statement contains a proof
+@[local simp]
+lemma foo4 {i j : ι} (r : F i) (s : F j) : ⟦(⟨r * s, FilteredRing.mul_mem r.2 s.2⟩ : F (i + j))⟧ = gradedMul F ⟦r⟧ ⟦s⟧ := rfl
+
+-- This is an example of using `fooHEq4` lemma (without refactor)
+lemma foo_bar {i : ι} (x : GradedPiece F i) : HEq (gradedMul F (0 : GradedPiece F 0) x) (0 : GradedPiece F i) := by
+  let rx : F i := Quotient.out' x
+  let r00 : F 0 := ⟨0, zero_mem _⟩
+  let r0i : F i := ⟨0, zero_mem _⟩
+  apply fooHEq3 F (r00 * rx) r0i (zero_add i) (zero_mul (rx : R))
+  convert (foo4 F r00 rx).symm
+  exact (Quotient.out_eq' x).symm
+  rfl
 
 set_option pp.proofs true in
 instance : DirectSum.GSemiring (GradedPiece F) where
