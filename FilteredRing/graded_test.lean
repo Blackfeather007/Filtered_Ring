@@ -24,7 +24,8 @@ abbrev GradedPiece' (i : ι) : AddSubgroup (⨁ i, GradedPiece F i) :=
   (DirectSum.of (GradedPiece F) i).range
 
 #check GradedPiece' F
-#check ⨁ i, GradedPiece' F i
+#check ⨁ i, GradedPiece F i
+
 
 private abbrev forward (i : ι) : GradedPiece F i → GradedPiece' F i :=
   fun x => ⟨DirectSum.of (GradedPiece F) i x, by simp only [AddMonoidHom.mem_range, exists_apply_eq_apply]⟩

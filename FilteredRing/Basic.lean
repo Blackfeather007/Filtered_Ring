@@ -7,7 +7,7 @@ variable {R : Type u} {ι : Type v} [Semiring R] [OrderedAddCommMonoid ι] [Deci
 
 section FilteredRing
 
-class FilteredRing (F : ι → σ) where
+class FilteredRing (F : ι → σ) : Prop where
   mono {i j} : i ≤ j → F i ≤ F j
   one : 1 ∈ F 0
   mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)
@@ -63,7 +63,7 @@ variable {M : Type w} [AddCommMonoid M] [Module R M]
 variable {ιM : Type v} [OrderedAddCommMonoid ιM] [VAdd ι ιM]
 variable {σM : Type*} [SetLike σM M] [AddSubmonoidClass σM M]
 
-class FilteredModule (F' : ιM → σM) where
+class FilteredModule (F' : ιM → σM) : Prop where
   mono : ∀ {i j}, i ≤ j → F' i ≤ F' j
   smul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F' j → x • y ∈ F' (i +ᵥ j)
 
@@ -81,7 +81,7 @@ instance trivialModuleFiltration [DecidableRel LE.le (α := ι)] [DecidableRel L
     · by_cases jge0 : j ≥ 0
       · sorry
       · simp only [ge_iff_le, jge0, reduceIte, AddSubmonoid.mem_bot] at hm
-        simp only [ge_iff_le, hm, smul_zero, AddSubmonoid.zero_mem (if 0 ≤ i +ᵥ j then ⊤ else ⊥)]
+        simp only [hm, smul_zero, AddSubmonoid.zero_mem (if 0 ≤ i +ᵥ j then ⊤ else ⊥)]
     · simp only [ge_iff_le, ige0, reduceIte, AddSubmonoid.mem_bot] at hr
       simp only [ge_iff_le, hr, zero_smul, AddSubmonoid.zero_mem (if 0 ≤ i +ᵥ j then ⊤ else ⊥)]
 

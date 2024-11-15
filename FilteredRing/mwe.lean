@@ -1,12 +1,8 @@
 import FilteredRing.Basic
 
-universe u
-
 suppress_compilation
 
 set_option linter.unusedSectionVars false
-
-set_option maxHeartbeats 0
 
 variable {R : Type u} [Ring R]
 
@@ -14,11 +10,9 @@ variable {ι : Type v} [OrderedCancelAddCommMonoid ι] [DecidableEq ι]
 
 variable (F : ι → AddSubgroup R) [FilteredRing F]
 
-def F_lt (i : ι) := ⨆ k < i, F k
+abbrev F_lt (i : ι) := ⨆ k < i, F k
 
 abbrev GradedPiece (i : ι) := F i ⧸ (F_lt F i).comap (F i).subtype
-
-def GradedPiece' (i : ι) := (DirectSum.of (GradedPiece F) i).range
 
 variable {F} in
 lemma Filtration.flt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt F i) (hy : y ∈ F j) :
@@ -48,8 +42,9 @@ lemma Filtration.mul_flt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ F_lt 
     rw [mul_add]
     exact add_mem ih₁ ih₂
 
-def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F (i + j) := by
-  intro x y
+def gradedMulLift {i j : ι} (x : F i) (y : F j) : F (i + j) := sorry
+
+def gradedMul {i j : ι} (x : GradedPiece F i) (y : GradedPiece F j) : GradedPiece F (i + j) := by
   refine Quotient.map₂' (fun x y ↦ ⟨x.1 * y.1, FilteredRing.mul_mem x.2 y.2⟩)
     ?_ x y
   intro x₁ x₂ hx y₁ y₂ hy
@@ -59,7 +54,6 @@ def gradedMul {i j : ι} : GradedPiece F i → GradedPiece F j → GradedPiece F
   exact add_mem (Filtration.flt_mul_mem hx y₁.2) (Filtration.mul_flt_mem x₂.2 hy)
 
 
-set_option pp.proofs true in
 instance : DirectSum.GSemiring (GradedPiece F) where
   mul := gradedMul F
   mul_zero := by
@@ -106,6 +100,7 @@ instance : DirectSum.GSemiring (GradedPiece F) where
   one_mul := by
     intro ⟨i, a⟩
     apply Sigma.ext
+    -- 1 * ⟨i, a⟩ = ⟨0 + i, 1 * a⟩ = ⟨i, a⟩
     · simp only [GradedMonoid.fst_mul, GradedMonoid.fst_one, zero_add]
     simp only [QuotientAddGroup.mk_zero, id_eq, ZeroMemClass.coe_zero,
       eq_mpr_eq_cast, cast_eq, AddSubgroup.coe_add, AddMemClass.mk_add_mk, NegMemClass.coe_neg,
@@ -187,3 +182,5 @@ instance : DirectSum.GSemiring (GradedPiece F) where
     rw [mul_one, mul_one]
     simp only [QuotientAddGroup.leftRel_apply, neg_add_cancel ((n : F 0) + 1)]
     exact zero_mem _
+
+-- instance : Semiring (⨁ (i : ι), GradedPiece F i) := sorry
