@@ -13,20 +13,12 @@ open DirectSum TensorProduct
 
 def indices (i : ι) := {x : ι × ι // x.1 + x.2 = i}
 
-
--- {(m : M) ⊗ₜ[ℤ] (n : N) | (m : FM i) (n : FN j)}
-instance tmp (i j : ι): AddSubgroup (M ⊗[ℤ] N) where
-  carrier := (FM i) ⊗[ℤ] (FN j)
-  add_mem' := by
-    intro a b ha hb
+instance FilteredPiece (i : ι) : Submodule ℤ (M ⊗[ℤ] N) where
+  carrier := ⨆ x : indices i, LinearMap.range (mapIncl (AddSubgroup.toIntSubmodule (AddSubmonoidClass.subtype (FM x.1.1)).range) (AddSubgroup.toIntSubmodule (AddSubmonoidClass.subtype (FN x.1.2)).range))
+  add_mem' := sorry
   zero_mem' := sorry
-  neg_mem' := sorry
-
--- instance FilteredPiece (i : ι) : AddSubgroup (M ⊗[ℤ] N) where
---   carrier := ⨆ (x : (indices i)), (FM x.1.1) ⊗[ℤ] (FN x.1.2)
+  smul_mem' := sorry
 
 
-
--- ⨁ (x : indices i), (FM x.1.1) ⊗[ℤ] (FN x.1.2)
 
 -- instance tensor_filtration : FilteredModule F FilteredPiece where
