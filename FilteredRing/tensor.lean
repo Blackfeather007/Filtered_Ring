@@ -20,7 +20,7 @@ noncomputable def FilteredPiece (i : ι) : Submodule ℤ (M ⊗[ℤ] N) := ⨆ x
 
 instance tensor_filtration : FilteredModule F (FilteredPiece FM FN) where
   mono := by
-    simp only [FilteredPiece, TensorProduct.range_mapIncl]
+    simp only [FilteredPiece, range_mapIncl]
     intro i j ilej
     apply iSup_le; intro x
     apply Submodule.span_le.2
@@ -36,11 +36,15 @@ instance tensor_filtration : FilteredModule F (FilteredPiece FM FN) where
     have : x • y ∈ x • (FilteredPiece FM FN j) :=
       Submodule.smul_mem_pointwise_smul y x (FilteredPiece FM FN j) hy
     refine SetLike.mem_of_subset (SetLike.coe_subset_coe.mpr ?_) this
-    simp only [vadd_eq_add, FilteredPiece, TensorProduct.range_mapIncl,
-      AddSubgroup.coe_toIntSubmodule, AddMonoidHom.coe_range, AddSubmonoidClass.coe_subtype,
-      Subtype.range_coe_subtype]
-    simp only [Submodule.iSup_span, Submodule.smul_span]
+    simp only [vadd_eq_add, FilteredPiece, range_mapIncl, AddSubgroup.coe_toIntSubmodule,
+      AddMonoidHom.coe_range, AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype,
+      Submodule.iSup_span, Submodule.smul_span]
     apply Submodule.span_mono
     simp only [← Set.singleton_smul, Set.smul_iUnion, Set.iUnion_subset_iff]
-    intro xj
+    intro indj
     simp only [Set.singleton_smul]
+    apply Set.smul_set_subset_iff.mpr
+    rintro y ⟨m, hm, n, hn, heq⟩
+    simp only [Set.mem_iUnion, Set.mem_image2, Set.mem_setOf_eq]
+    exact ⟨⟨(i + indj.1.1, indj.1.2), by rw [add_assoc, indj.2]⟩, ⟨x • m, ⟨filM.2 hx hm,
+      ⟨n, ⟨hn, by simp only [← smul_tmul', heq]⟩⟩⟩⟩⟩
