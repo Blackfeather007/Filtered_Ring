@@ -11,7 +11,7 @@ def F_le (i : ι) := ⨆ k ≤ i, F k
 
 def F_lt (i : ι) := ⨆ k < i, F k
 
-def induced_fil (R₀ : ι → AddSubgroup R) : ι → AddSubgroup R := fun i ↦ F_le R₀ i
+def induced_fil (R₀ : ι → σ) : ι → σ := fun i ↦ F_le R₀ i
 
 instance Graded_to_Filtered (R₀ : ι → AddSubgroup R) [GradedRing R₀] :
     FilteredRing (induced_fil R₀) where

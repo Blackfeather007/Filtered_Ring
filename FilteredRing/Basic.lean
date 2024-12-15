@@ -62,6 +62,7 @@ variable (F : ι → σ) [FilteredRing F]
 variable {M : Type w} [AddCommMonoid M] [Module R M]
 variable {ιM : Type v} [OrderedAddCommMonoid ιM] [VAdd ι ιM]
 variable {σM : Type*} [SetLike σM M] [AddSubmonoidClass σM M]
+--σM is more general, usually σM = σ
 
 class FilteredModule (F' : ιM → σM) : Prop where
   mono : ∀ {i j}, i ≤ j → F' i ≤ F' j
@@ -88,6 +89,9 @@ instance trivialModuleFiltration [DecidableRel LE.le (α := ι)] [DecidableRel L
 instance trivialModuleFiltration' : FilteredModule F fun _ : ιM ↦ (⊤ : AddSubmonoid M) where
   mono := fun _ ⦃_⦄ a ↦ a
   smul_mem := fun _ a ↦ a
+
+
+
 
 section FilteredAlgebra
 
