@@ -18,7 +18,28 @@ instance : FilteredRing f := {
     exact FilteredRing.mul_mem hx hy
 }
 
-instance burbur (i : ι) : Module R (GradedPiece f i) := sorry
+instance (i : ι) : Module R (GradedPiece f i) where
+  smul := by
+    intro r x
+    unfold GradedPiece at x
+
+    #check (Quotient.out' x)
+    set a := Quotient.out' x with ha
+    -- #check r • (a : A)
+    #check
+    set b := r • (a : 𝒜 i)
+    #check (b : f i)
+
+    #check Quotient.mk' (r • (a : A))
+
+    -- #check r • (Quotient.out' x)
+  one_smul := sorry
+  mul_smul := sorry
+  smul_zero := sorry
+  smul_add := sorry
+  add_smul := sorry
+  zero_smul := sorry
+
 
 -- #check GradedPiece fun i ↦ (𝒜 i).toAddSubgroup
 
