@@ -4,10 +4,8 @@ universe u v w
 suppress_compilation
 
 section FilRing
-variable {R : Type u} [Ring R]
-  {ι : Type v} [OrderedCancelAddCommMonoid ι]  [DecidableEq ι]
-  {σ : Type w} [SetLike σ R] [AddSubmonoidClass σ R]
-  [CompleteLattice σ] (F : ι → σ) [fil : FilteredRing F]
+variable {R : Type u} [Ring R] {ι : Type v} [OrderedCancelAddCommMonoid ι] [DecidableEq ι]
+  {σ : Type w} [SetLike σ R] [AddSubmonoidClass σ R] [CompleteLattice σ] (F : ι → σ)
 
 def F_le (i : ι) := ⨆ k ≤ i, F k
 
