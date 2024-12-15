@@ -41,19 +41,24 @@ variable {M : Type w} [Semiring M] [Algebra R M] (FM : ι → AddSubmonoid M)
 
 variable {N : Type x} [Semiring N] [Algebra R N] (FN : ι → AddSubmonoid N)
 
-variable [filM : FilteredModule FR FM ] (f : M →+* N)
+variable [filM : FilteredModule FR FM ] (f : M →ₐ[R] N)
 
 def filMod_map (α : ι) : AddSubmonoid N := AddSubmonoid.map f (FM α)
 
-instance FilteredMod_fil_map_range (f : M →+* N) : FilteredModule FR (filMod_map FM f) where
+instance FilteredMod_fil_map_range (f : M →ₐ[R] N) : FilteredModule FR (filMod_map FM f) where
   mono := by
     intro i j ilej y hy
-    obtain ⟨x, x_in, x_eq⟩ : ∃ x ∈ FR i , f x = y := hy
+    obtain ⟨x, x_in, x_eq⟩ : ∃ x ∈ FM i , f x = y := hy
     use x
-    simp only [SetLike.mem_coe, (FilteredRing.mono ilej) x_in, x_eq, and_self]
+    simp only [SetLike.mem_coe, (FilteredModule.mono R FR ilej) x_in, x_eq, and_self]
   smul_mem := by
-    intro i j x y hx hy
-
-    sorry
+    intro i j r n hr hn
+    simp only [filMod_map, AddSubmonoid.mem_map, vadd_eq_add] at *
+    obtain ⟨x , hx, eq⟩ := hn
+    rw[← eq]
+    use r • x
+    constructor
+    · exact FilteredModule.smul_mem hr hx
+    · simp only [map_smul]
 
 end FilteredMod_fil_map_map_range
