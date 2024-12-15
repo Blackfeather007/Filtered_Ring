@@ -18,7 +18,7 @@ instance : FilteredRing f := {
     exact FilteredRing.mul_mem hx hy
 }
 
-instance (i : ι) : Module R (GradedPiece f i) where
+noncomputable instance (i : ι) : Module R (GradedPiece f i) where
   smul := by
     intro r x
     set a := Quotient.out' x
@@ -29,7 +29,16 @@ instance (i : ι) : Module R (GradedPiece f i) where
   smul_zero := sorry
   smul_add := sorry
   add_smul := sorry
-  zero_smul := sorry
+  zero_smul := by
+    intro x
+    simp only [HSMul.hSMul, eq_mp_eq_cast, cast_eq, QuotientAddGroup.eq_zero_iff]
 
+    set a := Quotient.out' x with ha
+
+    #check @zero_smul R (𝒜 i) _ _ _ a
+    #check @Module.zero_smul R (𝒜 i) _ _ _ a
+    have : @SMul.smul R (𝒜 i) (𝒜 i).smul 0 a = 0 := sorry
+      -- rw [@zero_smul R (𝒜 i) _ _ _ a]
+    simpa [this] using AddSubgroup.zero_mem (Filtration.LTSubgroup f i)
 
 instance : DirectSum.GAlgebra R (GradedPiece f) := sorry
