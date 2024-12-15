@@ -24,3 +24,35 @@ instance FilteredRing_fil_map_range (f : R →+* S) : FilteredRing (fil_map FR f
     obtain ⟨y₁, y_in, y_eq⟩ := y_in_j
     use x₁ * y₁
     simp only [FilteredRing.mul_mem x_in y_in, map_mul, x_eq, y_eq, and_self]
+
+section FilteredModule_fil_map_map_range
+
+variable {M : Type w} [AddCommMonoid M] [Module R M]
+
+variable {ιM : Type v} [OrderedAddCommMonoid ιM] [VAdd ι ιM]
+variable {σM : Type*} [SetLike σM M] [AddSubmonoidClass σM M]
+variable {M : Type w} [AddCommMonoid M] [Module R M]
+variable {ιM : Type v} [OrderedAddCommMonoid ιM] [VAdd ι ιM]
+variable {σM : Type*} [SetLike σM M] [AddSubmonoidClass σM M] (f : M →+* N)
+
+def fil_map  : ι → AddSubmonoid S := fun i ↦ AddSubmonoid.map f (FR i)
+
+instance FilteredRing_fil_map_range (f : R →+* S) : FilteredRing (fil_map FR f) where
+  mono := by
+    intro i j ilej y hy
+    obtain ⟨x, x_in, x_eq⟩ : ∃ x ∈ FR i , f x = y := hy
+    use x
+    simp only [SetLike.mem_coe, (FilteredRing.mono ilej) x_in, x_eq, and_self]
+  one := by
+    use 1
+    simp only [SetLike.mem_coe, FilteredRing.one, map_one, and_self]
+  mul_mem := by
+    intro i j x y x_in_i y_in_j
+    simp only [fil_map, AddSubmonoid.mem_map] at *
+    obtain ⟨x₁, x_in, x_eq⟩ := x_in_i
+    obtain ⟨y₁, y_in, y_eq⟩ := y_in_j
+    use x₁ * y₁
+    simp only [FilteredRing.mul_mem x_in y_in, map_mul, x_eq, y_eq, and_self]
+
+
+end FilteredModule_fil_map_map_range
