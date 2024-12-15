@@ -21,18 +21,9 @@ instance : FilteredRing f := {
 instance (i : ι) : Module R (GradedPiece f i) where
   smul := by
     intro r x
-    unfold GradedPiece at x
-
-    #check (Quotient.out' x)
-    set a := Quotient.out' x with ha
-    -- #check r • (a : A)
-    #check
-    set b := r • (a : 𝒜 i)
-    #check (b : f i)
-
-    #check Quotient.mk' (r • (a : A))
-
-    -- #check r • (Quotient.out' x)
+    set a := Quotient.out' x
+    simp only [Submodule.mem_toAddSubgroup] at a
+    use QuotientAddGroup.mk (r • a : f i)
   one_smul := sorry
   mul_smul := sorry
   smul_zero := sorry
@@ -40,7 +31,5 @@ instance (i : ι) : Module R (GradedPiece f i) where
   add_smul := sorry
   zero_smul := sorry
 
-
--- #check GradedPiece fun i ↦ (𝒜 i).toAddSubgroup
 
 instance : DirectSum.GAlgebra R (GradedPiece f) := sorry
