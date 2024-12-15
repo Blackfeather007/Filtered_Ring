@@ -1,8 +1,6 @@
 import Mathlib
 import FilteredRing.Basic
 
-set_option maxHeartbeats 0
-
 variable {R : Type u} {ι : Type v} [CommSemiring R] [OrderedAddCommGroup ι] [DecidableEq ι]
   {σ : Type o} [SetLike σ R] [AddSubmonoidClass σ R] (F : ι → σ) [FilteredRing F]
 
@@ -45,6 +43,5 @@ instance tensor_filtration : FilteredModule F (FilteredPiece FM FN) where
     simp only [Set.singleton_smul]
     apply Set.smul_set_subset_iff.mpr
     rintro y ⟨m, hm, n, hn, heq⟩
-    simp only [Set.mem_iUnion, Set.mem_image2, Set.mem_setOf_eq]
-    exact ⟨⟨(i + indj.1.1, indj.1.2), by rw [add_assoc, indj.2]⟩, ⟨x • m, ⟨filM.2 hx hm,
-      ⟨n, ⟨hn, by simp only [← smul_tmul', heq]⟩⟩⟩⟩⟩
+    simpa [Set.mem_iUnion, Set.mem_image2, Set.mem_setOf_eq] using ⟨⟨(i + indj.1.1, indj.1.2), by
+      rw [add_assoc, indj.2]⟩, ⟨x • m, ⟨filM.2 hx hm, ⟨n, ⟨hn, by simp only [← smul_tmul', heq]⟩⟩⟩⟩⟩
