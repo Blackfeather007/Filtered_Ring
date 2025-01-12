@@ -4,6 +4,25 @@ universe o u v w
 
 open Pointwise CategoryTheory
 
+section GradedCommGroup
+
+variable {G : Type*} [AddCommGroup G] {ι : Type v} [OrderedAddCommMonoid ι] [DecidableEq ι]
+  {σ : Type o} [SetLike σ G] [AddSubgroupClass σ G]
+
+abbrev GradedCommGroup (F : ι → σ) := DirectSum.Decomposition F
+
+variable (F : ι → σ) [GradedCommGroup F]
+
+structure GradedCommGroupCat where
+  H : AddCommGrp
+  {σH : Type*}
+  [instSetLike : SetLike σH H]
+  [instAddSubgroupClass : AddSubgroupClass σH H]
+  gr : ι → σH
+  [instGradedComm : GradedCommGroup gr]
+
+end GradedCommGroup
+
 section GradedModule
 
 variable {R : Type u} [Ring R] {ι : Type v} [OrderedAddCommMonoid ι] [DecidableEq ι] {σ : Type o}
@@ -19,37 +38,35 @@ structure GradedModuleCat where
   {σMod : Type*}
   [instSetLike : SetLike σMod Mod.carrier]
   [instAddSubmonoidClass : AddSubmonoidClass σMod Mod.carrier]
-  ind : ι → σMod
-  [instGradedModule : GradedModule F ind]
-
-namespace GradedModuleCat
+  gr : ι → σMod
+  [instGradedModule : GradedModule F gr]
 
 attribute [instance] GradedModuleCat.instSetLike GradedModuleCat.instAddSubmonoidClass
 
 instance {M : GradedModuleCat F} (i : ι) : AddSubmonoid M.Mod where
-  carrier := Set.range (AddSubmonoidClass.subtype (M.ind i))
+  carrier := Set.range (AddSubmonoidClass.subtype (M.gr i))
   add_mem' {a b} ha hb := by
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq] at *
     exact add_mem ha hb
   zero_mem' := by
-    show 0 ∈ Set.range ⇑(AddSubmonoidClass.subtype (M.ind i))
+    show 0 ∈ Set.range ⇑(AddSubmonoidClass.subtype (M.gr i))
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq]
-    exact zero_mem (M.ind i)
+    exact zero_mem (M.gr i)
 
 instance {M : GradedModuleCat F} {i : ι} : AddSubmonoid M.Mod where
-  carrier := Set.range (AddSubmonoidClass.subtype (M.ind i))
+  carrier := Set.range (AddSubmonoidClass.subtype (M.gr i))
   add_mem' {a b} ha hb := by
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq] at *
     exact add_mem ha hb
   zero_mem' := by
-    show 0 ∈ Set.range ⇑(AddSubmonoidClass.subtype (M.ind i))
+    show 0 ∈ Set.range ⇑(AddSubmonoidClass.subtype (M.gr i))
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq]
-    exact zero_mem (M.ind i)
+    exact zero_mem (M.gr i)
 
 instance gradedModuleCategory : Category (GradedModuleCat F) where
   Hom M N := {f : M.Mod →ₗ[R] N.Mod //
-    ∀ i, f '' Set.range (AddSubmonoidClass.subtype (M.ind i))
-    ≤ Set.range (AddSubmonoidClass.subtype (N.ind i))}
+    ∀ i, f '' Set.range (AddSubmonoidClass.subtype (M.gr i))
+    ≤ Set.range (AddSubmonoidClass.subtype (N.gr i))}
   id _ := ⟨LinearMap.id, fun i ↦ by
     simp only [LinearMap.id_coe, id_eq, Set.image_id', le_refl]⟩
   comp f g := ⟨g.1.comp f.1, fun i ↦ by
@@ -80,11 +97,11 @@ def of {X : Type w} [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
     Mod := ModuleCat.of R X
     σMod := σX
     instAddSubmonoidClass := sorry
-    ind := filX
+    gr := filX
 
-instance {X : GradedModuleCat F} : GradedModule F X.ind := X.instGradedModule
+instance {X : GradedModuleCat F} : GradedModule F X.gr := X.instGradedModule
 
-@[simp] theorem of_coe (X : GradedModuleCat F) : of F X.ind = X := rfl
+@[simp] theorem of_coe (X : GradedModuleCat F) : of F X.gr = X := rfl
 
 @[simp] theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
   [AddSubmonoidClass σX X] (filX : ι → σX) [GradedModule F filX] : (of F filX).Mod = X := rfl
@@ -110,7 +127,7 @@ theorem ofHom_apply {X Y : Type w} {σX σY : Type o} [AddCommGroup X] [Module R
 graded module. -/
 -- no idea what ↑ means...
 @[simps]
-def ofSelfIso (M : GradedModuleCat F) : of F M.ind ≅ M where
+def ofSelfIso (M : GradedModuleCat F) : of F M.gr ≅ M where
   hom := 𝟙 M
   inv := 𝟙 M
 
@@ -138,7 +155,7 @@ private instance {M N : GradedModuleCat F} : AddCommMonoid (M ⟶ N) where
     simp only [Set.le_eq_subset]
     repeat rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype]
     rw [Set.image_subset_iff]
-    exact fun a _ ↦ zero_mem (N.ind i)⟩
+    exact fun a _ ↦ zero_mem (N.gr i)⟩
   zero_add a := propext Subtype.val_inj |>.symm.mpr
     <| AddZeroClass.zero_add a.1
   add_zero a := propext Subtype.val_inj |>.symm.mpr
@@ -227,7 +244,7 @@ instance toGradedModule (m : ModuleCat.{w, u} R) [GradedRing F] : GradedModule F
 open AddSubmonoid in
 def DeducedFunctor [GradedRing F] : CategoryTheory.Functor (ModuleCat.{w, u} R)
   (GradedModuleCat F) where
-    obj m := { Mod := m, ind := F' F m, instGradedModule := toGradedModule F m }
+    obj m := { Mod := m, gr := F' F m, instGradedModule := toGradedModule F m }
     map := fun {X Y} hom ↦ ⟨hom, by
       rintro i p ⟨x, ⟨hx1, hx2⟩⟩
       set toAddGP := (closure {x : Y.1 | ∃ r ∈ F i, ∃ a, x = r • a}).comap hom.toAddMonoidHom
@@ -251,7 +268,5 @@ instance : Inhabited (ModuleCat R) :=
 instance ofUnique {X : Type v} [AddCommGroup X] [Module R X] [i : Unique X] : Unique (of R X) :=
   i -/
 example : 1 = 1 := rfl
-
-end GradedModuleCat
 
 end GradedModule
