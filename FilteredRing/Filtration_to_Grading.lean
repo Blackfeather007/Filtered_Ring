@@ -23,7 +23,7 @@ section GradedRing
 
 variable {R : Type u} [Ring R] {σ : Type*} [SetLike σ R] [AddSubgroupClass σ R]
 
-variable (F F_lt : ι → σ) [IsRingFiltration F F_lt]
+variable (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]
 
 def Filtration.hMul {i j : ι} (x : F i) (y : F j) : F (i + j) :=
   ⟨x * y, IsRingFiltration.mul_mem x.2 y.2⟩
@@ -35,27 +35,44 @@ omit [AddSubgroupClass σ R] in
 @[simp]
 lemma Filtration.hMul_coe {i j : ι} (x : F i) (y : F j) : ((x * y : F (i + j)) : R) = x * y := rfl
 
---section of HasGMul
+section HasGMul
 
---class hasGMul
+class hasGMul (F : ι → σ) (F_lt : outParam <| ι → σ) extends IsRingFiltration F F_lt where
+  F_lt_mul_mem {i j : ι} {x y} : x ∈ F_lt i → y ∈ F j → x * y ∈ F_lt (i + j)
+  mul_F_lt_mem {i j : ι} {x y} : x ∈ F i → y ∈ F_lt j → x * y ∈ F_lt (i + j)
 
-variable {F} in
-lemma Filtration.lt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt i) (hy : y ∈ F j) :
-    x * y ∈ F_lt (i + j) := by
-  let S : AddSubgroup R := {
-    carrier := {z | z * y ∈ F_lt (i + j)}
-    add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
-    zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
-    neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
-  have : ∀ k < i, (AddSubgroupClass.subtype (F k)).range ≤ S := by
-    intro k hk x hx
-    simp only [AddMonoidHom.mem_range, AddSubgroupClass.coeSubtype, Subtype.exists, exists_prop,
-      exists_eq_right] at hx
-    exact IsRingFiltration.toIsFiltration.is_le ((add_lt_add_iff_right j).mpr hk) (IsRingFiltration.mul_mem hx hy)
-  #check IsRingFiltration.toIsFiltration.is_sup
-  sorry
+instance (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) (one_mem : 1 ∈ F 0)
+  (mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)) : hasGMul F (fun n ↦ F (n - 1)) := {
+    instIsRingFiltrationIntHSubOfNat F mono one_mem mul_mem with
+    F_lt_mul_mem := fun h1 h2 ↦ by
+      have := mul_mem h1 h2
+      rwa [sub_add_eq_add_sub] at this
+    mul_F_lt_mem := fun h1 h2 ↦ by
+      have := mul_mem h1 h2
+      rwa [add_sub_assoc'] at this }
 
-end GradedRing
+instance (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [IsRingFiltration F F_lt] :
+    hasGMul F F_lt where
+  F_lt_mul_mem := by
+    intro i j x y hx hy
+    let S : AddSubgroup R := {
+      carrier := {z | z * y ∈ F_lt (i + j)}
+      add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
+      zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
+      neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
+    exact IsRingFiltration.toIsFiltration.is_sup S i
+      (fun k hk z hz ↦ IsFiltration.is_le (add_lt_add_right  hk j) (IsRingFiltration.mul_mem hz hy)) hx
+  mul_F_lt_mem := by
+    intro i j x y hx hy
+    let S : AddSubgroup R := {
+      carrier := {z | x * z ∈ F_lt (i + j)}
+      add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
+      zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
+      neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true]}
+    exact IsRingFiltration.toIsFiltration.is_sup S j
+      (fun k hk z hz ↦ IsFiltration.is_le (add_lt_add_left hk i) (IsRingFiltration.mul_mem hx hz)) hy
+
+end HasGMul
 
 /-
 
@@ -86,16 +103,9 @@ lemma Filtration.mul_lt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ ⨆ k 
   | hmul _ _ _ _ ih₁ ih₂ =>
     rw [mul_add]
     exact add_mem ih₁ ih₂
+-/
 
-variable {F} in
-lemma Filtration.mul_mem_LTSubgroup {i j : ι} (x : F i) (y : F j)
-    (hx : x ∈ Filtration.LTSubgroup F i) : x * y ∈ Filtration.LTSubgroup F (i + j) :=
-  Filtration.lt_mul_mem hx y.2
-
-variable {F} in
-lemma Filtration.mul_mem_LTSubgroup' {i j : ι} (x : F i) (y : F j)
-    (hy : y ∈ Filtration.LTSubgroup F j) : x * y ∈ Filtration.LTSubgroup F (i + j) :=
-  Filtration.mul_lt_mem x.2 hy
+/-
 
 theorem Filtration.mul_equiv_mul ⦃x₁ x₂ : F i⦄ (hx : x₁ ≈ x₂) ⦃y₁ y₂ : (F j)⦄ (hy : y₁ ≈ y₂) :
     x₁ * y₁ ≈ x₂ * y₂ := by

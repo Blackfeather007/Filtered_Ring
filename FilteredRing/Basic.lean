@@ -12,11 +12,24 @@ class IsFiltration (F : ι → σ) (F_lt : outParam <| ι → σ) : Prop where
   is_sup (B : σ) (j : ι) : (∀ i < j, F i ≤ B) → F_lt j ≤ B
 -- F_lt j = ⨆ i < j, F i
 
+--for integer
+instance (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) : IsFiltration F (fun n ↦ F (n - 1)) where
+  mono := mono
+  is_le lt := mono (Int.le_sub_one_of_lt lt)
+  is_sup _ j hi := hi (j - 1) (sub_one_lt j)
+
 variable {R : Type u} [Semiring R] {σ : Type*} [SetLike σ R] [AddSubmonoidClass σ R]
 
 class IsRingFiltration (F : ι → σ) (F_lt : outParam <| ι → σ) extends IsFiltration F F_lt : Prop where
   one_mem : 1 ∈ F 0
   mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)
+
+--for integer
+instance (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) (one_mem : 1 ∈ F 0)
+  (mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)) : IsRingFiltration F (fun n ↦ F (n - 1)) := {
+    instIsFiltrationIntHSubOfNat F mono with
+    one_mem := one_mem
+    mul_mem := mul_mem }
 
 variable {M : Type*}
 variable {ιM : Type*} [OrderedAddCommMonoid ιM] [VAdd ι ιM]
