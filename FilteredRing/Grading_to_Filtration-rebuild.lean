@@ -26,8 +26,11 @@ instance Graded_to_Filtered (F : ι → AddSubgroup R) [GradedRing F] :
       intro k_le_i
       apply le_iSup_iff.mpr
       exact fun _ hb ↦ hb (lt_of_le_of_lt k_le_i i_lt_j)
-    is_sup := sorry
-
+    is_sup := by
+      intro b j h
+      simp[F_lt, F_le] at *
+      intro k k_lt_j
+      apply h k k_lt_j k (Preorder.le_refl k)
 
 end FilRing
 
