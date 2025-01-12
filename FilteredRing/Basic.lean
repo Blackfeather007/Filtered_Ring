@@ -8,7 +8,7 @@ variable {A : Type u} [AddCommMonoid A] {σ : Type*} [SetLike σ A] [AddSubmonoi
 
 class IsFiltration (F : ι → σ) (F_lt : ι → σ) : Prop where
   mono {i j} : i ≤ j → F i ≤ F j
-  is_le : ∀ i < j, F i ≤ F_lt j
+  is_le {i} : i < j → F i ≤ F_lt j
   is_sup (B : σ) (j : ι) : (∀ i < j, F i ≤ B) → F_lt j ≤ B
 -- F_lt j = ⨆ i < j, F i
 

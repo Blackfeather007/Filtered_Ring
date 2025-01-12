@@ -43,7 +43,16 @@ lemma Filtration.lt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt i) (hy : y ∈ F j
     add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
     zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
     neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
+  have : ∀ k < i, (AddSubgroupClass.subtype (F k)).range ≤ S := by
+    intro k hk x hx
+    simp only [AddMonoidHom.mem_range, AddSubgroupClass.coeSubtype, Subtype.exists, exists_prop,
+      exists_eq_right] at hx
+    #check IsRingFiltration.mul_mem hx hy
+    have : (k + j) < (i + j) := (add_lt_add_iff_right j).mpr hk
+    have : F (k + j) ≤ F_lt (i + j) := by
 
+      sorry
+    sorry
   sorry
 
 end GradedRing
