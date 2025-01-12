@@ -113,21 +113,14 @@ theorem id_apply {M : FilteredModuleCat F F_lt} (m : M.Mod) : (𝟙 M : M.Mod �
 theorem coe_comp {M N U : FilteredModuleCat F F_lt} (f : M ⟶ N) (g : N ⟶ U) :
   (f ≫ g : M.Mod → U.Mod) = g ∘ f := rfl
 
--- instance : Inhabited (FilteredModuleCat F) := {
---   default := {
---     Mod := ModuleCat.of R PUnit
---     σMod := (⊤ : AddSubmonoid (Mod F))
+instance {M N : FilteredModuleCat F F_lt} [AddSubgroupClass N.σMod N.Mod.carrier] :
+  AddCommGroup (M ⟶ N) := sorry
 
---   }
--- }
 
-instance {M N : FilteredModuleCat F} [AddSubgroupClass N.σMod N.Mod.carrier] :
-  AddCommGroup (M ⟶ N) := AddCommGroupMorphisms R ι
-
-instance (h : ∀ P : FilteredModuleCat F, AddSubgroupClass P.σMod P.Mod.carrier) :
-  Preadditive (FilteredModuleCat F) where
-  add_comp P Q R f f' g := by
-    exact propext Subtype.val_inj |>.symm.mpr <| LinearMap.comp_add f.1 f'.1 g.1
+instance (h : ∀ P : FilteredModuleCat F F_lt, AddSubgroupClass P.σMod P.Mod.carrier) :
+  Preadditive (FilteredModuleCat F F_lt) where
+  add_comp P Q R f f' g := by sorry
+    -- exact propext Subtype.val_inj |>.symm.mpr <| LinearMap.comp_add f.1 f'.1 g.1
 
 private def F' (m : ModuleCat.{w, u} R) := fun i ↦
   AddSubmonoid.closure {x | ∃ r ∈ F i, ∃ a : m.1, x = r • a}
@@ -141,7 +134,7 @@ private def proofGP (m : ModuleCat.{w, u} R) (i j : ι) (x : R) : AddSubmonoid m
     congrArg (Membership.mem (F' F m (j + i))) (smul_zero x) |>.mpr (F' F m (j + i)).zero_mem }
 
 open AddSubmonoid in
-instance toFilteredModule (m : ModuleCat.{w, u} R) [FilteredRing F]: FilteredModule F (F' F m) where
+instance toFilteredModule (m : ModuleCat.{w, u} R) [IsRingFiltration F F_lt]: IsModuleFiltration F (F' F m) where
   mono := fun hij ↦ by
     simp only [F', closure_le]
     rintro x ⟨r, ⟨hr, ⟨a, ha⟩⟩⟩
@@ -156,9 +149,9 @@ instance toFilteredModule (m : ModuleCat.{w, u} R) [FilteredRing F]: FilteredMod
     exact this hy
 
 open AddSubmonoid in
-def DeducedFunctor [FilteredRing F] : CategoryTheory.Functor (ModuleCat.{w, u} R)
-  (FilteredModuleCat F) where
-    obj m := { Mod := m, ind := F' F m, instFilteredModule := toFilteredModule F m }
+def DeducedFunctor [IsRingFiltration F F_lt] : CategoryTheory.Functor (ModuleCat.{w, u} R)
+  (FilteredModuleCat F F_lt) where
+    obj m := { Mod := m, fil := F' F m, instFilteredModule := toFilteredModule F m }
     map := fun {X Y} hom ↦ ⟨hom, by
       rintro i p ⟨x, ⟨hx1, hx2⟩⟩
       set toAddGP := (closure {x : Y.1 | ∃ r ∈ F i, ∃ a, x = r • a}).comap hom.toAddMonoidHom
