@@ -1,9 +1,10 @@
 import FilteredRing.Basic
-import FilteredRing.indexed_category
 
 universe o u v w
 
 open Pointwise CategoryTheory
+
+section GradedModule
 
 variable {R : Type u} [Ring R] {ι : Type v} [OrderedAddCommMonoid ι] [DecidableEq ι] {σ : Type o}
   [SetLike σ R] [AddSubmonoidClass σ R] (F : ι → σ) [GradedRing F]
@@ -13,18 +14,19 @@ variable {M : Type w} [AddCommMonoid M] [Module R M] {ιM : Type v} [OrderedAddC
 
 class GradedModule (F' : ιM → σM) extends SetLike.GradedSMul F F', DirectSum.Decomposition F'
 
-structure GradedModuleCat extends IndexedModuleCat R ι where
+structure GradedModuleCat where
+  Mod : ModuleCat.{w, u} R
+  {σMod : Type*}
+  [instSetLike : SetLike σMod Mod.carrier]
+  [instAddSubmonoidClass : AddSubmonoidClass σMod Mod.carrier]
+  ind : ι → σMod
   [instGradedModule : GradedModule F ind]
 
-
-/-
-Todo ↓
--/
 namespace GradedModuleCat
 
-instance {M : FilteredModuleCat F} (i : ι) : AddSubmonoid M.Mod := IndexedModuleSubmonoid R ι i
+attribute [instance] GradedModuleCat.instSetLike GradedModuleCat.instAddSubmonoidClass
 
-instance {M : FilteredModuleCat F} {i : ι} : AddSubmonoid M.Mod where
+instance {M : GradedModuleCat F} (i : ι) : AddSubmonoid M.Mod where
   carrier := Set.range (AddSubmonoidClass.subtype (M.ind i))
   add_mem' {a b} ha hb := by
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq] at *
@@ -34,7 +36,17 @@ instance {M : FilteredModuleCat F} {i : ι} : AddSubmonoid M.Mod where
     rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq]
     exact zero_mem (M.ind i)
 
-instance filteredModuleCategory : Category (FilteredModuleCat F) where
+instance {M : GradedModuleCat F} {i : ι} : AddSubmonoid M.Mod where
+  carrier := Set.range (AddSubmonoidClass.subtype (M.ind i))
+  add_mem' {a b} ha hb := by
+    rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq] at *
+    exact add_mem ha hb
+  zero_mem' := by
+    show 0 ∈ Set.range ⇑(AddSubmonoidClass.subtype (M.ind i))
+    rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq]
+    exact zero_mem (M.ind i)
+
+instance gradedModuleCategory : Category (GradedModuleCat F) where
   Hom M N := {f : M.Mod →ₗ[R] N.Mod //
     ∀ i, f '' Set.range (AddSubmonoidClass.subtype (M.ind i))
     ≤ Set.range (AddSubmonoidClass.subtype (N.ind i))}
@@ -49,75 +61,67 @@ instance filteredModuleCategory : Category (FilteredModuleCat F) where
   comp_id _ := rfl
   assoc _ _ _ := rfl
 
-instance {M N : FilteredModuleCat F} : FunLike (M ⟶ N) M.Mod N.Mod where
+instance {M N : GradedModuleCat F} : FunLike (M ⟶ N) M.Mod N.Mod where
   coe f := f.1.toFun
   coe_injective' _ _ h := propext Subtype.val_inj |>.symm.mpr <| DFunLike.coe_injective' h
 
-instance filteredModuleConcreteCategory : ConcreteCategory (FilteredModuleCat F) where
+instance gradedModuleConcreteCategory : ConcreteCategory (GradedModuleCat F) where
   forget :=
     { obj := fun R ↦ R.Mod
       map := fun f ↦ f.val }
   forget_faithful := ⟨fun {_ _} ⦃_ _⦄ ht ↦ Subtype.val_inj.mp (LinearMap.ext_iff.mpr (congrFun ht))⟩
 
-@[simp] lemma forget_map {M N : FilteredModuleCat F} (f : M ⟶ N) :
-  (forget (FilteredModuleCat F)).map f = (f : M.Mod → N.Mod) := rfl
+@[simp] lemma forget_map {M N : GradedModuleCat F} (f : M ⟶ N) :
+  (forget (GradedModuleCat F)).map f = (f : M.Mod → N.Mod) := rfl
 
-/-- The object in the category of R-filt associated to an filtered R-module -/
+/-- The object in the category of R-grad associated to an graded R-module -/
 def of {X : Type w} [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] : FilteredModuleCat F where
+  [AddSubmonoidClass σX X] (filX : ι → σX) [GradedModule F filX] : GradedModuleCat F where
     Mod := ModuleCat.of R X
     σMod := σX
-    instAddSubmonoidClass := by trivial
+    instAddSubmonoidClass := sorry
     ind := filX
 
-instance {X : FilteredModuleCat F} : FilteredModule F X.ind := X.instFilteredModule
+instance {X : GradedModuleCat F} : GradedModule F X.ind := X.instGradedModule
 
-@[simp] theorem of_coe (X : FilteredModuleCat F) : of F X.ind = X := rfl
+@[simp] theorem of_coe (X : GradedModuleCat F) : of F X.ind = X := rfl
 
 @[simp] theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] : (of F filX).Mod = X := rfl
+  [AddSubmonoidClass σX X] (filX : ι → σX) [GradedModule F filX] : (of F filX).Mod = X := rfl
 
 /-- A `LinearMap` with degree 0 is a morphism in `Module R`. -/
 def ofHom {X Y : Type w} {σX σY : Type o} [AddCommGroup X] [Module R X] [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] [AddCommGroup Y] [Module R Y]
-  [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) [FilteredModule F filY] (f : X →ₗ[R] Y)
+  [AddSubmonoidClass σX X] (filX : ι → σX) [GradedModule F filX] [AddCommGroup Y] [Module R Y]
+  [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) [GradedModule F filY] (f : X →ₗ[R] Y)
   (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (filX i))
     ≤ Set.range (AddSubmonoidClass.subtype (filY i))) :
     of F filX ⟶ of F filY :=
     ⟨f, deg0⟩
 
--- @[simp 1100] ← 有lint错误
+@[simp 1100]
 theorem ofHom_apply {X Y : Type w} {σX σY : Type o} [AddCommGroup X] [Module R X] [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] [AddCommGroup Y] [Module R Y]
-  [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) [FilteredModule F filY] (f : X →ₗ[R] Y)
+  [AddSubmonoidClass σX X] (filX : ι → σX) [GradedModule F filX] [AddCommGroup Y] [Module R Y]
+  [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) [GradedModule F filY] (f : X →ₗ[R] Y)
   (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (filX i))
     ≤ Set.range (AddSubmonoidClass.subtype (filY i))) (x : X) :
   ofHom F filX filY f deg0 x = f x := rfl
 
 /-- Forgetting to the underlying type and then building the bundled object returns the original
-filtered module. -/
--- Have no idea what ↑ means...
+graded module. -/
+-- no idea what ↑ means...
 @[simps]
-def ofSelfIso (M : FilteredModuleCat F) : of F M.ind ≅ M where
+def ofSelfIso (M : GradedModuleCat F) : of F M.ind ≅ M where
   hom := 𝟙 M
   inv := 𝟙 M
 
 @[simp]
-theorem id_apply {M : FilteredModuleCat F} (m : M.Mod) : (𝟙 M : M.Mod → M.Mod) m = m := rfl
+theorem id_apply {M : GradedModuleCat F} (m : M.Mod) : (𝟙 M : M.Mod → M.Mod) m = m := rfl
 
 @[simp]
-theorem coe_comp {M N U : FilteredModuleCat F} (f : M ⟶ N) (g : N ⟶ U) :
+theorem coe_comp {M N U : GradedModuleCat F} (f : M ⟶ N) (g : N ⟶ U) :
   (f ≫ g : M.Mod → U.Mod) = g ∘ f := rfl
 
--- instance : Inhabited (FilteredModuleCat F) := {
---   default := {
---     Mod := ModuleCat.of R PUnit
---     σMod := (⊤ : AddSubmonoid (Mod F))
-
---   }
--- }
-
-private instance {M N : FilteredModuleCat F} : AddSemigroup (M ⟶ N) where
+private instance {M N : GradedModuleCat F} : AddSemigroup (M ⟶ N) where
   add f g := ⟨f.1 + g.1, by
     simp only [Set.le_eq_subset, Set.image_subset_iff]
     intro i _ hx
@@ -129,7 +133,7 @@ private instance {M N : FilteredModuleCat F} : AddSemigroup (M ⟶ N) where
   add_assoc a b c := propext Subtype.val_inj |>.symm.mpr
     <| add_assoc a.1 b.1 c.1
 
-private instance {M N : FilteredModuleCat F} : AddCommMonoid (M ⟶ N) where
+private instance {M N : GradedModuleCat F} : AddCommMonoid (M ⟶ N) where
   zero := ⟨0, fun i ↦ by
     simp only [Set.le_eq_subset]
     repeat rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype]
@@ -153,7 +157,7 @@ private instance {M N : FilteredModuleCat F} : AddCommMonoid (M ⟶ N) where
   add_comm f g := propext Subtype.val_inj |>.symm.mpr
     <| AddCommMagma.add_comm f.1 g.1
 
-private instance {M N : FilteredModuleCat F} [AddSubgroupClass N.σMod N.Mod.carrier] :
+private instance {M N : GradedModuleCat F} [AddSubgroupClass N.σMod N.Mod.carrier] :
   SubNegMonoid (M ⟶ N) where
   zsmul k f := ⟨k • f.1, by
     simp only [Set.le_eq_subset, LinearMap.smul_apply, Set.image_subset_iff]
@@ -181,14 +185,14 @@ private instance {M N : FilteredModuleCat F} [AddSubgroupClass N.σMod N.Mod.car
     simp only [Set.le_eq_subset, negSucc_zsmul, Nat.cast_add, Nat.cast_one, neg_inj]
     norm_cast
 
-instance {M N : FilteredModuleCat F} [AddSubgroupClass N.σMod N.Mod.carrier] :
+instance {M N : GradedModuleCat F} [AddSubgroupClass N.σMod N.Mod.carrier] :
   AddCommGroup (M ⟶ N) where
   neg_add_cancel f := propext Subtype.val_inj |>.symm.mpr
     <| neg_add_cancel f.1
   add_comm := AddCommMagma.add_comm
 
-instance (h : ∀ P : FilteredModuleCat F, AddSubgroupClass P.σMod P.Mod.carrier) :
-  Preadditive (FilteredModuleCat F) where
+instance (h : ∀ P : GradedModuleCat F, AddSubgroupClass P.σMod P.Mod.carrier) :
+  Preadditive (GradedModuleCat F) where
   add_comp P Q R f f' g := by
     exact propext Subtype.val_inj |>.symm.mpr <| LinearMap.comp_add f.1 f'.1 g.1
 
@@ -203,9 +207,9 @@ private def proofGP (m : ModuleCat.{w, u} R) (i j : ι) (x : R) : AddSubmonoid m
   zero_mem' :=
     congrArg (Membership.mem (F' F m (j + i))) (smul_zero x) |>.mpr (F' F m (j + i)).zero_mem }
 
+/-
 open AddSubmonoid in
-instance toFilteredModule (m : ModuleCat.{w, u} R) [FilteredRing F] :
-  FilteredModule F (F' F m) where
+instance toGradedModule (m : ModuleCat.{w, u} R) [GradedRing F] : GradedModule F (F' F m) where
   mono := fun hij ↦ by
     simp only [F', closure_le]
     rintro x ⟨r, ⟨hr, ⟨a, ha⟩⟩⟩
@@ -218,11 +222,12 @@ instance toFilteredModule (m : ModuleCat.{w, u} R) [FilteredRing F] :
       exact ha.symm ▸ mem_closure.mpr fun K hk ↦ hk ⟨x * r', ⟨FilteredRing.mul_mem hx hr',
         ⟨a, smul_smul x r' a⟩⟩⟩
     exact this hy
+-/
 
 open AddSubmonoid in
-def DeducedFunctor [FilteredRing F] : CategoryTheory.Functor (ModuleCat.{w, u} R)
-  (FilteredModuleCat F) where
-    obj m := { Mod := m, ind := F' F m, instFilteredModule := toFilteredModule F m }
+def DeducedFunctor [GradedRing F] : CategoryTheory.Functor (ModuleCat.{w, u} R)
+  (GradedModuleCat F) where
+    obj m := { Mod := m, ind := F' F m, instGradedModule := toGradedModule F m }
     map := fun {X Y} hom ↦ ⟨hom, by
       rintro i p ⟨x, ⟨hx1, hx2⟩⟩
       set toAddGP := (closure {x : Y.1 | ∃ r ∈ F i, ∃ a, x = r • a}).comap hom.toAddMonoidHom
@@ -248,3 +253,5 @@ instance ofUnique {X : Type v} [AddCommGroup X] [Module R X] [i : Unique X] : Un
 example : 1 = 1 := rfl
 
 end GradedModuleCat
+
+end GradedModule
