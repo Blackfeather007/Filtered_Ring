@@ -1,12 +1,11 @@
-import Mathlib
 import FilteredRing.Basic
 
 variable {R : Type u} {ι : Type v} [CommSemiring R] [OrderedAddCommGroup ι] [DecidableEq ι]
-  {σ : Type o} [SetLike σ R] [AddSubmonoidClass σ R] (F : ι → σ) [FilteredRing F]
-
-variable {M : Type*} [AddCommGroup M] [Module R M] {σM : Type*} [SetLike σM M] [AddSubgroupClass σM M]
-variable {N : Type*} [AddCommGroup N] [Module R N] {σN : Type*} [SetLike σN N] [AddSubgroupClass σN N]
-variable (FM : ι → σM) (FN : ι → σN) [filM : FilteredModule F FM] [filN : FilteredModule F FN]
+  {σ : Type o} [SetLike σ R] [AddSubmonoidClass σ R] (F : ι → σ)(F_lt : ι → σ) [IsRingFiltration F F_lt]
+  {M : Type*} [AddCommGroup M] [Module R M] {σM : Type*} [SetLike σM M] [AddSubgroupClass σM M]
+  {N : Type*} [AddCommGroup N] [Module R N] {σN : Type*} [SetLike σN N] [AddSubgroupClass σN N]
+  (FM : ι → σM) (FM_lt : ι → σM) (FN : ι → σN) (FM_lt : ι → σM) (FN_lt : ι → σN)
+  [filM : IsModuleFiltration F F_lt FM FM_lt] [filN : IsModuleFiltration F F_lt FN FN_lt]
 
 open DirectSum TensorProduct Pointwise
 
@@ -16,7 +15,7 @@ noncomputable def FilteredPiece (i : ι) : Submodule ℤ (M ⊗[ℤ] N) := ⨆ x
   (mapIncl (AddSubgroup.toIntSubmodule (AddSubmonoidClass.subtype (FM x.1.1)).range)
   (AddSubgroup.toIntSubmodule (AddSubmonoidClass.subtype (FN x.1.2)).range))
 
-instance tensor_filtration : FilteredModule F (FilteredPiece FM FN) where
+instance tensor_filtration : IsModuleFiltration F F_lt (FilteredPiece FM FN) where
   mono := by
     simp only [FilteredPiece, range_mapIncl]
     intro i j ilej

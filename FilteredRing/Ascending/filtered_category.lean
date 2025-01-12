@@ -62,49 +62,55 @@ instance filteredModuleConcreteCategory : ConcreteCategory (FilteredModuleCat F 
 
 /-- The object in the category of R-filt associated to an filtered R-module -/
 def of {X : Type w} [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [IsModuleFiltration F filX] : FilteredModuleCat F where
+  [AddSubmonoidClass σX X] (filX : ι → σX)(filX_lt : ι → σX) [IsModuleFiltration F F_lt filX filX_lt] :
+  FilteredModuleCat F F_lt where
     Mod := ModuleCat.of R X
     σMod := σX
     instAddSubmonoidClass := by trivial
-    ind := filX
+    fil := filX
+    fil_lt := filX_lt
 
-instance {X : FilteredModuleCat F} : FilteredModule F X.ind := X.instFilteredModule
 
-@[simp] theorem of_coe (X : FilteredModuleCat F) : of F X.ind = X := rfl
+
+instance {X : FilteredModuleCat F F_lt} : IsModuleFiltration F F_lt X.fil X.fil_lt := instIsModuleFiltration
+
+
+@[simp] theorem of_coe (X : FilteredModuleCat F F_lt) : of F F_lt X.fil X.fil_lt = X := rfl
+
 
 @[simp] theorem coe_of (X : Type w) [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] : (of F filX).Mod = X := rfl
+  [AddSubmonoidClass σX X] (filX : ι → σX) (filX_lt : ι → σX) [IsModuleFiltration F F_lt filX filX_lt] :
+  (of F F_lt filX filX_lt).Mod = X := rfl
 
 /-- A `LinearMap` with degree 0 is a morphism in `Module R`. -/
 def ofHom {X Y : Type w} {σX σY : Type o} [AddCommGroup X] [Module R X] [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] [AddCommGroup Y] [Module R Y]
-  [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) [FilteredModule F filY] (f : X →ₗ[R] Y)
-  (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (filX i))
-    ≤ Set.range (AddSubmonoidClass.subtype (filY i))) :
-    of F filX ⟶ of F filY :=
-    ⟨f, deg0⟩
+  [AddSubmonoidClass σX X] (filX : ι → σX) (filX_lt : ι → σX) [IsModuleFiltration F F_lt filX filX_lt]
+  [AddCommGroup Y] [Module R Y] [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) (filY_lt : ι → σY)
+  [IsModuleFiltration F F_lt filY filY_lt] (f : X →ₗ[R] Y)
+  (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (filX i)) ≤ Set.range (AddSubmonoidClass.subtype (filY i))) :
+    of F F_lt filX filX_lt ⟶ of F F_lt filY filY_lt :=  ⟨f, deg0⟩
 
 -- @[simp 1100] ← 有lint错误
 theorem ofHom_apply {X Y : Type w} {σX σY : Type o} [AddCommGroup X] [Module R X] [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] [AddCommGroup Y] [Module R Y]
-  [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) [FilteredModule F filY] (f : X →ₗ[R] Y)
-  (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (filX i))
-    ≤ Set.range (AddSubmonoidClass.subtype (filY i))) (x : X) :
-  ofHom F filX filY f deg0 x = f x := rfl
+  [AddSubmonoidClass σX X] (filX : ι → σX) (filX_lt : ι → σX) [IsModuleFiltration F F_lt filX filX_lt]
+  [AddCommGroup Y] [Module R Y] [SetLike σY Y] [AddSubmonoidClass σY Y] (filY : ι → σY) (filY_lt : ι → σY)
+  [IsModuleFiltration F F_lt filY filY_lt] (f : X →ₗ[R] Y)
+  (deg0 : ∀ i, f '' Set.range (AddSubmonoidClass.subtype (filX i)) ≤ Set.range (AddSubmonoidClass.subtype (filY i))) (x : X) :
+  ofHom F F_lt filX filX_lt filY filY_lt f deg0 x = f x := rfl
 
 /-- Forgetting to the underlying type and then building the bundled object returns the original
 filtered module. -/
 -- Have no idea what ↑ means...
 @[simps]
-def ofSelfIso (M : FilteredModuleCat F) : of F M.ind ≅ M where
+def ofSelfIso (M : FilteredModuleCat F F_lt) : of F F_lt M.fil M.fil_lt ≅ M where
   hom := 𝟙 M
   inv := 𝟙 M
 
 @[simp]
-theorem id_apply {M : FilteredModuleCat F} (m : M.Mod) : (𝟙 M : M.Mod → M.Mod) m = m := rfl
+theorem id_apply {M : FilteredModuleCat F F_lt} (m : M.Mod) : (𝟙 M : M.Mod → M.Mod) m = m := rfl
 
 @[simp]
-theorem coe_comp {M N U : FilteredModuleCat F} (f : M ⟶ N) (g : N ⟶ U) :
+theorem coe_comp {M N U : FilteredModuleCat F F_lt} (f : M ⟶ N) (g : N ⟶ U) :
   (f ≫ g : M.Mod → U.Mod) = g ∘ f := rfl
 
 -- instance : Inhabited (FilteredModuleCat F) := {
