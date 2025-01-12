@@ -18,6 +18,13 @@ instance (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) : Is
   is_le lt := mono (Int.le_sub_one_of_lt lt)
   is_sup _ j hi := hi (j - 1) (sub_one_lt j)
 
+class IsExhaustiveFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt] : Prop where
+  exhaustive : A = ⋃ i, (F i : Set A)
+
+class IsDiscreteFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt] : Prop where
+  discrete : ∃ n : ι, ∀ i ≤ n,
+    AddSubmonoidClass.subtype (F i) '' Set.univ = (⊥ : AddSubmonoid A)
+
 variable {R : Type u} [Semiring R] {σ : Type*} [SetLike σ R] [AddSubmonoidClass σ R]
 
 class IsRingFiltration (F : ι → σ) (F_lt : outParam <| ι → σ) extends IsFiltration F F_lt : Prop where
