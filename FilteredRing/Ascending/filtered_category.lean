@@ -1,5 +1,4 @@
 import FilteredRing.Basic
--- import FilteredRing.indexed_category
 
 universe o u v w
 
@@ -17,6 +16,7 @@ class FilteredModuleCat where
   fil_lt : ι → σMod
   [instIsModuleFiltration : IsModuleFiltration F F_lt fil fil_lt]
 
+
 namespace FilteredModuleCat
 
 attribute [instance] FilteredModuleCat.instSetLike FilteredModuleCat.instAddSubmonoidClass FilteredModuleCat.instIsModuleFiltration
@@ -29,28 +29,40 @@ instance {M : FilteredModuleCat F F_lt} (i : ι) : AddSubmonoid M.Mod where
   zero_mem' := by
     simp only [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq, zero_mem (M.fil i)]
 
+
 instance filteredModuleCategory : Category (FilteredModuleCat F F_lt) where
-  Hom M N := (IndexedModuleCategory R ι).Hom M.toIndexedModuleCat N.toIndexedModuleCat
-  id M := (IndexedModuleCategory R ι).id M.toIndexedModuleCat
-  comp := (IndexedModuleCategory R ι).comp
+  Hom M N := {f : M.Mod →ₗ[R] N.Mod //
+    ∀ i, f '' Set.range (AddSubmonoidClass.subtype (M.fil i))
+    ≤ Set.range (AddSubmonoidClass.subtype (N.fil i))}
+  id _ := ⟨LinearMap.id, fun i ↦ by
+    simp only [LinearMap.id_coe, id_eq, Set.image_id', le_refl]⟩
+  comp f g := ⟨g.1.comp f.1, fun i ↦ by
+    have aux1 := f.2 i
+    have aux2 := g.2 i
+    simp only [Set.le_eq_subset, Set.image_subset_iff] at *
+    exact fun _ hx ↦ aux2 <| aux1 hx⟩
   id_comp _ := rfl
   comp_id _ := rfl
   assoc _ _ _ := rfl
 
-instance {M N : FilteredModuleCat F} : FunLike (M ⟶ N) M.Mod N.Mod := IndexedModuleFunLike R ι
 
-instance filteredModuleConcreteCategory : ConcreteCategory (FilteredModuleCat F) where
+instance {M N : FilteredModuleCat F F_lt} : FunLike (M ⟶ N) M.1 N.1 where
+  coe f := f.1.toFun
+  coe_injective' _ _ h := propext Subtype.val_inj |>.symm.mpr <| DFunLike.coe_injective' h
+
+instance filteredModuleConcreteCategory : ConcreteCategory (FilteredModuleCat F F_lt) where
   forget :=
     { obj := fun R ↦ R.Mod
       map := fun f ↦ f.val }
   forget_faithful := ⟨fun {_ _} ⦃_ _⦄ ht ↦ Subtype.val_inj.mp (LinearMap.ext_iff.mpr (congrFun ht))⟩
 
-@[simp] lemma forget_map {M N : FilteredModuleCat F} (f : M ⟶ N) :
-  (forget (FilteredModuleCat F)).map f = (f : M.Mod → N.Mod) := rfl
+
+@[simp] lemma forget_map {M N : FilteredModuleCat F F_lt} (f : M ⟶ N) :
+  (forget (FilteredModuleCat F F_lt)).map f = (f : M.Mod → N.Mod) := rfl
 
 /-- The object in the category of R-filt associated to an filtered R-module -/
 def of {X : Type w} [AddCommGroup X] [Module R X] {σX : Type*} [SetLike σX X]
-  [AddSubmonoidClass σX X] (filX : ι → σX) [FilteredModule F filX] : FilteredModuleCat F where
+  [AddSubmonoidClass σX X] (filX : ι → σX) [IsModuleFiltration F filX] : FilteredModuleCat F where
     Mod := ModuleCat.of R X
     σMod := σX
     instAddSubmonoidClass := by trivial
