@@ -2,31 +2,53 @@ import FilteredRing.Basic
 
 universe u
 
-suppress_compilation
-
-set_option linter.unusedSectionVars false
-
 set_option maxHeartbeats 0
 
-variable {R : Type u} [Ring R]
+variable {ι : Type v} [OrderedCancelAddCommMonoid ι]
 
-variable {ι : Type v} [OrderedCancelAddCommMonoid ι] [DecidableEq ι]
+section GeneralGraded
 
-variable (F : ι → AddSubgroup R) [FilteredRing F]
+variable {A : Type u} [AddCommGroup A] {σ : Type*} [SetLike σ A] [AddSubgroupClass σ A]
 
-def Filtration.LTSubgroup (i : ι) : AddSubgroup (F i) := (⨆ k < i, F k).comap (F i).subtype
+variable (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt]
 
-instance Filtration.LTSetoid (i : ι) : Setoid (F i) :=
-  QuotientAddGroup.leftRel (Filtration.LTSubgroup F i)
+abbrev GradedPiece (i : ι) := (AddSubgroupClass.subtype (F i)).range ⧸
+    (AddSubgroupClass.subtype (F_lt i)).range.addSubgroupOf (AddSubgroupClass.subtype (F i)).range
+
+end GeneralGraded
+
+section GradedRing
+
+#check GradedRing
+
+variable {R : Type u} [Ring R] {σ : Type*} [SetLike σ R] [AddSubgroupClass σ R]
+
+variable (F : ι → σ) (F_lt : ι → σ) [IsRingFiltration F F_lt]
 
 def Filtration.hMul {i j : ι} (x : F i) (y : F j) : F (i + j) :=
-  ⟨x * y, FilteredRing.mul_mem x.2 y.2⟩
+  ⟨x * y, IsRingFiltration.mul_mem x.2 y.2⟩
 
-instance {i j : ι} : HMul (F i) (F j) (F (i + j)) where
-  hMul := Filtration.hMul F
+instance (i j : ι) : HMul (F i) (F j) (F (i + j)) where
+  hMul := fun x y ↦ Filtration.hMul F F_lt x y
 
+omit [AddSubgroupClass σ R] in
 @[simp]
 lemma Filtration.hMul_coe {i j : ι} (x : F i) (y : F j) : ((x * y : F (i + j)) : R) = x * y := rfl
+
+variable {F} in
+lemma Filtration.lt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt i) (hy : y ∈ F j) :
+    x * y ∈ F_lt (i + j) := by
+  let S : AddSubgroup R := {
+    carrier := {z | z * y ∈ F_lt (i + j)}
+    add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
+    zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
+    neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
+
+  sorry
+
+end GradedRing
+
+/-
 
 variable {F} in
 lemma Filtration.lt_mul_mem {i j : ι} {x y} (hx : x ∈ ⨆ k < i, F k) (hy : y ∈ F j) :
@@ -343,3 +365,4 @@ instance : DirectSum.GSemiring (GradedPiece F) where
 
 open DirectSum in
 instance : Semiring (⨁ i, GradedPiece F i) := by infer_instance
+-/
