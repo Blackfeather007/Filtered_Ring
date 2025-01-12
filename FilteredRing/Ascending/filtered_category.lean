@@ -1,21 +1,35 @@
 import FilteredRing.Basic
-import FilteredRing.indexed_category
+-- import FilteredRing.indexed_category
 
 universe o u v w
 
 open Pointwise CategoryTheory
 
 variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] {σ : Type o} [SetLike σ R]
-  (F : ι → σ)
+(F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]
 
-structure FilteredModuleCat extends IndexedModuleCat R ι where
-  [instFilteredModule : FilteredModule F ind]
+class FilteredModuleCat where
+  Mod : ModuleCat.{w, u} R
+  {σMod : Type*}
+  [instSetLike : SetLike σMod Mod.carrier]
+  [instAddSubmonoidClass : AddSubmonoidClass σMod Mod.carrier]
+  fil : ι → σMod
+  fil_lt : ι → σMod
+  [instIsModuleFiltration : IsModuleFiltration F F_lt fil fil_lt]
 
 namespace FilteredModuleCat
 
-instance {M : FilteredModuleCat F} (i : ι) : AddSubmonoid M.Mod := IndexedModuleSubmonoid R ι i
+attribute [instance] FilteredModuleCat.instSetLike FilteredModuleCat.instAddSubmonoidClass FilteredModuleCat.instIsModuleFiltration
 
-instance filteredModuleCategory : Category (FilteredModuleCat F) where
+instance {M : FilteredModuleCat F F_lt} (i : ι) : AddSubmonoid M.Mod where
+  carrier := Set.range (AddSubmonoidClass.subtype (M.fil i))
+  add_mem' {a b} ha hb := by
+    rw [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq] at *
+    exact add_mem ha hb
+  zero_mem' := by
+    simp only [AddSubmonoidClass.coe_subtype, Subtype.range_coe_subtype, Set.mem_setOf_eq, zero_mem (M.fil i)]
+
+instance filteredModuleCategory : Category (FilteredModuleCat F F_lt) where
   Hom M N := (IndexedModuleCategory R ι).Hom M.toIndexedModuleCat N.toIndexedModuleCat
   id M := (IndexedModuleCategory R ι).id M.toIndexedModuleCat
   comp := (IndexedModuleCategory R ι).comp
