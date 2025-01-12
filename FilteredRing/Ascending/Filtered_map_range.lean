@@ -4,20 +4,13 @@ import FilteredRing.filtered_category
 
 section FilteredRing_fil_map_range
 
-variable {ι : Type v} [OrderedCancelAddCommMonoid ι]
-variable {R : Type*} [Ring R]{σR : Type*} [SetLike σR R] [AddSubmonoidClass σR R]
-variable {S : Type*} [Ring S] {σS : Type*} [SetLike σS S] [AddSubmonoidClass σS S]
+variable {R : Type*} [Ring R] {ι : Type v} [OrderedCancelAddCommMonoid ι]
+variable (FR : ι → AddSubmonoid R) [fil : FilteredRing FR]
+variable {S : Type*} [Ring S] (f : R →+* S)
 
-variable (FR : ι → σR) [fil : FilteredRing FR] (f : R →+* S)
+def filring_map  : ι → AddSubmonoid S := fun i ↦ AddSubmonoid.map f (FR i)
 
-
-variable (i : ι)
-#check AddSubmonoidClass.subtype
---(FR i).toAddMonoid
-
-def filring_map  : ι → σS := fun i ↦ AddSubmonoid.map f
-
-instance FilRing_map_range (f : R →+* S) : FilteredRing (filring_map FR f) where
+instance FilteredRing_fil_map_range : FilteredRing (filring_map FR f) where
   mono := by
     intro i j ilej y hy
     obtain ⟨x, x_in, x_eq⟩ : ∃ x ∈ FR i , f x = y := hy
@@ -81,50 +74,25 @@ variable {B : Type w2} [Ring B] [Algebra R B]
 
 variable [filA : FilteredAlgebra 𝒜] (f : A →ₐ[R] B)
 
-
--- #check (𝒜 i).toAddSubmonoid
--- #check toAddsubmonoid_ma
--- #check (𝒜 i).toAddSubmonoid
---
-
 def filAlg_map := fun (i : ι) ↦ Submodule.map f (𝒜 i)
 
 variable (i : ι)
 
-
-instance : (filAlg_map 𝒜 f i).toAddSubmonoid =
-   filring_map (fun i ↦ (𝒜 i).toAddSubmonoid) f.toRingHom i := sorry
-
--- def filAlg_map :=
--- #check filAlg_map
-
-#check AddSubmonoid.map
-
--- instance FilAlg_map.to_filring_map : filAlg_map.toAddSubmonoid
-
-instance FilAlg_map_range (f : A →ₐ[R] B) : FilteredAlgebra (filAlg_map 𝒜 f) := by
-
-  sorry
---   unfold FilteredAlgebra at filA
---   unfold FilteredAlgebra
-
---   sorry
--- where
-  -- FilRing_map_range
--- --  where
---   mono := by
---     intro i j ilej y hy
---     obtain ⟨x, x_in, x_eq⟩ : ∃ x ∈ FM i , f x = y := hy
---     use x
---     simp only [SetLike.mem_coe, (FilteredModule.mono R FR ilej) x_in, x_eq, and_self]
---   smul_mem := by
---     intro i j r n hr hn
---     simp only [filMod_map, AddSubmonoid.mem_map, vadd_eq_add] at *
---     obtain ⟨x , hx, eq⟩ := hn
---     rw[← eq]
---     use r • x
---     constructor
---     · exact FilteredModule.smul_mem hr hx
---     · simp only [map_smul]
+instance FilAlg_map_range (f : A →ₐ[R] B) : FilteredAlgebra (filAlg_map 𝒜 f) where
+  mono := by
+    intro i j ilej y hy
+    obtain ⟨x, x_in, x_eq⟩ : ∃ x ∈ 𝒜 i , f x = y := hy
+    use x
+    simp only [SetLike.mem_coe, x_eq, and_true, FilteredRing.mono ilej x_in]
+  one := by
+    use 1
+    simp only [SetLike.mem_coe, FilteredRing.one, map_one, and_self]
+  mul_mem := by
+    intro i j x y x_in_i y_in_j
+    simp only [filAlg_map, AddSubmonoid.mem_map] at *
+    obtain ⟨x₁, x_in, x_eq⟩ := x_in_i
+    obtain ⟨y₁, y_in, y_eq⟩ := y_in_j
+    use x₁ * y₁
+    simp only [SetLike.mem_coe, FilteredRing.mul_mem x_in y_in, map_mul, x_eq, y_eq, and_self]
 
 end FilteredMod_fil_map_map_range

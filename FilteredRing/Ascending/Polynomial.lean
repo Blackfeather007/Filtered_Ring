@@ -60,7 +60,7 @@ instance : FilteredModule
     obtain (hik | hjk) : i < ix ∨ j < iy := by
       cases i with | bot => exact .inl (WithBot.bot_lt_coe _) | coe i => ?_
       cases j with | bot => exact .inr (WithBot.bot_lt_coe _) | coe j => ?_
-      rw [← WithBot.coe_add] at hk
+      -- rw [← WithBot.coe_add] at hk
       erw [WithBot.coe_lt_coe] at hk
       erw [WithBot.coe_lt_coe, WithBot.coe_lt_coe]
       simp only [Nat.cast_id] at hk ⊢
