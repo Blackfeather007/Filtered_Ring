@@ -23,7 +23,7 @@ section GradedRing
 
 variable {R : Type u} [Ring R] {σ : Type*} [SetLike σ R] [AddSubgroupClass σ R]
 
-variable (F : ι → σ) (F_lt : ι → σ) [IsRingFiltration F F_lt]
+variable (F F_lt : ι → σ) [IsRingFiltration F F_lt]
 
 def Filtration.hMul {i j : ι} (x : F i) (y : F j) : F (i + j) :=
   ⟨x * y, IsRingFiltration.mul_mem x.2 y.2⟩
@@ -34,6 +34,10 @@ instance (i j : ι) : HMul (F i) (F j) (F (i + j)) where
 omit [AddSubgroupClass σ R] in
 @[simp]
 lemma Filtration.hMul_coe {i j : ι} (x : F i) (y : F j) : ((x * y : F (i + j)) : R) = x * y := rfl
+
+--section of HasGMul
+
+--class hasGMul
 
 variable {F} in
 lemma Filtration.lt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt i) (hy : y ∈ F j) :
@@ -47,12 +51,8 @@ lemma Filtration.lt_mul_mem {i j : ι} {x y} (hx : x ∈ F_lt i) (hy : y ∈ F j
     intro k hk x hx
     simp only [AddMonoidHom.mem_range, AddSubgroupClass.coeSubtype, Subtype.exists, exists_prop,
       exists_eq_right] at hx
-    #check IsRingFiltration.mul_mem hx hy
-    have : (k + j) < (i + j) := (add_lt_add_iff_right j).mpr hk
-    have : F (k + j) ≤ F_lt (i + j) := by
-
-      sorry
-    sorry
+    exact IsRingFiltration.toIsFiltration.is_le ((add_lt_add_iff_right j).mpr hk) (IsRingFiltration.mul_mem hx hy)
+  #check IsRingFiltration.toIsFiltration.is_sup
   sorry
 
 end GradedRing
