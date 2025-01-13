@@ -20,9 +20,15 @@ abbrev GradedPiece (i : ι) := (AddSubgroupClass.subtype (F i)).range ⧸
 
 end GeneralGraded
 
-section GradedRing
+section
 
-#check GradedRing
+instance {R : Type u} [Ring R] {σ : Type*} [SetLike σ R] [AddSubgroupClass σ R]
+    (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]: One (GradedPiece F F_lt 0)  where
+  one := ⟦⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩⟧
+
+end
+
+section GradedRing
 
 variable {R : Type u} [Ring R] {σ : Type*} [SetLike σ R] [AddSubgroupClass σ R]
 
@@ -30,7 +36,7 @@ variable (F : ι → σ) (F_lt : outParam <| ι → σ)
 
 section HasGMul
 
-class hasGMul extends IsRingFiltration F F_lt where
+class hasGMul extends IsRingFiltration F F_lt : Prop where
   F_lt_mul_mem {i j : ι} {x y} : x ∈ F_lt i → y ∈ F j → x * y ∈ F_lt (i + j)
   mul_F_lt_mem {i j : ι} {x y} : x ∈ F i → y ∈ F_lt j → x * y ∈ F_lt (i + j)
 
@@ -107,11 +113,63 @@ lemma sound {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) : x ≈ y �
 @[simp]
 lemma exact {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) : mk F F_lt x = mk F F_lt y → x ≈ y := Quotient.exact
 
-omit [OrderedCancelAddCommMonoid ι] [hasGMul F F_lt] in
+section HEq
+
+lemma GradedPiece.mk_mul {i j : ι} (x : (AddSubgroupClass.subtype (F i)).range) (y : (AddSubgroupClass.subtype (F j)).range) : mk F F_lt x * mk F F_lt y = mk F F_lt (x * y) := rfl
+
+omit [OrderedCancelAddCommMonoid ι] [hasGMul F F_lt]
+
 @[simp]
 lemma mk_eq {i : ι} (x : (AddSubgroupClass.subtype (F i)).range) : mk F F_lt x = ⟦x⟧ := rfl
 
+lemma GradedPiece.mk_zero {i : ι} : mk F F_lt 0  = (0 : GradedPiece F F_lt i) := rfl
 
+lemma HEq_rfl {i j : ι} {r : R} (h : i = j)
+    (hi : r ∈ (AddSubgroupClass.subtype (F i)).range) (hj : r ∈ (AddSubgroupClass.subtype (F j)).range) :
+    HEq (mk F F_lt ⟨r, hi⟩) (mk F F_lt ⟨r, hj⟩) :=
+  h ▸ HEq.rfl
+
+theorem fooHEq3 {i j : ι} {x : GradedPiece F F_lt i} {y : GradedPiece F F_lt j} {r s : R}
+    (h : i = j) (e : r = s) (hi : r ∈ (AddSubgroupClass.subtype (F i)).range) (hj : s ∈ (AddSubgroupClass.subtype (F j)).range)
+    (hx : x = mk F F_lt ⟨r, hi⟩) (hy : y = mk F F_lt ⟨s, hj⟩) : HEq x y := by
+  rw [hx, hy]
+  subst e
+  exact HEq_rfl F F_lt h hi hj
+
+-- Will be easier to use if HMul intances for F i is added and some other refactor is done.
+theorem fooHEq4 {i j : ι} {x : GradedPiece F F_lt i} {y : GradedPiece F F_lt j}
+    (r : (AddSubgroupClass.subtype (F i)).range) (s : (AddSubgroupClass.subtype (F j)).range)
+    (h : i = j) (e : (r : R) = (s : R)) (hx : x = mk F F_lt r) (hy : y = mk F F_lt s) : HEq x y :=
+  fooHEq3 F F_lt h e r.2 (e ▸ s.2) hx hy
+
+end HEq
+
+lemma GradedPiece.HEq_one_mul {i : ι} (x : GradedPiece F F_lt i) : HEq ((1 : GradedPiece F F_lt 0) * x) x := by
+  let rx := Quotient.out' x
+  let r1 : (AddSubgroupClass.subtype (F 0)).range := ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩
+  apply fooHEq3 F F_lt (zero_add i) (one_mul (rx : R))
+
+  --convert (foo4 F r1 rx).symm
+  --all_goals exact (Quotient.out_eq' x).symm
+
+  repeat sorry
+  /-
+  let rx : F i := Quotient.out' x
+  let r1 : F 0 := ⟨1, FilteredRing.one⟩
+  apply fooHEq3 F (r1 * rx) rx (zero_add i) (one_mul (rx : R))
+  convert (foo4 F r1 rx).symm
+  all_goals exact (Quotient.out_eq' x).symm
+  -/
+
+lemma GradedPiece.HEq_mul_one {i : ι} (x : GradedPiece F F_lt i) : HEq (x * (1 : GradedPiece F F_lt 0)) x := by
+  sorry
+  /-
+  let rx : F i := Quotient.out' x
+  let r1 : F 0 := ⟨1, FilteredRing.one⟩
+  apply fooHEq3 F (rx * r1) rx (add_zero i) (mul_one (rx : R))
+  convert (foo4 F rx r1).symm
+  all_goals exact (Quotient.out_eq' x).symm
+  -/
 
 end GradedPiece
 
@@ -164,10 +222,6 @@ lemma GradedPiece.mk_zero {i : ι} : mk (0 : F i) = (0 : GradedPiece F i) := rfl
 theorem fooHEq1 {i j : ι} {r : R} (h : i = j) (hi : r ∈ F i) (hj : r ∈ F j) :
     HEq (⟦⟨r, hi⟩⟧ : GradedPiece F i) (⟦⟨r, hj⟩⟧ : GradedPiece F j) :=
   h ▸ HEq.rfl
-
-theorem fooHEq2 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r : R) (h : i = j)
-    (hi : r ∈ F i) (hj : r ∈ F j) (hx : x = ⟦⟨r, hi⟩⟧) (hy : y = ⟦⟨r, hj⟩⟧) : HEq x y :=
-  hx ▸ hy ▸ h ▸ HEq.rfl
 
 theorem fooHEq3 {i j : ι} {x : GradedPiece F i} {y : GradedPiece F j} (r s : R)
     (h : i = j) (e : r = s) (hi : r ∈ F i) (hj : s ∈ F j)
