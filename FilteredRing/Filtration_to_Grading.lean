@@ -257,74 +257,88 @@ lemma GradedPiece.HEq_mul_assoc {i j k : ι}
       · exact (Quotient.out_eq' b).symm
       · exact (Quotient.out_eq' c).symm
 
+omit [hasGMul F F_lt] in
+lemma Filtration.pow_mem [IsRingFiltration F F_lt] (n : ℕ) {i : ι} (x : (AddSubgroupClass.subtype (F i)).range) : (x : R) ^ n ∈ (AddSubgroupClass.subtype (F (n • i))).range := by
+  induction' n with d hd
+  · use ⟨1, by simpa only [zero_smul] using IsRingFiltration.one_mem⟩
+    simp
+  · rcases x.2 with ⟨x', hx'⟩
+    rcases hd with ⟨xd', hxd'⟩
+    rw [pow_succ, ← hxd', ← hx']
+    simpa [succ_nsmul i d] using (IsRingFiltration.mul_mem xd'.2 x'.2)
+
+lemma Filtration.pow_lift (n : ℕ) {i : ι} (x₁ x₂ : (AddSubgroupClass.subtype (F i)).range) (h : x₁ ≈ x₂) :
+    (⟨x₁ ^ n, Filtration.pow_mem F F_lt n x₁⟩ : (AddSubgroupClass.subtype (F (n • i))).range) ≈ (⟨x₂ ^ n, Filtration.pow_mem F F_lt n x₂⟩ : (AddSubgroupClass.subtype (F (n • i))).range) := by
+  induction' n with d hd
+  · simp only [pow_zero, mk_eq, exact]
+  · simp only [pow_succ]
+    simp [HasEquiv.Equiv, QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf, AddSubgroup.comap] at h hd ⊢
+    have mem1 : x₁.1 ^ d * x₂.1 - x₁.1 ^ d * x₁.1 ∈ F_lt ((d + 1) • i) := by
+      rw [← mul_sub, sub_eq_neg_add]
+      have := Filtration.pow_mem F F_lt d x₁
+      simp only [AddMonoidHom.mem_range, AddSubgroupClass.coeSubtype, Subtype.exists, exists_prop,
+        exists_eq_right] at this
+      simpa [succ_nsmul i d] using hasGMul.mul_F_lt_mem this h
+    have mem2 : x₂.1 ^ d * x₂.1 - x₁.1 ^ d * x₂.1 ∈ F_lt ((d + 1) • i) := by
+      rw [← sub_mul, sub_eq_neg_add]
+      rcases x₂.2 with ⟨x₂', hx₂'⟩
+      have : x₂.1 ∈ F i := by simp [← hx₂']
+      simpa [succ_nsmul i d] using hasGMul.F_lt_mul_mem hd this
+    have : -(x₁.1 ^ d * x₁.1) + x₂.1 ^ d * x₂.1 = x₁.1 ^ d * x₂.1 - x₁.1 ^ d * x₁.1 + (x₂.1 ^ d * x₂.1 - x₁.1 ^ d * x₂.1) := by abel
+    rw [this]
+    exact add_mem mem1 mem2
+
+def GradedPiece.gnpow (n : ℕ) {i : ι} : GradedPiece F F_lt i → GradedPiece F F_lt (n • i) :=
+  Quotient.map (fun x ↦ ⟨x.1 ^ n, Filtration.pow_mem F F_lt n x⟩)
+  (fun x₁ x₂ h ↦ Filtration.pow_lift F F_lt n x₁ x₂ h)
+
+lemma gnpow_def (n : ℕ) {i : ι} (x : (AddSubgroupClass.subtype (F i)).range) :
+  mk F F_lt ⟨x.1 ^ n, Filtration.pow_mem F F_lt n x⟩ = GradedPiece.gnpow F F_lt n (mk F F_lt x) := rfl
+
+lemma GradedPiece.gnpow_zero' {i : ι} (x : GradedPiece F F_lt i) :
+    HEq (gnpow F F_lt 0 x) (1 : GradedPiece F F_lt 0) := by
+  let rx := Quotient.out' x
+  let r1 : (AddSubgroupClass.subtype (F 0)).range := ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩
+  apply HEq_eq_mk_eq F F_lt (zero_nsmul i) (pow_zero rx.1) (Filtration.pow_mem F F_lt 0 rx) r1.2 _ rfl
+  simp only [gnpow_def F F_lt 0 rx, rx, mk_eq]
+  nth_rw 1 [← Quotient.out_eq x]
+  rfl
+
+lemma GradedPiece.gnpow_succ' (n : ℕ) {i : ι} (x : GradedPiece F F_lt i) :
+    HEq (gnpow F F_lt n.succ x) (gnpow F F_lt n x * x) := by
+  let rx := Quotient.out' x
+  have mk_rx : mk F F_lt rx = x := by
+    nth_rw 1 [← Quotient.out_eq x]
+    rfl
+  have : rx.1 ^ n * rx.1 ∈ (AddSubgroupClass.subtype (F (n • i + i))).range := by
+    rcases rx.2 with ⟨rx', hrx'⟩
+    rcases (Filtration.pow_mem F F_lt n rx) with ⟨rxn', hrxn'⟩
+    use ⟨rx.1 ^ n * rx.1, IsRingFiltration.mul_mem (by simp [← hrxn']) (by simp [← hrx'])⟩
+    rfl
+  apply HEq_eq_mk_eq F F_lt (succ_nsmul i n) (pow_succ rx.1 n) (Filtration.pow_mem F F_lt (n + 1) rx) this
+  · rw [gnpow_def, mk_rx]
+  · rw [← mk_rx, ← gnpow_def]
+    rfl
+
+def GradedPiece.natCast (n : ℕ) : GradedPiece F F_lt 0 :=
+  mk F F_lt (n • ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩)
+
+lemma GradedPiece.natCast_zero : (natCast F F_lt 0 : GradedPiece F F_lt 0) = 0 := by
+  show mk F F_lt (0 • ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩) = 0
+  simp only [zero_smul, mk_eq]
+  rfl
+
+lemma GradedPiece.natCast_succ (n : ℕ) : (natCast F F_lt n.succ : GradedPiece F F_lt 0) = (natCast F F_lt n : GradedPiece F F_lt 0) + 1 := by
+  show mk F F_lt (n.succ • ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩) = mk F F_lt (n • ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩) + mk F F_lt (⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩)
+  simp only [Nat.succ_eq_add_one, AddSubmonoidClass.mk_nsmul, nsmul_eq_mul, Nat.cast_add,
+    Nat.cast_one, mul_one]
+  rfl
+
 end GradedMul
 
 end HasGMul
 
 /-
-variable {F} in
-lemma Filtration.pow_mem (n : ℕ) {i : ι} (x : F i) : (x : R) ^ n ∈ F (n • i) := by
-  induction' n with d hd
-  · simpa only [pow_zero, zero_smul] using FilteredRing.one
-  simpa only [pow_succ, succ_nsmul] using FilteredRing.mul_mem hd x.2
-
-variable {F} in
-def GradedPiece.gnpow (n : ℕ) {i : ι} (x : GradedPiece F i) : GradedPiece F (n • i) :=
-  mk ⟨x.out' ^ n, Filtration.pow_mem n x.out⟩
-
-variable {F} in
-lemma GradedPiece.gnpow_zero' {i : ι} (x : GradedPiece F i) :
-    HEq (gnpow 0 x) (1 : GradedPiece F 0) := by
-  let rx : F i := Quotient.out' x
-  let r1 : F 0 := ⟨1, FilteredRing.one⟩
-  have smul_eq : 0 • i = 0 := by simp only [zero_smul] --?
-  apply fooHEq3 F (rx ^ 0) r1 (smul_eq) (pow_zero rx.1) (Filtration.pow_mem 0 rx) r1.2 rfl rfl
-
-@[simp]
-lemma foo2 {i j : ι} (x : F i) (y : GradedPiece F j) : mk x * y = mk (x * y.out') := by
-  induction y using Quotient.ind'
-  rename_i a
-  change Quotient.mk'' _ = Quotient.mk'' _
-  rw [Quotient.eq'']
-  simp only [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
-  have eq : - (x.1 * a) + x * (Quotient.mk' a).out' = x * (- a + (Quotient.mk' a).out') := by
-    noncomm_ring
-  have ha : -a + (Quotient.mk' a).out' ∈ Filtration.LTSubgroup F j := by
-    rw [← QuotientAddGroup.leftRel_apply, ← Quotient.eq'']
-    exact Eq.symm (Quotient.out_eq' (Quotient.mk' a))
-  convert (Filtration.mul_mem_LTSubgroup' x _ ha )
-  exact SetLike.coe_eq_coe.mp eq
-
-variable {F} in
-lemma GradedPiece.gnpow_succ' (n : ℕ) {i : ι} (x : GradedPiece F i) :
-    HEq (gnpow n.succ x) (gnpow n x * x) := by
-  let rx : F i := Quotient.out' x
-  have succ_eq : n.succ • i = n • i + i := by simp only [Nat.succ_eq_add_one, succ_nsmul] --?
-  apply fooHEq3 F (rx ^ n.succ) (rx ^ n * rx) succ_eq (pow_succ rx.1 n)
-    (Filtration.pow_mem n.succ rx) (FilteredRing.mul_mem (Filtration.pow_mem n rx) rx.2) rfl
-  apply foo2
-
-variable {F} in
-def GradedPiece.natCast (n : ℕ) : GradedPiece F 0 := mk (n • (1 : F 0))
-
-variable {F} in
-lemma GradedPiece.natCast_zero : (natCast 0 : GradedPiece F 0) = 0 := by
-  show mk (0 • (1 : F 0)) = 0
-  simp only [zero_smul, QuotientAddGroup.mk_zero]
-  rfl
-
-variable {F} in
-lemma GradedPiece.natCast_succ (n : ℕ) :
-    (natCast n.succ : GradedPiece F 0) = (natCast n : GradedPiece F 0) + 1 := by
-  show mk (n.succ • (1 : F 0)) = mk (n • (1 : F 0)) + 1
-  simp only [Nat.succ_eq_add_one, nsmul_eq_mul, Nat.cast_add, Nat.cast_one, mul_one]
-  apply Quotient.eq''.mpr
-  convert_to Setoid.r (((n : F 0) + 1) * 1) ((n : F 0) * 1 + 1)
-  · simp only [mul_one]
-  simp only [QuotientAddGroup.leftRel_apply, neg_add_cancel ((n : F 0) + 1)]
-  · simp only [mul_one, add_right_inj]; rfl
-  simp only [mul_one]
-  exact Quotient.eq''.mp rfl
 
 /-# Main Result-/
 instance : DirectSum.GSemiring (GradedPiece F) where
