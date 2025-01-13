@@ -64,7 +64,7 @@ variable {M : Type*} {ιM : Type*} [OrderedAddCommMonoid ιM] [VAdd ι ιM] {σM
 
 variable [AddCommMonoid M] [AddSubmonoidClass σM M] in
 class IsModuleFiltration [Module R M] (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]
-    (F' : ιM → σM) (F'_lt : ιM → σM) extends IsFiltration F' F'_lt : Prop where
+    (F' : ιM → σM) (F'_lt : outParam <| ιM → σM) extends IsFiltration F' F'_lt : Prop where
   smul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F' j → x • y ∈ F' (i +ᵥ j)
 
 end FilteredModule
