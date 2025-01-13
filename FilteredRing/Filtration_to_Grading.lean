@@ -163,7 +163,6 @@ instance : GradedMonoid.GMul (GradedPiece F F_lt) where
 instance : GradedMonoid.GOne (GradedPiece F F_lt) where
   one := (1 : GradedPiece F F_lt 0)
 
-variable {F} in
 theorem GradedPiece.mul_zero {i j : ι} (a : GradedPiece F F_lt i) : a * (0 : GradedPiece F F_lt j) = 0 := by
   rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
   induction a using Quotient.ind'
@@ -174,7 +173,6 @@ theorem GradedPiece.mul_zero {i j : ι} (a : GradedPiece F F_lt i) : a * (0 : Gr
   simpa only [AddSubgroupClass.coeSubtype, ZeroMemClass.coe_zero, AddSubgroup.coeSubtype]
     using (MulZeroClass.mul_zero _).symm
 
-variable {F} in
 theorem GradedPiece.zero_mul {i j : ι} (a : GradedPiece F F_lt i) : (0 : GradedPiece F F_lt j) * a = 0 := by
   rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
   induction a using Quotient.ind'
@@ -333,6 +331,23 @@ lemma GradedPiece.natCast_succ (n : ℕ) : (natCast F F_lt n.succ : GradedPiece 
   simp only [Nat.succ_eq_add_one, AddSubmonoidClass.mk_nsmul, nsmul_eq_mul, Nat.cast_add,
     Nat.cast_one, mul_one]
   rfl
+
+--GRing to be added, but intCast is similar
+/-# Main Result-/
+instance : DirectSum.GSemiring (GradedPiece F F_lt) where
+  mul_zero := GradedPiece.mul_zero F F_lt
+  zero_mul := GradedPiece.zero_mul F F_lt
+  mul_add := GradedPiece.mul_add F F_lt
+  add_mul := GradedPiece.add_mul F F_lt
+  one_mul := fun ⟨i, a⟩ => Sigma.ext (by simp) (GradedPiece.HEq_one_mul F F_lt a)
+  mul_one := fun ⟨i, a⟩ => Sigma.ext (by simp) (GradedPiece.HEq_mul_one F F_lt a)
+  mul_assoc := fun ⟨i, a⟩ ⟨j, b⟩ ⟨k, c⟩ => Sigma.ext (add_assoc i j k) (GradedPiece.HEq_mul_assoc F F_lt a b c)
+  gnpow := GradedPiece.gnpow F F_lt
+  gnpow_zero' := fun ⟨i, a⟩ ↦ Sigma.ext (zero_nsmul i) (GradedPiece.gnpow_zero' F F_lt a)
+  gnpow_succ' :=  fun n ⟨i, a⟩ ↦ Sigma.ext (succ_nsmul i n) (GradedPiece.gnpow_succ' F F_lt n a)
+  natCast := GradedPiece.natCast F F_lt
+  natCast_zero := GradedPiece.natCast_zero F F_lt
+  natCast_succ := GradedPiece.natCast_succ F F_lt
 
 end GradedMul
 
