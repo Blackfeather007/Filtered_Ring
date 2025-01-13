@@ -8,19 +8,19 @@ section HomtoFiltration
 variable {A : Type*} [AddCommMonoid A] (σA : Type*) [SetLike σA A] [AddSubmonoidClass σA A]
 {B : Type*} [Ring B] (σB : Type*) [SetLike σB B] [AddSubgroupClass σB B]
 
-class SubmonoidClassHom (f : A →+ B) where
+class SubmonoidClassHom (f : A → B) where
   map : σA → σB
   image_coe_eq_coe_map (x : σA) : f '' (x : Set A) = map x
 
-def FB (FA : ι → σA)(f : A →+ B)[SubmonoidClassHom σA σB f] : ι → σB :=
+def FB (FA : ι → σA)(f : A → B)[SubmonoidClassHom σA σB f] : ι → σB :=
   fun i ↦ SubmonoidClassHom.map f (FA i)
 
-def FB_lt (FA_lt : ι → σA) (f : A →+ B) [SubmonoidClassHom σA σB f] :  outParam <| ι → σB :=
+def FB_lt (FA_lt : ι → σA) (f : A → B) [SubmonoidClassHom σA σB f] :  outParam <| ι → σB :=
   fun i ↦ SubmonoidClassHom.map f (FA_lt i)
 
-class SubmonoidClasscomap (f : A →+ B) where
+class SubmonoidClasscomap (f : A → B) where
   comap (y : σB) : σA
-  property (y : σB) : (comap y : Set A) = ⇑f ⁻¹' y
+  property (y : σB) : (comap y : Set A) = f ⁻¹' y
 
 
 open SubmonoidClassHom Set
@@ -43,15 +43,15 @@ instance HomtoFiltration [fil : IsFiltration FA FA_lt] [SubmonoidClassHom σA σ
 
     refine le_iff_subset.mpr <| image_subset_iff.mpr ?_
 
-    have h : ∀ i < j, ↑(FA i) ≤ ⇑f ⁻¹' ↑Sup := by
+    have h : ∀ i < j, ↑(FA i) ≤ f ⁻¹' ↑Sup := by
       intro i i_lt_j
-      have : (⇑f '' (FA i) : Set B) ≤ Sup := by
+      have : (f '' (FA i) : Set B) ≤ Sup := by
         have : ((map f (FA i) : σB) : Set B) ≤ (Sup : Set B) := h i i_lt_j
         rw[← image_coe_eq_coe_map <| FA i] at this
         exact this
       exact le_iff_subset.mpr <| image_subset_iff.mp this
 
-    have : (SubmonoidClasscomap.comap f Sup : σA) = ⇑f ⁻¹' Sup := SubmonoidClasscomap.property Sup
+    have : (SubmonoidClasscomap.comap f Sup : σA) = f ⁻¹' Sup := SubmonoidClasscomap.property Sup
     rw[← this] at h ⊢
     exact IsFiltration.is_sup (SubmonoidClasscomap.comap f Sup : σA) j h
 
@@ -59,6 +59,76 @@ end HomtoFiltration
 
 
 
+
+section RingHomtoFiltration
+
+variable {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
+{S : Type*} [Ring S] (σS : Type*) [SetLike σS S] [AddSubgroupClass σS S]
+
+-- class SubgroupClassHom (f : R →+* S) where
+--   map : σR → σS
+--   image_coe_eq_coe_map (x : σR) : f '' (x : Set R) = map x
+
+def FS (FR : ι → σR)(f : R →+* S)[SubmonoidClassHom σR σS f] : ι → σS :=
+  fun i ↦ SubmonoidClassHom.map f (FR i)
+
+def FS_lt (FR_lt : ι → σR) (f : R →+* S) [SubmonoidClassHom σR σS f] :  outParam <| ι → σS :=
+  fun i ↦ SubmonoidClassHom.map f (FR_lt i)
+
+-- class SubgroupClasscomap (f : R → S) where
+--   comap (y : σS) : σR
+--   property (y : σS) : (comap y : Set R) = f ⁻¹' y
+
+variable (FR : ι → σR) (FR_lt :  outParam <| ι → σR) (f : R →+* S) [fil : IsRingFiltration FR FR_lt]
+[SubmonoidClassHom σR σS f]
+
+
+
+#check HomtoFiltration
+
+open SubmonoidClassHom Set
+
+private lemma ele_map_to_image [SubmonoidClasscomap σR σS f] {A: σR}{x : S} :
+    x ∈ ⇑f '' (A : Set R) → x ∈ (map f <| A : σS):= by
+  show x ∈ ⇑f '' (A : Set R) → x ∈ (((map f <| A) : σS) : Set S)
+  simp only[← image_coe_eq_coe_map <| A, imp_self]
+
+private lemma map_to_image [SubmonoidClasscomap σR σS f] {A B: σR} :
+    ⇑f '' (A : Set R) ≤ ⇑f '' (B : Set R) → (map f <| A : σS) ≤ (map f <| B : σS):= by
+  show ⇑f '' (A : Set R) ≤ ⇑f '' (B : Set R) → (((map f <| A) : σS) : Set S) ≤ (((map f <| B) : σS) : Set S)
+  simp only [image_subset_iff, ← image_coe_eq_coe_map <| A, ← image_coe_eq_coe_map <| B, imp_self]
+
+instance [fil : IsRingFiltration FR FR_lt] [SubmonoidClasscomap σR σS f] :
+  IsRingFiltration (FS σR σS FR f) (FS_lt σR σS FR_lt f) where
+    __ := HomtoFiltration σR σS
+    one_mem := by
+      apply ele_map_to_image
+      use 1
+      simp only [SetLike.mem_coe, IsRingFiltration.one_mem, map_one, and_self]
+    mul_mem := by
+      intro i j x y x_in_i y_in_j
+
+      apply ele_map_to_image
+
+      have x_in_i : x ∈ ((map f (FR i) : σS) : Set S) := x_in_i
+      rw[← image_coe_eq_coe_map <| FR i] at x_in_i
+
+      have y_in_j : y ∈ ((map f (FR j) : σS) : Set S) := y_in_j
+      rw[← image_coe_eq_coe_map <| FR j] at y_in_j
+
+      obtain ⟨x₁, x_in, x_eq⟩ := x_in_i
+      obtain ⟨y₁, y_in, y_eq⟩ := y_in_j
+      use x₁ * y₁
+      simp only [SetLike.mem_coe, IsRingFiltration.mul_mem x_in y_in, map_mul,
+        Mathlib.Tactic.LinearCombination'.mul_pf x_eq y_eq, and_self]
+
+end RingHomtoFiltration
+
+
+
+
+
+/-
 
 section RingHomtoFiltration
 
@@ -156,7 +226,7 @@ instance [fil : IsRingFiltration FR FR_lt] [SubgroupClasscomap σR σS f] :
 
 end RingHomtoFiltration
 
-/-
+
 
 section RingHom_to_FilterHom
 
