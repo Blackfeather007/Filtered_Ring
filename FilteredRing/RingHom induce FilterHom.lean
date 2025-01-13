@@ -65,9 +65,6 @@ section RingHomtoFiltration
 variable {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
 {S : Type*} [Ring S] (σS : Type*) [SetLike σS S] [AddSubgroupClass σS S]
 
-{R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
-{S : Type*} [Ring S] (σS : Type*) [SetLike σS S] [AddSubgroupClass σS S]
-
 class SubgroupClassHom (f : R →+* S) where
   map : σR → σS
   image_coe_eq_coe_map (x : σR) : f '' (x : Set R) = map x
