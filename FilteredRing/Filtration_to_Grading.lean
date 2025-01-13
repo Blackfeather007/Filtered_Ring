@@ -84,64 +84,40 @@ theorem Filtration.mul_equiv_mul [hasGMul F F_lt] ⦃x₁ x₂ : (AddSubgroupCla
   rcases x₂.2 with ⟨x₂', hx₂'⟩
   exact add_mem (hasGMul.F_lt_mul_mem (F := F) hx (by simp [← hy₁'])) (hasGMul.mul_F_lt_mem (F := F) (by simp [← hx₂']) hy)
 
-def gradedMul [hasGMul F F_lt] {i j : ι} (x : GradedPiece F F_lt i) (y : GradedPiece F F_lt j) : GradedPiece F F_lt (i + j) :=
+namespace GradedPiece
+
+variable [hasGMul F F_lt]
+
+def gradedMul {i j : ι} (x : GradedPiece F F_lt i) (y : GradedPiece F F_lt j) : GradedPiece F F_lt (i + j) :=
   Quotient.map₂ (· * ·) (Filtration.mul_equiv_mul F F_lt) x y
 
-instance GradedPiece.hMul [hasGMul F F_lt] {i j : ι} :
+instance hMul {i j : ι} :
     HMul (GradedPiece F F_lt i) (GradedPiece F F_lt j) (GradedPiece F F_lt (i + j)) where
   hMul := gradedMul F F_lt
+
+def mk {i : ι} (x : (AddSubgroupClass.subtype (F i)).range) : GradedPiece F F_lt i := ⟦x⟧
+
+omit [OrderedCancelAddCommMonoid ι] in
+@[simp]
+lemma mk_congr {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) (h : x = y) : mk F F_lt x = mk F F_lt y := congrArg (mk F F_lt) h
+
+@[simp]
+lemma sound {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) : x ≈ y → mk F F_lt x = mk F F_lt y := Quotient.sound
+
+@[simp]
+lemma exact {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) : mk F F_lt x = mk F F_lt y → x ≈ y := Quotient.exact
+
+omit [OrderedCancelAddCommMonoid ι] [hasGMul F F_lt] in
+@[simp]
+lemma mk_eq {i : ι} (x : (AddSubgroupClass.subtype (F i)).range) : mk F F_lt x = ⟦x⟧ := rfl
+
+
+
+end GradedPiece
 
 end HasGMul
 
 /-
-
-variable {F} in
-lemma Filtration.lt_mul_mem {i j : ι} {x y} (hx : x ∈ ⨆ k < i, F k) (hy : y ∈ F j) :
-    x * y ∈ ⨆ k < (i + j), F k := by
-  rw [ iSup_subtype'] at hx ⊢
-  induction hx using AddSubgroup.iSup_induction' with
-  | hp i x hx =>
-    exact AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_right i.2 _⟩ (FilteredRing.mul_mem hx hy)
-  | h1 =>
-    rw [zero_mul]
-    exact zero_mem _
-  | hmul _ _ _ _ ih₁ ih₂ =>
-    rw [add_mul]
-    exact add_mem ih₁ ih₂
-
-variable {F} in
-lemma Filtration.mul_lt_mem {i j : ι} {x y} (hx : x ∈ F i) (hy : y ∈ ⨆ k < j, F k) :
-    x * y ∈ ⨆ k < i + j, F k := by
-  rw [iSup_subtype'] at hy ⊢
-  induction hy using AddSubgroup.iSup_induction' with
-  | hp j y hy =>
-    exact AddSubgroup.mem_iSup_of_mem ⟨i + j, add_lt_add_left j.2 _⟩ (FilteredRing.mul_mem hx hy)
-  | h1 =>
-    rw [mul_zero]
-    exact zero_mem _
-  | hmul _ _ _ _ ih₁ ih₂ =>
-    rw [mul_add]
-    exact add_mem ih₁ ih₂
--/
-
-/-
-
-theorem Filtration.mul_equiv_mul ⦃x₁ x₂ : F i⦄ (hx : x₁ ≈ x₂) ⦃y₁ y₂ : (F j)⦄ (hy : y₁ ≈ y₂) :
-    x₁ * y₁ ≈ x₂ * y₂ := by
-  simp [HasEquiv.Equiv, QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf, Filtration.LTSubgroup, AddSubgroup.comap] at hx hy ⊢
-  have eq : - (x₁.1 * y₁) + x₂ * y₂ = (- x₁ + x₂) * y₁ + x₂ * (- y₁ + y₂) := by noncomm_ring
-  rw [eq]
-  exact add_mem (Filtration.lt_mul_mem hx y₁.2) (Filtration.mul_lt_mem x₂.2 hy)
-
-abbrev GradedPiece (i : ι) := F i ⧸ Filtration.LTSubgroup F i
-
-def gradedMul {i j : ι} (x : GradedPiece F i) (y : GradedPiece F j) : GradedPiece F (i + j) :=
-  Quotient.map₂ (· * ·) (Filtration.mul_equiv_mul F) x y
-
-instance GradedPiece.hMul {i j : ι} :
-    HMul (GradedPiece F i) (GradedPiece F j) (GradedPiece F (i + j)) where
-  hMul := gradedMul F
-
 -- implicit variable?
 variable {F} in
 def GradedPiece.mk {i : ι} (x : F i) : GradedPiece F i := ⟦x⟧
@@ -220,7 +196,8 @@ lemma foo_bar {i : ι} (x : GradedPiece F i) : HEq (gradedMul F (0 : GradedPiece
   convert (foo4 F r00 rx).symm
   exact (Quotient.out_eq' x).symm
   rfl
-
+-/
+/-
 instance : GradedMonoid.GMul (GradedPiece F) where
   mul := gradedMul F
 
