@@ -1,11 +1,11 @@
-import Mathlib
 import FilteredRing.Basic
-import FilteredRing.filtered_category
 
 section FilteredRing_fil_map_range
 
 variable {R : Type*} [Ring R] {ι : Type v} [OrderedCancelAddCommMonoid ι]
-variable (FR : ι → AddSubmonoid R) [fil : FilteredRing FR]
+ {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A]
+
+variable (FR : ι → σR) [fil : FilteredRing FR]
 variable {S : Type*} [Ring S] (f : R →+* S)
 
 def filring_map  : ι → AddSubmonoid S := fun i ↦ AddSubmonoid.map f (FR i)
