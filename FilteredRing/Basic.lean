@@ -23,7 +23,7 @@ class IsExhaustiveFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F 
 
 class IsDiscreteFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt] : Prop where
   discrete : ∃ n : ι, ∀ i ≤ n,
-    AddSubmonoidClass.subtype (F i) '' Set.univ = (⊥ : AddSubmonoid A)
+    Set.range (AddSubmonoidClass.subtype (F i)) = (⊥ : AddSubmonoid A)
 
 variable {R : Type u} [Semiring R] {σ : Type*} [SetLike σ R] [AddSubmonoidClass σ R]
 
