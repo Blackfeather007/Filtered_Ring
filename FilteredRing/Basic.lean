@@ -34,6 +34,17 @@ class IsRingFiltration (F : ι → σ) (F_lt : outParam <| ι → σ) extends Is
   one_mem : 1 ∈ F 0
   mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)
 
+instance (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt] : Semiring (F 0) := {
+  mul := fun x y ↦ ⟨x.1 * y.1, by simpa using IsRingFiltration.mul_mem x.2 y.2⟩
+  left_distrib := fun a b c ↦ SetCoe.ext (mul_add a.1 b.1 c.1)
+  right_distrib := fun a b c ↦ SetCoe.ext (add_mul a.1 b.1 c.1)
+  zero_mul := fun a ↦ SetCoe.ext (zero_mul a.1)
+  mul_zero := fun a ↦ SetCoe.ext (mul_zero a.1)
+  mul_assoc := fun a b c ↦ SetCoe.ext (mul_assoc a.1 b.1 c.1)
+  one := ⟨1, IsRingFiltration.one_mem⟩
+  one_mul := fun a ↦ SetCoe.ext (one_mul a.1)
+  mul_one := fun a ↦ SetCoe.ext (mul_one a.1) }
+
 --for integer
 instance (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) (one_mem : 1 ∈ F 0)
   (mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)) : IsRingFiltration F (fun n ↦ F (n - 1)) := {
