@@ -75,9 +75,6 @@ def FS (FR : ι → σR)(f : R →+* S)[SubgroupClassHom σR σS f] : ι → σS
 def FS_lt (FR_lt : ι → σR) (f : R →+* S) [SubgroupClassHom σR σS f] :  outParam <| ι → σS :=
   fun i ↦ SubgroupClassHom.map f (FR_lt i)
 
-class σS_inv_in_σR (f : R →+* S) where
-  preimage (y : σS) : σR
-  property (y : σS) : (preimage y : Set R) = ⇑f ⁻¹' y
 class SubgroupClasscomap (f : R →+* S) where
   comap (y : σS) : σR
   property (y : σS) : (comap y : Set R) = ⇑f ⁻¹' y
@@ -118,6 +115,44 @@ instance Filtered_fil_map_range [SubgroupClasscomap σR σS f]
     have : (SubgroupClasscomap.comap f B : σR) = ⇑f ⁻¹' B := SubgroupClasscomap.property B
     rw[← this] at h ⊢
     exact IsFiltration.is_sup (SubgroupClasscomap.comap f B : σR) j h
+
+
+private lemma ele_map_to_image [SubgroupClasscomap σR σS f] {A: σR}{x : S} :
+    x ∈ ⇑f '' (A : Set R) → x ∈ (map f <| A : σS):= by
+  show x ∈ ⇑f '' (A : Set R) → x ∈ (((map f <| A) : σS) : Set S)
+  simp only[← image_coe_eq_coe_map <| A, imp_self]
+
+private lemma map_to_image [SubgroupClasscomap σR σS f] {A B: σR} :
+    ⇑f '' (A : Set R) ≤ ⇑f '' (B : Set R) → (map f <| A : σS) ≤ (map f <| B : σS):= by
+  show ⇑f '' (A : Set R) ≤ ⇑f '' (B : Set R) → (((map f <| A) : σS) : Set S) ≤ (((map f <| B) : σS) : Set S)
+  simp only [image_subset_iff, ← image_coe_eq_coe_map <| A, ← image_coe_eq_coe_map <| B, imp_self]
+
+instance [fil : IsRingFiltration FR FR_lt] [SubgroupClasscomap σR σS f] :
+  IsRingFiltration (FS σR σS FR f) (FS_lt σR σS FR_lt f) where
+    __ := Filtered_fil_map_range σR σS FR FR_lt f
+    one_mem := by
+      apply ele_map_to_image
+      use 1
+      simp only [SetLike.mem_coe, IsRingFiltration.one_mem, map_one, and_self]
+    mul_mem := by
+      intro i j x y x_in_i y_in_j
+
+      apply ele_map_to_image
+
+      have x_in_i : x ∈ ((map f (FR i) : σS) : Set S) := x_in_i
+      rw[← image_coe_eq_coe_map <| FR i] at x_in_i
+
+      have y_in_j : y ∈ ((map f (FR j) : σS) : Set S) := y_in_j
+      rw[← image_coe_eq_coe_map <| FR j] at y_in_j
+
+      obtain ⟨x₁, x_in, x_eq⟩ := x_in_i
+      obtain ⟨y₁, y_in, y_eq⟩ := y_in_j
+      use x₁ * y₁
+      simp only [SetLike.mem_coe, IsRingFiltration.mul_mem x_in y_in, map_mul,
+        Mathlib.Tactic.LinearCombination'.mul_pf x_eq y_eq, and_self]
+
+
+
 
 end RingHomtoFiltration
 
