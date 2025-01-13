@@ -25,6 +25,9 @@ class IsDiscreteFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_
   discrete : ∃ n : ι, ∀ i ≤ n,
     Set.range (AddSubmonoidClass.subtype (F i)) = (⊥ : AddSubmonoid A)
 
+
+section FilteredRing
+
 variable {R : Type u} [Semiring R] {σ : Type*} [SetLike σ R] [AddSubmonoidClass σ R]
 
 class IsRingFiltration (F : ι → σ) (F_lt : outParam <| ι → σ) extends IsFiltration F F_lt : Prop where
@@ -38,12 +41,30 @@ instance (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) (one
     one_mem := one_mem
     mul_mem := mul_mem }
 
-variable {M : Type*}
-variable {ιM : Type*} [OrderedAddCommMonoid ιM] [VAdd ι ιM]
-variable {σM : Type*} [SetLike σM M]
+end FilteredRing
+
+
+section FilteredModule
+
+variable {R : Type u} [Semiring R] {σ : Type*} [SetLike σ R] [AddSubmonoidClass σ R]
+
+variable {M : Type*} {ιM : Type*} [OrderedAddCommMonoid ιM] [VAdd ι ιM] {σM : Type*} [SetLike σM M]
 --`ιM` can be more general, however usually we take `ιM = ι`
 
 variable [AddCommMonoid M] [AddSubmonoidClass σM M] in
 class IsModuleFiltration [Module R M] (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]
     (F' : ιM → σM) (F'_lt : ιM → σM) extends IsFiltration F' F'_lt : Prop where
   smul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F' j → x • y ∈ F' (i +ᵥ j)
+
+end FilteredModule
+
+
+section FilteredAlgebra
+
+variable {R : Type u} [CommSemiring R] {𝒜 : Type w} [Semiring 𝒜] [Algebra R 𝒜]
+
+variable {σ : Type*} [SetLike σ 𝒜] [AddSubmonoidClass σ 𝒜] [SMulMemClass σ R 𝒜]
+
+abbrev IsAlgebraFiltration (F : ι → σ) (F_lt : outParam <| ι → σ) := IsRingFiltration F F_lt
+
+end FilteredAlgebra
