@@ -1,4 +1,4 @@
-import FilteredRing.Basic
+import FilteredRing.Ascending.Basic
 universe u v w
 
 suppress_compilation
