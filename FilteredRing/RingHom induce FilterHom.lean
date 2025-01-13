@@ -65,19 +65,12 @@ section RingHomtoFiltration
 variable {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
 {S : Type*} [Ring S] (σS : Type*) [SetLike σS S] [AddSubgroupClass σS S]
 
--- class SubgroupClassHom (f : R →+* S) where
---   map : σR → σS
---   image_coe_eq_coe_map (x : σR) : f '' (x : Set R) = map x
 
 def FS (FR : ι → σR)(f : R →+* S)[SubmonoidClassHom σR σS f] : ι → σS :=
   fun i ↦ SubmonoidClassHom.map f (FR i)
 
 def FS_lt (FR_lt : ι → σR) (f : R →+* S) [SubmonoidClassHom σR σS f] :  outParam <| ι → σS :=
   fun i ↦ SubmonoidClassHom.map f (FR_lt i)
-
--- class SubgroupClasscomap (f : R → S) where
---   comap (y : σS) : σR
---   property (y : σS) : (comap y : Set R) = f ⁻¹' y
 
 variable (FR : ι → σR) (FR_lt :  outParam <| ι → σR) (f : R →+* S) [fil : IsRingFiltration FR FR_lt]
 [SubmonoidClassHom σR σS f]
@@ -92,11 +85,6 @@ private lemma ele_map_to_image [SubmonoidClasscomap σR σS f] {A: σR}{x : S} :
     x ∈ ⇑f '' (A : Set R) → x ∈ (map f <| A : σS):= by
   show x ∈ ⇑f '' (A : Set R) → x ∈ (((map f <| A) : σS) : Set S)
   simp only[← image_coe_eq_coe_map <| A, imp_self]
-
-private lemma map_to_image [SubmonoidClasscomap σR σS f] {A B: σR} :
-    ⇑f '' (A : Set R) ≤ ⇑f '' (B : Set R) → (map f <| A : σS) ≤ (map f <| B : σS):= by
-  show ⇑f '' (A : Set R) ≤ ⇑f '' (B : Set R) → (((map f <| A) : σS) : Set S) ≤ (((map f <| B) : σS) : Set S)
-  simp only [image_subset_iff, ← image_coe_eq_coe_map <| A, ← image_coe_eq_coe_map <| B, imp_self]
 
 instance [fil : IsRingFiltration FR FR_lt] [SubmonoidClasscomap σR σS f] :
   IsRingFiltration (FS σR σS FR f) (FS_lt σR σS FR_lt f) where
