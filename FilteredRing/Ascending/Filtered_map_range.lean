@@ -6,28 +6,25 @@ variable {ι : Type v} [OrderedCancelAddCommMonoid ι]
 {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
 {S : Type*} [Ring S] (σS : Type*) [SetLike σS S] [AddSubgroupClass σS S]
 
-class FilteredRingHom (f : R →+* S) where
+class SubgroupClassHom (f : R →+* S) where
   map : σR → σS
   image_coe_eq_coe_map (x : σR) : f '' (x : Set R) = map x
 
-def FS (FR : ι → σR)(f : R →+* S)[FilteredRingHom σR σS f] : ι → σS :=
-  fun i ↦ FilteredRingHom.map f (FR i)
+def FS (FR : ι → σR)(f : R →+* S)[SubgroupClassHom σR σS f] : ι → σS :=
+  fun i ↦ SubgroupClassHom.map f (FR i)
 
-def FS_lt (FR_lt : ι → σR) (f : R →+* S) [FilteredRingHom σR σS f] : ι → σS :=
-  fun i ↦ FilteredRingHom.map f (FR_lt i)
+def FS_lt (FR_lt : ι → σR) (f : R →+* S) [SubgroupClassHom σR σS f] :  outParam <| ι → σS :=
+  fun i ↦ SubgroupClassHom.map f (FR_lt i)
 
-class σS_inv_in_σR (f : R →+* S) where
-  preimage (y : σS) : σR
-  property (y : σS) : (preimage y : Set R) = ⇑f ⁻¹' y
+class SubgroupClasscomap (f : R →+* S) where
+  comap (y : σS) : σR
+  property (y : σS) : (comap y : Set R) = ⇑f ⁻¹' y
 
-variable (FR : ι → σR) (FR_lt : ι → σR) (f : R →+* S) [fil : IsRingFiltration FR FR_lt]
-[FilteredRingHom σR σS f]
+variable (FR : ι → σR) (FR_lt :  outParam <| ι → σR) (f : R →+* S) [fil : IsRingFiltration FR FR_lt]
+[SubgroupClassHom σR σS f]
 
-
-
-
-open FilteredRingHom Set
-instance FilteredRing_fil_map_range [σS_inv_in_σR σR σS f]
+open SubgroupClassHom Set
+instance Filtered_fil_map_range [SubgroupClasscomap σR σS f]
  : IsFiltration (FS σR σS FR f) (FS_lt σR σS FR_lt f) where
   mono := by
     intro i j i_le_j
@@ -53,11 +50,11 @@ instance FilteredRing_fil_map_range [σS_inv_in_σR σR σS f]
         exact this
       exact le_iff_subset.mpr <| image_subset_iff.mp this
 
-    have : (σS_inv_in_σR.preimage f B : σR) = ⇑f ⁻¹' B := σS_inv_in_σR.property B
+    have : (SubgroupClasscomap.comap f B : σR) = ⇑f ⁻¹' B := SubgroupClasscomap.property B
     rw[← this] at h ⊢
-    exact IsFiltration.is_sup (σS_inv_in_σR.preimage f B : σR) j h
+    exact IsFiltration.is_sup (SubgroupClasscomap.comap f B : σR) j h
 
-
+-- instance [SubgroupClasscomap σR σS f] : IsRingFiltration (FS σR σS FR f) (FS_lt σR σS FR_lt f) := sorry
 
 -- where
 --   mono :=
