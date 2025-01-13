@@ -6,7 +6,7 @@ variable {ι : Type v} [OrderedCancelAddCommMonoid ι]
 section HomtoFiltration
 
 variable {A : Type*} [AddCommMonoid A] (σA : Type*) [SetLike σA A] [AddSubmonoidClass σA A]
-{B : Type*} [Ring B] (σB : Type*) [SetLike σB B] [AddSubgroupClass σB B]
+{B : Type*} [AddCommMonoid B] (σB : Type*) [SetLike σB B] [AddSubmonoidClass σB B]
 
 class SubmonoidClassHom (f : A → B) where
   map : σA → σB
@@ -125,45 +125,28 @@ variable {N : Type*} [AddCommMonoid N] [Module R N] (σN : Type*) [SetLike σN N
 
 variable [filM : IsModuleFiltration FR FR_lt FM FM_lt] (f : M →+ N)
 
-class SubmoduleClassHom (f : M →+ N) where
-  map : σM → σN
-  image_coe_eq_coe_map (x : σM) : f '' (x : Set M) = map x
-
-#check SubmoduleClassHom σM σN f
-
-def FN (FM : ι → σM) (f : M →+ N)[SubmoduleClassHom σM σN f] [SubmonoidClassHom σM σN f]
+def FN (FM : ι → σM) (f : M →+ N)[SubmonoidClassHom σM σN f] [SubmonoidClassHom σM σN f]
 : ι → σN := FB σM σN FM f
 
-def FN_lt (FM_lt : ι → σM) (f : M →+ N) [SubmoduleClassHom σM σN f] [SubmonoidClassHom σM σN f]
+def FN_lt (FM_lt : ι → σM) (f : M →+ N) [SubmonoidClassHom σM σN f] [SubmonoidClassHom σM σN f]
 : outParam <| ι → σN := FB_lt σM σN FM_lt f
 
-variable [SubmoduleClassHom σM σN f]
+variable [SubmonoidClassHom σM σN f] [SubmonoidClasscomap σM σN f.toFun]
 
-#check HomtoFiltration
--- FB = FN
-
-lemma aaa : IsFiltration (FN σM σN FM f) (FN_lt σM σN FM_lt f) := by
-  apply HomtoFiltration
-  sorry
-
-#check aaa σM FM FM_lt σN f
-
-theorem FilMod_map_range   :
+theorem FilMod_map_range :
  IsModuleFiltration FR FR_lt (FN σM σN FM f) (FN_lt σM σN FM_lt f) where
-   __ := aaa σM FM FM_lt σN f
-   smul_mem := sorry
-  -- smul_mem := sorry
---   mono := by
---
---   smul_mem := by
---     intro i j r n hr hn
---     simp only [filMod_map, AddSubgroup.mem_map, vadd_eq_add] at *
---     obtain ⟨x , hx, eq⟩ := hn
---     rw[← eq]
---     use r • x
---     constructor
---     · exact FilteredModule.smul_mem hr hx
---     · simp only [map_smul]
+  __ := HomtoFiltration σM σN (f := f.toFun) (ι := ι) (FA := FM) (FA_lt := FM_lt)
+  smul_mem := by
+    intro i j r n hr hn
+
+    sorry
+    -- simp only [filMod_map, AddSubgroup.mem_map, vadd_eq_add] at *
+    -- obtain ⟨x , hx, eq⟩ := hn
+    -- rw[← eq]
+    -- use r • x
+    -- constructor
+    -- · exact FilteredModule.smul_mem hr hx
+    -- · simp only [map_smul]
 
 -- end FilteredMod_fil_map_map_range
 
