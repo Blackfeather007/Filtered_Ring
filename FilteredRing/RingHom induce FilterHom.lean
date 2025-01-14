@@ -77,7 +77,7 @@ variable (FR : ι → σR) (FR_lt :  outParam <| ι → σR) (f : R →+* S) [fi
 
 open SubmonoidClassHom Set
 
-private lemma ele_map_to_image [SubmonoidClasscomap σR σS f] {A: σR}{x : S} :
+instance ele_map_to_image [SubmonoidClasscomap σR σS f] {A: σR}{x : S} :
     x ∈ ⇑f '' (A : Set R) → x ∈ (map f <| A : σS):= by
   show x ∈ ⇑f '' (A : Set R) → x ∈ (((map f <| A) : σS) : Set S)
   simp only[← image_coe_eq_coe_map <| A, imp_self]
@@ -121,67 +121,32 @@ variable {M : Type*} [AddCommMonoid M] [Module R M] (σM : Type*) [SetLike σM M
 [AddSubmonoidClass σM M] [SMulMemClass σM R M] (FM : ι → σM) (FM_lt : outParam <| ι → σM)
 
 variable {N : Type*} [AddCommMonoid N] [Module R N] (σN : Type*) [SetLike σN N]
-[AddSubmonoidClass σN N] [SMulMemClass σN R N]-- (FN : ι → σN) (FN_lt : outParam <| ι → σN)
+[AddSubmonoidClass σN N] [SMulMemClass σN R N]
 
-variable [filM : IsModuleFiltration FR FR_lt FM FM_lt] (f : M →+ N)
+variable [filM : IsModuleFiltration FR FR_lt FM FM_lt] (f : M →ₗ[R] N)
 
-def FN (FM : ι → σM) (f : M →+ N)[SubmonoidClassHom σM σN f] [SubmonoidClassHom σM σN f]
+def FN (FM : ι → σM) (f : M →ₗ[R] N)[SubmonoidClassHom σM σN f] [SubmonoidClassHom σM σN f]
 : ι → σN := FB σM σN FM f
 
-def FN_lt (FM_lt : ι → σM) (f : M →+ N) [SubmonoidClassHom σM σN f] [SubmonoidClassHom σM σN f]
+def FN_lt (FM_lt : ι → σM) (f : M →ₗ[R] N) [SubmonoidClassHom σM σN f] [SubmonoidClassHom σM σN f]
 : outParam <| ι → σN := FB_lt σM σN FM_lt f
 
 variable [SubmonoidClassHom σM σN f] [SubmonoidClasscomap σM σN f.toFun]
 
-theorem FilMod_map_range :
+open SubmonoidClassHom
+instance FilMod_map_range :
  IsModuleFiltration FR FR_lt (FN σM σN FM f) (FN_lt σM σN FM_lt f) where
   __ := HomtoFiltration σM σN (f := f.toFun) (ι := ι) (FA := FM) (FA_lt := FM_lt)
   smul_mem := by
     intro i j r n hr hn
+    have hn : n ∈ ((map f <| FM j : σN) : Set N) := hn
+    rw[← image_coe_eq_coe_map <| FM j] at hn
+    obtain⟨m, hm, heq⟩ := hn
 
-    sorry
-    -- simp only [filMod_map, AddSubgroup.mem_map, vadd_eq_add] at *
-    -- obtain ⟨x , hx, eq⟩ := hn
-    -- rw[← eq]
-    -- use r • x
-    -- constructor
-    -- · exact FilteredModule.smul_mem hr hx
-    -- · simp only [map_smul]
+    show r • n ∈ ((map f (FM <| i + j) : σN) : Set N)
+    rw[← image_coe_eq_coe_map <| FM (i + j), ← heq, ← (LinearMap.CompatibleSMul.map_smul f r m)]
+    use r • m
 
--- end FilteredMod_fil_map_map_range
-
-
-/-
-
-
-
-section FilteredMod_fil_map_map_range
-
-variable {R : Type u} [CommSemiring R] {ι : Type v} [OrderedCancelAddCommgroup ι]
-variable {A : Type w1} [Ring A] [Algebra R A] (𝒜 : ι → Submodule R A)
-variable {B : Type w2} [Ring B] [Algebra R B]
-
-variable [filA : FilteredAlgebra 𝒜] (f : A →ₐ[R] B)
-
-def filAlg_map := fun (i : ι) ↦ Submodule.map f (𝒜 i)
-
-variable (i : ι)
-
-instance FilAlg_map_range (f : A →ₐ[R] B) : FilteredAlgebra (filAlg_map 𝒜 f) where
-  mono := by
-    intro i j ilej y hy
-    obtain ⟨x, x_in, x_eq⟩ : ∃ x ∈ 𝒜 i , f x = y := hy
-    use x
-    simp only [SetLike.mem_coe, x_eq, and_true, FilteredRing.mono ilej x_in]
-  one := by
-    use 1
-    simp only [SetLike.mem_coe, FilteredRing.one, map_one, and_self]
-  mul_mem := by
-    intro i j x y x_in_i y_in_j
-    simp only [filAlg_map, AddSubgroup.mem_map] at *
-    obtain ⟨x₁, x_in, x_eq⟩ := x_in_i
-    obtain ⟨y₁, y_in, y_eq⟩ := y_in_j
-    use x₁ * y₁
-    simp only [SetLike.mem_coe, FilteredRing.mul_mem x_in y_in, map_mul, x_eq, y_eq, and_self]
-
-end FilteredMod_fil_map_map_range-/
+    have := IsModuleFiltration.smul_mem hr hm
+    rw[vadd_eq_add] at this
+    simp only [SetLike.mem_coe, this, map_smul, and_self]
