@@ -87,6 +87,8 @@ class IsInducedFiltration {σMod : Type*}
   containsF : ∀ i : ι, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' i
   closureF : ∀ s : σMod, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ s → F' i ≤ s
 
+namespace AddSubgroup
+
 variable (F' : ι → AddSubgroup M.1) (F'_lt : outParam <| ι → AddSubgroup M.1)
   [hfil : IsInducedFiltration F M F' F'_lt]
 
@@ -139,6 +141,53 @@ instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
     have : (F' j).carrier ⊆ {z | x • z ∈ F' (i + j)} := this
     have : y ∈ {z | x • z ∈ F' (i + j)} := this hy
     rwa [Set.mem_setOf_eq] at this
+
+end AddSubgroup
+
+
+namespace Submodule
+
+variable {R : Type u} [CommRing R] {σ : Type o} [SetLike σ R] (F : ι → σ) (F_lt : outParam <| ι → σ)
+  [IsRingFiltration F F_lt] (M : ModuleCat.{w, u} R) (F' : ι → Submodule R M.1)
+  (F'_lt : outParam <| ι → Submodule R M.1) [hfil : IsInducedFiltration F M F' F'_lt]
+
+include hfil in
+theorem closure_le : F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K := ⟨
+  fun hi ↦ fun ⦃_⦄ a ↦ hi <| IsInducedFiltration.containsF i (self := hfil) a,
+  fun hi ↦ IsInducedFiltration.closureF (self := hfil) K (i := i) hi⟩
+
+include hfil in
+theorem mem_closure : x ∈ F' i ↔ ∀ (K : Submodule R M), {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K →
+  x ∈ K := ⟨fun hi K hK ↦ IsInducedFiltration.closureF (self := hfil) K (i := i) hK hi,
+    fun h ↦ h (F' i) <| IsInducedFiltration.containsF i (self := hfil)⟩
+
+private def proofMOD (i j : ι) (x : R) : Submodule R M.1 := {
+  carrier := {z | x • z ∈ F' (j + i)}
+  add_mem' := fun {a b} ha hb ↦ by
+    simpa only [Set.mem_setOf_eq, smul_add] using (Submodule.add_mem_iff_right (F' (j + i)) ha).2 hb
+  zero_mem' := by simpa only [Set.mem_setOf_eq, smul_zero] using zero_mem (F' (j + i))
+  smul_mem' := fun r m hm ↦ by
+    rw [Set.mem_setOf_eq, ← smul_assoc, smul_eq_mul, mul_comm, mul_smul]
+    exact (Submodule.smul_mem (F' (j + i)) r hm)
+}
+
+instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
+  smul_mem {i j x y} hx hy := by
+    have : F' j ≤ proofMOD M F' j i x := by
+      apply (closure_le F M F' F'_lt).2
+      intro h ⟨r', hr', ⟨a, ha⟩⟩
+      apply (mem_closure F M F' F'_lt).2
+      intro K hK
+      rw [ha, smul_smul]
+      have : (x * r') • a ∈ {x | ∃ r ∈ F (i + j), ∃ a, x = r • a} := by
+        rw [Set.mem_setOf_eq]
+        exact ⟨(x * r'), ⟨IsRingFiltration.mul_mem hx hr', ⟨a, rfl⟩⟩⟩
+      exact hK this
+    have : y ∈ {z | x • z ∈ F' (i + j)} := this hy
+    rwa [Set.mem_setOf_eq] at this
+
+end Submodule
+
 
 end Induced
 
