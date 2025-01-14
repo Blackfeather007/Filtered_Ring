@@ -100,7 +100,6 @@ section
 variable {σMod : Type*} [SetLike σMod M.1] [AddSubgroupClass σMod M.1] (F' : ι → σMod)
     (F'_lt : outParam <| ι → σMod)  [hfil : IsInducedFiltration F M F' F'_lt]
 
-
 instance closure_le : F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K where
   mp := by
     intro h _ ⟨r, r_in, m, eq⟩
@@ -169,10 +168,6 @@ variable {R : Type u} [CommRing R] {σ : Type o} [SetLike σ R] (F : ι → σ) 
   [IsRingFiltration F F_lt] (M : ModuleCat.{w, u} R) (F' : ι → Submodule R M.1)
   (F'_lt : outParam <| ι → Submodule R M.1) [hfil : IsInducedFiltration F M F' F'_lt]
 
-include hfil in
-theorem closure_le : F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K := ⟨
-  fun hi ↦ fun ⦃_⦄ a ↦ hi <| IsInducedFiltration.containsF i (self := hfil) a,
-  fun hi ↦ IsInducedFiltration.closureF (self := hfil) K (i := i) hi⟩
 
 include hfil in
 theorem mem_closure : x ∈ F' i ↔ ∀ (K : Submodule R M), {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K →
