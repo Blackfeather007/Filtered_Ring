@@ -20,6 +20,10 @@ structure FilteredModuleCat where
   fil_lt : ι → σMod
   [instIsModuleFiltration : IsModuleFiltration F F_lt fil fil_lt]
 
+
+
+
+
 namespace FilteredModuleCat
 
 attribute [instance] FilteredModuleCat.instSetLike FilteredModuleCat.instAddSubgroupClass FilteredModuleCat.instIsModuleFiltration
@@ -77,6 +81,9 @@ instance {M N : FilteredModuleCat F F_lt} [AddSubgroupClass N.σMod N.Mod.carrie
 
 end FilteredModuleCat
 
+
+
+
 namespace Induced
 
 variable (M : ModuleCat.{w, u} R) [IsRingFiltration F F_lt]
@@ -87,19 +94,30 @@ class IsInducedFiltration {σMod : Type*}
   containsF : ∀ i : ι, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' i
   closureF : ∀ s : σMod, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ s → F' i ≤ s
 
+
+section
+
+variable {σMod : Type*} [SetLike σMod M.1] [AddSubgroupClass σMod M.1] (F' : ι → σMod)
+    (F'_lt : outParam <| ι → σMod)  [hfil : IsInducedFiltration F M F' F'_lt]
+
+
+instance closure_le : F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K where
+  mp := by
+    intro h _ ⟨r, r_in, m, eq⟩
+    have : r • m ∈ F' i := by
+      apply hfil.containsF
+      use r
+      simp only [r_in, exists_apply_eq_apply', and_self]
+    exact Set.mem_of_eq_of_mem eq (h this)
+  mpr := fun h ↦ IsInducedFiltration.closureF K h
+
+end
+
 namespace AddSubgroup
 
 variable (F' : ι → AddSubgroup M.1) (F'_lt : outParam <| ι → AddSubgroup M.1)
   [hfil : IsInducedFiltration F M F' F'_lt]
 
-include hfil in
-theorem closure_le : F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K := by
-  constructor
-  · intro hi
-    have := IsInducedFiltration.containsF i (self := hfil)
-    exact fun ⦃_⦄ a ↦ hi (this a)
-  · intro hi
-    exact IsInducedFiltration.closureF (self := hfil) K (i := i) hi
 
 include hfil in
 theorem mem_closure : x ∈ F' i ↔ ∀ (K : AddSubgroup M),
@@ -190,6 +208,9 @@ end Submodule
 
 
 end Induced
+
+
+
 
 namespace DeducedFunctor
 
