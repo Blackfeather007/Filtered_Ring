@@ -332,7 +332,18 @@ lemma GradedPiece.natCast_succ (n : ℕ) : (natCast F F_lt n.succ : GradedPiece 
     Nat.cast_one, mul_one]
   rfl
 
---GRing to be added, but intCast is similar
+def GradedPiece.intCast (n : ℤ) : GradedPiece F F_lt 0 :=
+  mk F F_lt (n • ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩)
+
+lemma GradedPiece.intCast_ofNat (n : ℕ) : intCast F F_lt n = natCast F F_lt n := by
+  show mk F F_lt ((n : ℤ) • ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩) = mk F F_lt (n • ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩)
+  simp
+
+lemma GradedPiece.intCast_negSucc_ofNat (n : ℕ) : intCast F F_lt (Int.negSucc n) = - (natCast F F_lt (n + 1)) := by
+  show mk F F_lt ((Int.negSucc n) • ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩) = - mk F F_lt ((n + 1) • ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩)
+  simp only [negSucc_zsmul, AddSubmonoidClass.mk_nsmul, nsmul_eq_mul, Nat.cast_add, Nat.cast_one, mul_one]
+  rfl
+
 /-# Main Result-/
 instance : DirectSum.GSemiring (GradedPiece F F_lt) where
   mul_zero := GradedPiece.mul_zero F F_lt
@@ -349,42 +360,17 @@ instance : DirectSum.GSemiring (GradedPiece F F_lt) where
   natCast_zero := GradedPiece.natCast_zero F F_lt
   natCast_succ := GradedPiece.natCast_succ F F_lt
 
+/-# Main Result-/
+instance : DirectSum.GRing (GradedPiece F F_lt) where
+  intCast := GradedPiece.intCast F F_lt
+  intCast_ofNat := GradedPiece.intCast_ofNat F F_lt
+  intCast_negSucc_ofNat := GradedPiece.intCast_negSucc_ofNat F F_lt
+
+/-
+open DirectSum in
+instance : Ring (⨁ i, GradedPiece F F_lt i) := by infer_instance
+-/
+
 end GradedMul
 
 end HasGMul
-
-/-
-
-/-# Main Result-/
-instance : DirectSum.GSemiring (GradedPiece F) where
-  mul_zero := GradedPiece.mul_zero
-  zero_mul := GradedPiece.zero_mul
-  mul_add := GradedPiece.mul_add
-  add_mul := GradedPiece.add_mul
-  one_mul := fun ⟨i, a⟩ =>
-    Sigma.ext (by simp only [GradedMonoid.fst_mul, GradedMonoid.fst_one, zero_add]) (HEq_one_mul a)
-  mul_one := fun ⟨i, a⟩ =>
-    Sigma.ext (by simp only [GradedMonoid.fst_mul, GradedMonoid.fst_one, add_zero]) (HEq_mul_one a)
-  mul_assoc := fun ⟨i, a⟩ ⟨j, b⟩ ⟨k, c⟩ => Sigma.ext (add_assoc i j k) (id (HEq_mul_assoc a b c))
-  gnpow := GradedPiece.gnpow
-  gnpow_zero' := by
-    intro ⟨i, a⟩
-    apply Sigma.ext
-    · show (0 • i) = 0
-      simp only [zero_smul]
-    exact GradedPiece.gnpow_zero' a
-  gnpow_succ' := by
-    intro n ⟨i, a⟩
-    apply Sigma.ext
-    · show n.succ • i = n • i + i
-      simp only [Nat.succ_eq_add_one, succ_nsmul]
-    simp only [GradedMonoid.snd_mul]
-    show HEq (gnpow n.succ a) ((gnpow n a) * a)
-    exact gnpow_succ' n a
-  natCast := GradedPiece.natCast
-  natCast_zero := GradedPiece.natCast_zero
-  natCast_succ := GradedPiece.natCast_succ
-
-open DirectSum in
-instance : Semiring (⨁ i, GradedPiece F i) := by infer_instance
--/
