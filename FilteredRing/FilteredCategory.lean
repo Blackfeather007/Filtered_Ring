@@ -20,10 +20,6 @@ structure FilteredModuleCat where
   fil_lt : ι → σMod
   [instIsModuleFiltration : IsModuleFiltration F F_lt fil fil_lt]
 
-
-
-
-
 namespace FilteredModuleCat
 
 attribute [instance] FilteredModuleCat.instSetLike FilteredModuleCat.instAddSubgroupClass FilteredModuleCat.instIsModuleFiltration
@@ -81,9 +77,6 @@ instance {M N : FilteredModuleCat F F_lt} [AddSubgroupClass N.σMod N.Mod.carrie
 
 end FilteredModuleCat
 
-
-
-
 namespace Induced
 
 variable (M : ModuleCat.{w, u} R) [IsRingFiltration F F_lt]
@@ -93,7 +86,6 @@ class IsInducedFiltration {σMod : Type*}
     (F'_lt : outParam <| ι → σMod) extends IsFiltration F' F'_lt : Prop where
   containsF : ∀ i : ι, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' i
   closureF : ∀ s : σMod, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ s → F' i ≤ s
-
 
 section
 
@@ -155,7 +147,6 @@ instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
 
 end AddSubgroup
 
-
 namespace Submodule
 
 variable {R : Type u} [CommRing R] {σ : Type o} [SetLike σ R] (F : ι → σ) (F_lt : outParam <| ι → σ)
@@ -189,10 +180,7 @@ instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
 
 end Submodule
 
-
 end Induced
-
-
 
 
 namespace DeducedFunctor
@@ -206,28 +194,75 @@ def F' {M : ModuleCat R} :=
 def F'_lt {M : ModuleCat R} :=
   fun i ↦ AddSubgroup.closure {x | ∃ r ∈ F_lt i, ∃ a : M.1, x = r • a}
 
-instance {M : ModuleCat R} : IsFiltration (F' F) (F'_lt F) (σ := (AddSubgroup M.1)) where
+instance {M : ModuleCat R} : IsFiltration (F' F) (F'_lt F_lt) (σ := (AddSubgroup M.1)) where
   mono {i j} hij := by
+    refine AddSubgroup.closure_mono ?_
+    intro x hx
+    rw [Set.mem_setOf_eq] at hx ⊢
+    have mono := IsFiltration.mono hij (F := F) (F_lt := F_lt) (A := R)
+    obtain ⟨r, hr⟩ := hx
+    exact ⟨r, ⟨mono hr.1, hr.2⟩⟩
+  is_le {j i} hij := by
+    refine AddSubgroup.closure_mono ?_
+    intro x hx
+    rw [Set.mem_setOf_eq] at hx ⊢
+    have mono := IsFiltration.is_le hij (F := F) (F_lt := F_lt) (A := R)
+    obtain ⟨r, hr⟩ := hx
+    exact ⟨r, ⟨mono hr.1, hr.2⟩⟩
+  is_sup B j hj := by
+    unfold F'_lt
+    unfold F' at hj
+    have lt_j := IsFiltration.is_sup (F := F) (F_lt := F_lt) (A := R) (F_lt j) j
+    --   fun i hij ↦ IsFiltration.mono (le_of_lt hij)
+    apply (AddSubgroup.closure_le B).2
+    intro x hx
+    simp at hx
+    obtain ⟨r, ⟨hr1, ⟨a, rfl⟩⟩⟩ := hx
+    have : ∀ i < j, {x | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ B.carrier := by
+      intro i hij
+      replace hj := hj i hij
+      exact (AddSubgroup.closure_le B).1 hj
+    by_cases hpos : ∃ i, i < j
+    · obtain ⟨i, hi⟩ := hpos
+      replace this := this i hi
+      intro x hx
+      rw [Set.mem_setOf_eq] at hx
+      obtain ⟨r, hr⟩ := hx
+      have : F_lt j ≤ F i := by
+
+    let test := {r : R | ∃ a : M, r • a ∈ B}
+    have := IsFiltration.is_sup (F := F) (F_lt := F_lt) (A := R) (F j) j
+    intro x hx
+    rw [Set.mem_setOf_eq] at hx
+    obtain ⟨r, ⟨hr1, ⟨a, hr2⟩⟩⟩ := hx
+    -- suffices AddSubgroup.closure {x | ∃ r ∈ F j, ∃ a, x = r • a} ≤ B from by
+    --   have sub : {x : M.1 | ∃ r ∈ F_lt j, ∃ a, x = r • a} ⊆ {x | ∃ r ∈ F j, ∃ a, x = r • a} := by
+    --     intro x hx
+    --     rw [Set.mem_setOf_eq] at hx ⊢
+    --     obtain ⟨r, hr⟩ := hx
+    --     exact ⟨r, ⟨lt_j hr.1, hr.2⟩⟩
+    --   have le := AddSubgroup.closure_mono sub
+    --   exact le_trans le this
 
     sorry
-  is_le := sorry
-  is_sup := sorry
+
+instance {M : ModuleCat R} : Induced.IsInducedFiltration F M (F' F) (F'_lt F_lt) where
+  containsF := sorry
+  closureF := sorry
 
 def DeducedFunctor : CategoryTheory.Functor (ModuleCat.{w, u} R)
   (FilteredModuleCat F F_lt) where
-    obj M := by
-      set fil :=
-        fun i ↦ AddSubgroup.closure {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a}
-      set fil_lt :=
-        fun i ↦ AddSubgroup.closure {x | ∃ r ∈ F_lt i, ∃ a : M.1, x = r • a}
-      let _ : Induced.IsInducedFiltration F M fil fil_lt := sorry
-      let _ : IsModuleFiltration F F_lt fil fil_lt :=
-        Induced.ModuleFiltration F F_lt M fil fil_lt
-      refine FilteredModuleCat.mk M fil fil_lt
+    obj M := {
+      Mod := M
+      σMod := AddSubgroup M
+      fil := F' F
+      fil_lt := F'_lt F_lt
+    }
     map := fun {X Y} hom ↦ ⟨hom, by
-      rintro i p ⟨x, ⟨hx1, hx2⟩⟩
-      set toAddGP := (closure {x : Y.1 | ∃ r ∈ F i, ∃ a, x = r • a}).comap hom.toAddMonoidHom
-      rw [AddSubmonoidClass.coe_, .range_coe_, Set.mem_setOf_eq] at *
+      rintro i p
+      simp at p ⊢
+      set toAddGP := (AddSubgroup.closure {x : Y.1 | ∃ r ∈ F i, ∃ a, x = r • a}).comap hom.toAddMonoidHom
+      -- rw [AddSubgroupClass.coe_, .range_coe_, Set.mem_setOf_eq] at *
       suffices x ∈ toAddGP from hx2.symm ▸ this
       suffices closure {x : X.1 | ∃ r ∈ F i, ∃ a, x = r • a} ≤ toAddGP from this hx1
       suffices {x : X.1 | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ hom ⁻¹' {x : Y.1 | ∃ r ∈ F i, ∃ a, x = r • a}
