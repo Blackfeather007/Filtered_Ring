@@ -595,6 +595,10 @@ instance [hasGMul F F_lt] : DirectSum.Gmodule (GradedPiece F F_lt) (GradedPiece 
   add_smul := GradedPiece.add_smul F F_lt FM FM_lt
   zero_smul := GradedPiece.zero_smul F F_lt FM FM_lt
 
+open DirectSum in
+instance [hasGMul F F_lt] [DecidableEq ι] [DecidableEq ιM] : Module (⨁ i, GradedPiece F F_lt i) (⨁ i, GradedPiece FM FM_lt i) :=
+  Gmodule.module (GradedPiece F F_lt) (GradedPiece FM FM_lt)
+
 end gradedSMul
 
 end hasGSMul
