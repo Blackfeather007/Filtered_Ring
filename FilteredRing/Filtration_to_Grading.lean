@@ -351,20 +351,24 @@ lemma GradedPiece.intCast_negSucc_ofNat (n : ℕ) : intCast F F_lt (Int.negSucc 
   rfl
 
 /-# Main Result-/
-instance : DirectSum.GSemiring (GradedPiece F F_lt) where
-  mul_zero := GradedPiece.mul_zero F F_lt
-  zero_mul := GradedPiece.zero_mul F F_lt
-  mul_add := GradedPiece.mul_add F F_lt
-  add_mul := GradedPiece.add_mul F F_lt
+instance : GradedMonoid.GMonoid (GradedPiece F F_lt) where
   one_mul := fun ⟨i, a⟩ => Sigma.ext (by simp) (GradedPiece.HEq_one_mul F F_lt a)
   mul_one := fun ⟨i, a⟩ => Sigma.ext (by simp) (GradedPiece.HEq_mul_one F F_lt a)
   mul_assoc := fun ⟨i, a⟩ ⟨j, b⟩ ⟨k, c⟩ => Sigma.ext (add_assoc i j k) (GradedPiece.HEq_mul_assoc F F_lt a b c)
   gnpow := GradedPiece.gnpow F F_lt
   gnpow_zero' := fun ⟨i, a⟩ ↦ Sigma.ext (zero_nsmul i) (GradedPiece.gnpow_zero' F F_lt a)
   gnpow_succ' :=  fun n ⟨i, a⟩ ↦ Sigma.ext (succ_nsmul i n) (GradedPiece.gnpow_succ' F F_lt n a)
+
+/-# Main Result-/
+instance : DirectSum.GSemiring (GradedPiece F F_lt) :=
+{ GradedMul.instGMonoidGradedPiece F F_lt with
+  mul_zero := GradedPiece.mul_zero F F_lt
+  zero_mul := GradedPiece.zero_mul F F_lt
+  mul_add := GradedPiece.mul_add F F_lt
+  add_mul := GradedPiece.add_mul F F_lt
   natCast := GradedPiece.natCast F F_lt
   natCast_zero := GradedPiece.natCast_zero F F_lt
-  natCast_succ := GradedPiece.natCast_succ F F_lt
+  natCast_succ := GradedPiece.natCast_succ F F_lt }
 
 /-# Main Result-/
 instance : DirectSum.GRing (GradedPiece F F_lt) where
@@ -388,7 +392,7 @@ variable {R : Type u} [Ring R] {σ : Type*} [SetLike σ R]
 
 variable (F : ι → σ) (F_lt : outParam <| ι → σ)
 
-variable {M : Type*} {ιM : Type*} [OrderedCancelAddCommMonoid ιM] [VAdd ι ιM] {σM : Type*} [SetLike σM M]
+variable {M : Type*} {ιM : Type*} [OrderedCancelAddCommMonoid ιM] [AddAction ι ιM] {σM : Type*} [SetLike σM M]
 
 section hasGSMul
 
@@ -406,7 +410,8 @@ lemma hasGSMul_int [AddCommMonoid M] [Module R M] (F : ℤ → σ) (mono : ∀ {
   smul_F_lt_mem := fun {i j x y} hx hy ↦ by
     simpa [add_sub_assoc i j 1] using IsModuleFiltration.smul_mem hx hy}
 
-variable [AddSubgroupClass σ R] [AddCommGroup M] [Module R M] [AddSubgroupClass σM M] [IsOrderedCancelVAdd ι ιM]
+variable [AddSubgroupClass σ R] [AddCommGroup M] [Module R M] [AddSubgroupClass σM M]
+  [IsOrderedCancelVAdd ι ιM]
 
 lemma hasGSMul_AddSubgroup (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [IsRingFiltration F F_lt]
     (FM : ιM → AddSubgroup M) (FM_lt : outParam <| ιM → AddSubgroup M) [IsModuleFiltration F F_lt FM FM_lt] : hasGSMul F F_lt FM FM_lt where
@@ -467,13 +472,103 @@ instance hSMul {i : ι} {j : ιM}:
 section HEq
 
 omit [IsOrderedCancelVAdd ι ιM] in
-lemma GradedPiece.mk_mul {i : ι} {j : ιM} (x : (AddSubgroupClass.subtype (F i)).range) (y : (AddSubgroupClass.subtype (FM j)).range) : mk F F_lt x • mk FM FM_lt y = mk FM FM_lt (x • y) := rfl
+lemma GradedPiece.mk_smul {i : ι} {j : ιM} (x : (AddSubgroupClass.subtype (F i)).range) (y : (AddSubgroupClass.subtype (FM j)).range) : mk F F_lt x • mk FM FM_lt y = mk FM FM_lt (x • y) := rfl
 
 omit [IsOrderedCancelVAdd ι ιM] in
-lemma gradedMul_def {i : ι} {j : ιM} (x : (AddSubgroupClass.subtype (F i)).range) (y : (AddSubgroupClass.subtype (FM j)).range) :
+lemma gradedSMul_def {i : ι} {j : ιM} (x : (AddSubgroupClass.subtype (F i)).range) (y : (AddSubgroupClass.subtype (FM j)).range) :
   GradedPiece.mk FM FM_lt (IsModuleFiltration.hSMul F F_lt FM FM_lt i j x y) = hasGSMul.gradedSMul F F_lt FM FM_lt (GradedPiece.mk F F_lt x) (GradedPiece.mk FM FM_lt y) := rfl
 
 end HEq
+
+namespace gradedSMul
+
+open GradedPiece
+
+instance : GradedMonoid.GSMul (GradedPiece F F_lt) (GradedPiece FM FM_lt) where
+  smul := hasGSMul.gradedSMul F F_lt FM FM_lt
+
+section
+
+omit [IsOrderedCancelVAdd ι ιM]
+
+lemma GradedPiece.HEq_one_smul {i : ιM} (x : GradedPiece FM FM_lt i) : HEq ((1 : GradedPiece F F_lt 0) • x) x := by
+  let rx := Quotient.out' x
+  let r1 : (AddSubgroupClass.subtype (F 0)).range := ⟨1, AddMonoidHom.mem_range.mpr (by use 1; rfl)⟩
+  have : r1.1 • rx.1 = rx.1 := MulAction.one_smul rx.1
+  apply HEq_eq_mk_eq FM FM_lt (zero_vadd ι i) this
+  convert (gradedSMul_def F F_lt FM FM_lt r1 rx).symm
+  · exact (Quotient.out_eq' x).symm
+  · exact (Quotient.out_eq' x).symm
+  · rcases rx.2 with ⟨rx', hrx'⟩
+    simp [← hrx']
+
+theorem GradedPiece.smul_add {i : ι} {j : ιM} (a : GradedPiece F F_lt i) (b c : GradedPiece FM FM_lt j) :
+    a • (b + c) = a • b + a • c := by
+  induction a using Quotient.ind'
+  induction b using Quotient.ind'
+  induction c using Quotient.ind'
+  show Quotient.mk'' _ = Quotient.mk'' _
+  rw [Quotient.eq'']
+  simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
+  rename_i a1 a2 a3
+  have : -(a1 • (a2 + a3)).1 + ((a1 • a2).1 + (a1 • a3).1) = 0 := by
+    have : -(a1.1 • (a2.1 + a3.1)) + (a1.1 • a2.1 + a1.1 • a3.1) = 0 := by
+      simp only [_root_.smul_add, neg_add_rev]
+      abel
+    rw [← this]
+    rfl
+  rw [this]
+  exact zero_mem (FM_lt (i +ᵥ j))
+
+theorem GradedPiece.add_mul {i : ι} {j : ιM} (a b : GradedPiece F F_lt i) (c : GradedPiece FM FM_lt j) :
+    (a + b) • c = a • c + b • c := by
+  induction a using Quotient.ind'
+  induction b using Quotient.ind'
+  induction c using Quotient.ind'
+  show Quotient.mk'' _ = Quotient.mk'' _
+  rw [Quotient.eq'']
+  simp [QuotientAddGroup.leftRel_apply, AddSubgroup.mem_addSubgroupOf]
+  rename_i a1 a2 a3
+  have : -((a1 + a2) • a3).1 + ((a1 • a3).1 + (a2 • a3).1) = 0 := by
+    have : -((a1.1 + a2.1) • a3.1) + (a1.1 • a3.1 + a2.1 • a3.1) = 0 := by
+      simp only [add_smul, neg_add_rev]
+      abel
+    rw [← this]
+    rfl
+  rw [this]
+  exact zero_mem (FM_lt (i +ᵥ j))
+
+lemma GradedPiece.HEq_mul_assoc [hasGMul F F_lt] {i j : ι} {k : ιM}
+    (a : GradedPiece F F_lt i) (b : GradedPiece F F_lt j) (c : GradedPiece FM FM_lt k) :
+    HEq ((a * b) • c) (a • (b • c)) := by
+  let ra := Quotient.out' a
+  let rb := Quotient.out' b
+  let rc := Quotient.out' c
+  apply HEq_eq_mk_eq FM FM_lt (add_vadd i j k) (mul_smul ra.1 rb.1 rc.1)
+  · show (a * b) • c = ⟦(ra * rb) • rc⟧
+    convert (gradedSMul_def F F_lt FM FM_lt (ra * rb) rc).symm
+    · convert (gradedMul_def F F_lt ra rb).symm
+      · exact (Quotient.out_eq' a).symm
+      · exact (Quotient.out_eq' b).symm
+    · exact (Quotient.out_eq' c).symm
+  · show a • (b • c) = ⟦ra • (rb • rc)⟧
+    convert (gradedSMul_def F F_lt FM FM_lt ra (rb • rc)).symm
+    · exact (Quotient.out_eq' a).symm
+    · convert (gradedSMul_def F F_lt FM FM_lt rb rc).symm
+      · exact (Quotient.out_eq' b).symm
+      · exact (Quotient.out_eq' c).symm
+
+end
+
+instance [hasGMul F F_lt] : DirectSum.Gmodule (GradedPiece F F_lt) (GradedPiece FM FM_lt) where
+  one_smul := sorry
+  mul_smul := sorry
+  smul_add := sorry
+  smul_zero := sorry
+  add_smul := sorry
+  zero_smul := sorry
+
+end gradedSMul
 
 end hasGSMul
 
