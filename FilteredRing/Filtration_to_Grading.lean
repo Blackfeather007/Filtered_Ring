@@ -8,13 +8,60 @@ section GeneralGraded
 
 variable {A : Type u} [AddCommGroup A] {σ : Type*} [SetLike σ A] [AddSubgroupClass σ A]
 
-variable (F : ι → σ) (F_lt : outParam <| ι → σ) [IsFiltration F F_lt]
+variable (F : ι → σ) (F_lt : outParam <| ι → σ)
 
 instance [IsFiltration F F_lt] (i : ι) : Setoid (AddSubgroupClass.subtype (F i)).range :=
   QuotientAddGroup.leftRel ((AddSubgroupClass.subtype (F_lt i)).range.addSubgroupOf (AddSubgroupClass.subtype (F i)).range)
 
 abbrev GradedPiece (i : ι) := (AddSubgroupClass.subtype (F i)).range ⧸
     (AddSubgroupClass.subtype (F_lt i)).range.addSubgroupOf (AddSubgroupClass.subtype (F i)).range
+
+namespace GradedPiece
+
+def mk {i : ι} (x : (AddSubgroupClass.subtype (F i)).range) : GradedPiece F F_lt i := ⟦x⟧
+
+section
+
+omit [OrderedCancelAddCommMonoid ι]
+
+@[simp]
+lemma mk_eq {i : ι} (x : (AddSubgroupClass.subtype (F i)).range) : mk F F_lt x = ⟦x⟧ := rfl
+
+lemma GradedPiece.mk_zero {i : ι} : mk F F_lt 0  = (0 : GradedPiece F F_lt i) := rfl
+
+lemma HEq_rfl {i j : ι} {r : A} (h : i = j)
+    (hi : r ∈ (AddSubgroupClass.subtype (F i)).range) (hj : r ∈ (AddSubgroupClass.subtype (F j)).range) :
+    HEq (mk F F_lt ⟨r, hi⟩) (mk F F_lt ⟨r, hj⟩) :=
+  h ▸ HEq.rfl
+
+theorem HEq_eq_mk_eq {i j : ι} {x : GradedPiece F F_lt i} {y : GradedPiece F F_lt j} {r s : A}
+    (h : i = j) (e : r = s) (hi : r ∈ (AddSubgroupClass.subtype (F i)).range) (hj : s ∈ (AddSubgroupClass.subtype (F j)).range)
+    (hx : x = mk F F_lt ⟨r, hi⟩) (hy : y = mk F F_lt ⟨s, hj⟩) : HEq x y := by
+  rw [hx, hy]
+  subst e
+  exact HEq_rfl F F_lt h hi hj
+
+-- Will be easier to use if HMul intances for F i is added and some other refactor is done.
+theorem HEq_eq_mk_coe_eq {i j : ι} {x : GradedPiece F F_lt i} {y : GradedPiece F F_lt j}
+    (r : (AddSubgroupClass.subtype (F i)).range) (s : (AddSubgroupClass.subtype (F j)).range)
+    (h : i = j) (e : (r : A) = (s : A)) (hx : x = mk F F_lt r) (hy : y = mk F F_lt s) : HEq x y :=
+  HEq_eq_mk_eq F F_lt h e r.2 (e ▸ s.2) hx hy
+
+end
+
+variable [IsFiltration F F_lt]
+
+omit [OrderedCancelAddCommMonoid ι] in
+@[simp]
+lemma mk_congr {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) (h : x = y) : mk F F_lt x = mk F F_lt y := congrArg (mk F F_lt) h
+
+@[simp]
+lemma sound {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) : x ≈ y → mk F F_lt x = mk F F_lt y := Quotient.sound
+
+@[simp]
+lemma exact {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) : mk F F_lt x = mk F F_lt y → x ≈ y := Quotient.exact
+
+end GradedPiece
 
 end GeneralGraded
 
@@ -100,50 +147,9 @@ instance hMul {i j : ι} :
 
 namespace GradedPiece
 
-def mk {i : ι} (x : (AddSubgroupClass.subtype (F i)).range) : GradedPiece F F_lt i := ⟦x⟧
-
-omit [OrderedCancelAddCommMonoid ι] in
-@[simp]
-lemma mk_congr {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) (h : x = y) : mk F F_lt x = mk F F_lt y := congrArg (mk F F_lt) h
-
-@[simp]
-lemma sound {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) : x ≈ y → mk F F_lt x = mk F F_lt y := Quotient.sound
-
-@[simp]
-lemma exact {i : ι} (x y : (AddSubgroupClass.subtype (F i)).range) : mk F F_lt x = mk F F_lt y → x ≈ y := Quotient.exact
-
 section HEq
 
 lemma GradedPiece.mk_mul {i j : ι} (x : (AddSubgroupClass.subtype (F i)).range) (y : (AddSubgroupClass.subtype (F j)).range) : mk F F_lt x * mk F F_lt y = mk F F_lt (x * y) := rfl
-
-section
-
-omit [OrderedCancelAddCommMonoid ι] [hasGMul F F_lt]
-
-@[simp]
-lemma mk_eq {i : ι} (x : (AddSubgroupClass.subtype (F i)).range) : mk F F_lt x = ⟦x⟧ := rfl
-
-lemma GradedPiece.mk_zero {i : ι} : mk F F_lt 0  = (0 : GradedPiece F F_lt i) := rfl
-
-lemma HEq_rfl {i j : ι} {r : R} (h : i = j)
-    (hi : r ∈ (AddSubgroupClass.subtype (F i)).range) (hj : r ∈ (AddSubgroupClass.subtype (F j)).range) :
-    HEq (mk F F_lt ⟨r, hi⟩) (mk F F_lt ⟨r, hj⟩) :=
-  h ▸ HEq.rfl
-
-theorem HEq_eq_mk_eq {i j : ι} {x : GradedPiece F F_lt i} {y : GradedPiece F F_lt j} {r s : R}
-    (h : i = j) (e : r = s) (hi : r ∈ (AddSubgroupClass.subtype (F i)).range) (hj : s ∈ (AddSubgroupClass.subtype (F j)).range)
-    (hx : x = mk F F_lt ⟨r, hi⟩) (hy : y = mk F F_lt ⟨s, hj⟩) : HEq x y := by
-  rw [hx, hy]
-  subst e
-  exact HEq_rfl F F_lt h hi hj
-
--- Will be easier to use if HMul intances for F i is added and some other refactor is done.
-theorem HEq_eq_mk_coe_eq {i j : ι} {x : GradedPiece F F_lt i} {y : GradedPiece F F_lt j}
-    (r : (AddSubgroupClass.subtype (F i)).range) (s : (AddSubgroupClass.subtype (F j)).range)
-    (h : i = j) (e : (r : R) = (s : R)) (hx : x = mk F F_lt r) (hy : y = mk F F_lt s) : HEq x y :=
-  HEq_eq_mk_eq F F_lt h e r.2 (e ▸ s.2) hx hy
-
-end
 
 lemma gradedMul_def {i j : ι} (x : (AddSubgroupClass.subtype (F i)).range) (y : (AddSubgroupClass.subtype (F j)).range) :
   mk F F_lt (Filtration.hMul F F_lt i j x y) = gradedMul F F_lt (mk F F_lt x) (mk F F_lt y) := rfl
@@ -383,6 +389,8 @@ variable (F : ι → σ) (F_lt : outParam <| ι → σ)
 
 variable {M : Type*} {ιM : Type*} [OrderedAddCommMonoid ιM] [VAdd ι ιM] {σM : Type*} [SetLike σM M]
 
+section hasGSMul
+
 class hasGSMul [AddCommMonoid M] [Module R M] [isfil : IsRingFiltration F F_lt] (FM : ιM → σM) (FM_lt : outParam <| ιM → σM) extends IsModuleFiltration F F_lt FM FM_lt : Prop where
   F_lt_smul_mem {i : ι} {j : ιM} {x y} : x ∈ F_lt i → y ∈ FM j → x • y ∈ FM_lt (i +ᵥ j)
   smul_F_lt_mem {i : ι} {j : ιM} {x y} : x ∈ F i → y ∈ FM_lt j → x • y ∈ FM_lt (i +ᵥ j)
@@ -419,5 +427,7 @@ lemma hasGSMul_AddSubgroup (F : ι → AddSubgroup R) (F_lt : outParam <| ι →
       neg_mem' := by simp only [Set.mem_setOf_eq, smul_neg, neg_mem_iff, imp_self, implies_true]}
     apply IsFiltration.is_sup (F := FM) (F_lt := FM_lt) S j
       (fun k hk z hz ↦ IsFiltration.is_le (VAdd.vadd_lt_vadd_of_le_of_lt (Preorder.le_refl i) hk) (IsModuleFiltration.smul_mem hx hz)) hy
+
+end hasGSMul
 
 end GradedModule
