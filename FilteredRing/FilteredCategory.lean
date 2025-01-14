@@ -98,9 +98,10 @@ class IsInducedFiltration {σMod : Type*}
 section
 
 variable {σMod : Type*} [SetLike σMod M.1] [AddSubgroupClass σMod M.1] (F' : ι → σMod)
-    (F'_lt : outParam <| ι → σMod)  [hfil : IsInducedFiltration F M F' F'_lt]
+    (F'_lt : outParam <| ι → σMod)
 
-instance closure_le : F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K where
+instance closure_le [hfil : IsInducedFiltration F M F' F'_lt] :
+    F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K where
   mp := by
     intro h _ ⟨r, r_in, m, eq⟩
     have : r • m ∈ F' i := by
@@ -110,24 +111,17 @@ instance closure_le : F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • 
     exact Set.mem_of_eq_of_mem eq (h this)
   mpr := fun h ↦ IsInducedFiltration.closureF K h
 
+instance mem_closure [hfil : IsInducedFiltration F M F' F'_lt] :
+    x ∈ F' i ↔ ∀ (K : σMod), {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ (K : Set M) → x ∈ K :=
+  ⟨fun hi K hK ↦ IsInducedFiltration.closureF (self := hfil) K (i := i) hK hi,
+  fun h ↦ h (F' i) <| IsInducedFiltration.containsF i (self := hfil)⟩
+
 end
 
 namespace AddSubgroup
 
 variable (F' : ι → AddSubgroup M.1) (F'_lt : outParam <| ι → AddSubgroup M.1)
   [hfil : IsInducedFiltration F M F' F'_lt]
-
-
-include hfil in
-theorem mem_closure : x ∈ F' i ↔ ∀ (K : AddSubgroup M),
-    {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K → x ∈ K := by
-  constructor
-  · intro hi K hK
-    have := IsInducedFiltration.closureF (self := hfil) K (i := i) hK
-    exact this hi
-  · intro h
-    have := IsInducedFiltration.containsF i (self := hfil)
-    exact h (F' i) this
 
 private def proofGP (i j : ι) (x : R) : AddSubgroup M.1 := {
   carrier := {z | x • z ∈ F' (j + i)}
@@ -167,12 +161,6 @@ namespace Submodule
 variable {R : Type u} [CommRing R] {σ : Type o} [SetLike σ R] (F : ι → σ) (F_lt : outParam <| ι → σ)
   [IsRingFiltration F F_lt] (M : ModuleCat.{w, u} R) (F' : ι → Submodule R M.1)
   (F'_lt : outParam <| ι → Submodule R M.1) [hfil : IsInducedFiltration F M F' F'_lt]
-
-
-include hfil in
-theorem mem_closure : x ∈ F' i ↔ ∀ (K : Submodule R M), {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K →
-  x ∈ K := ⟨fun hi K hK ↦ IsInducedFiltration.closureF (self := hfil) K (i := i) hK hi,
-    fun h ↦ h (F' i) <| IsInducedFiltration.containsF i (self := hfil)⟩
 
 private def proofMOD (i j : ι) (x : R) : Submodule R M.1 := {
   carrier := {z | x • z ∈ F' (j + i)}
