@@ -520,7 +520,7 @@ theorem GradedPiece.smul_add {i : ι} {j : ιM} (a : GradedPiece F F_lt i) (b c 
   rw [this]
   exact zero_mem (FM_lt (i +ᵥ j))
 
-theorem GradedPiece.add_mul {i : ι} {j : ιM} (a b : GradedPiece F F_lt i) (c : GradedPiece FM FM_lt j) :
+theorem GradedPiece.add_smul {i : ι} {j : ιM} (a b : GradedPiece F F_lt i) (c : GradedPiece FM FM_lt j) :
     (a + b) • c = a • c + b • c := by
   induction a using Quotient.ind'
   induction b using Quotient.ind'
@@ -531,14 +531,14 @@ theorem GradedPiece.add_mul {i : ι} {j : ιM} (a b : GradedPiece F F_lt i) (c :
   rename_i a1 a2 a3
   have : -((a1 + a2) • a3).1 + ((a1 • a3).1 + (a2 • a3).1) = 0 := by
     have : -((a1.1 + a2.1) • a3.1) + (a1.1 • a3.1 + a2.1 • a3.1) = 0 := by
-      simp only [add_smul, neg_add_rev]
+      simp only [_root_.add_smul, neg_add_rev]
       abel
     rw [← this]
     rfl
   rw [this]
   exact zero_mem (FM_lt (i +ᵥ j))
 
-theorem GradedPiece.mul_zero {i : ι} {j : ιM} (a : GradedPiece F F_lt i) : a • (0 : GradedPiece FM FM_lt j) = (0 : GradedPiece FM FM_lt (i +ᵥ j)) := by
+theorem GradedPiece.smul_zero {i : ι} {j : ιM} (a : GradedPiece F F_lt i) : a • (0 : GradedPiece FM FM_lt j) = (0 : GradedPiece FM FM_lt (i +ᵥ j)) := by
   rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
   induction a using Quotient.ind'
   show Quotient.mk'' _ = Quotient.mk'' _
@@ -546,9 +546,9 @@ theorem GradedPiece.mul_zero {i : ι} {j : ιM} (a : GradedPiece F F_lt i) : a �
   simp only [ZeroMemClass.coe_zero, mul_zero, QuotientAddGroup.leftRel_apply, add_zero, neg_mem_iff]
   use 0
   simpa only [AddSubgroupClass.coeSubtype, ZeroMemClass.coe_zero, AddSubgroup.coeSubtype]
-    using (smul_zero _).symm
+    using (_root_.smul_zero _).symm
 
-theorem GradedPiece.zero_mul  {i : ι} {j : ιM} (a : GradedPiece FM FM_lt j) : (0 : GradedPiece F F_lt i) • a = (0 : GradedPiece FM FM_lt (i +ᵥ j)) := by
+theorem GradedPiece.zero_smul  {i : ι} {j : ιM} (a : GradedPiece FM FM_lt j) : (0 : GradedPiece F F_lt i) • a = (0 : GradedPiece FM FM_lt (i +ᵥ j)) := by
   rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
   induction a using Quotient.ind'
   change Quotient.mk'' _ = Quotient.mk'' _
@@ -556,7 +556,7 @@ theorem GradedPiece.zero_mul  {i : ι} {j : ιM} (a : GradedPiece FM FM_lt j) : 
   simp only [ZeroMemClass.coe_zero, zero_mul, QuotientAddGroup.leftRel_apply, add_zero, neg_mem_iff]
   use 0
   simpa only [AddSubgroupClass.coeSubtype, ZeroMemClass.coe_zero, AddSubgroup.coeSubtype]
-    using (zero_smul _ _).symm
+    using (_root_.zero_smul _ _).symm
 
 lemma GradedPiece.HEq_mul_smul [hasGMul F F_lt] {i j : ι} {k : ιM}
     (a : GradedPiece F F_lt i) (b : GradedPiece F F_lt j) (c : GradedPiece FM FM_lt k) :
@@ -580,13 +580,20 @@ lemma GradedPiece.HEq_mul_smul [hasGMul F F_lt] {i j : ι} {k : ιM}
 
 end
 
+omit [IsOrderedCancelVAdd ι ιM] in
+@[simp]
+lemma fst_smul (a : GradedMonoid (GradedPiece F F_lt)) (b : GradedMonoid (GradedPiece FM FM_lt)) :
+    (a • b).fst = a.fst +ᵥ b.fst := rfl
+
 instance [hasGMul F F_lt] : DirectSum.Gmodule (GradedPiece F F_lt) (GradedPiece FM FM_lt) where
-  one_smul := sorry
-  mul_smul := sorry
-  smul_add := sorry
-  smul_zero := sorry
-  add_smul := sorry
-  zero_smul := sorry
+  one_smul := fun ⟨i, a⟩ => Sigma.ext (by simp)
+    (GradedPiece.HEq_one_smul F F_lt FM FM_lt a)
+  mul_smul := fun ⟨i, a⟩ ⟨j, b⟩ ⟨k, c⟩ => Sigma.ext (by simp [add_vadd i j k])
+    (GradedPiece.HEq_mul_smul F F_lt FM FM_lt a b c)
+  smul_add := GradedPiece.smul_add F F_lt FM FM_lt
+  smul_zero := GradedPiece.smul_zero F F_lt FM FM_lt
+  add_smul := GradedPiece.add_smul F F_lt FM FM_lt
+  zero_smul := GradedPiece.zero_smul F F_lt FM FM_lt
 
 end gradedSMul
 
