@@ -86,10 +86,73 @@ namespace DeducedFunctor
 
 variable (M : ModuleCat.{w, u} R) (σMod : Type*)
   [SetLike σMod M.1] [AddSubgroupClass σMod M.1]
-  (hclosure : ∀ i : ι, ∃ sub : σMod, Set.range (AddSubgroupClass.subtype sub) =
-    AddSubgroup.closure {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a})
-  (hclosure' : ∀ i : ι, ∃ sub : σMod, Set.range (AddSubgroupClass.subtype sub) =
-    AddSubgroup.closure {x | ∃ r ∈ F_lt i, ∃ a : M.1, x = r • a})
+  (F' : ι → σMod) (F'_lt : outParam <| ι → σMod) [IsRingFiltration F F_lt]
+
+class InducedFilteredModule extends IsRingFiltration F F_lt : Prop where
+  containsF : ∀ i : ι, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' i
+  closureF : ∀ s : σMod, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ s → F' i ≤ s
+  -- containsFlt : ∀ i : ι, {x | ∃ r ∈ F_lt i, ∃ a : M.1, x = r • a} ⊆ F'_lt i
+  -- closureFlt : ∀ s : σMod, {x | ∃ r ∈ F_lt i, ∃ a : M.1, x = r • a} ⊆ s → F'_lt i ≤ s
+
+theorem induceFil [InducedFilteredModule F F_lt M σMod F'] : IsFiltration F' F'_lt where
+  mono {i j} hij := by
+    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' j from
+      InducedFilteredModule.closureF (F' j) this (F_lt := F_lt) (F' := F')
+    suffices {x : M.1 | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ {x | ∃ r ∈ F j, ∃ a, x = r • a} from
+      Set.Subset.trans this <|
+        InducedFilteredModule.containsF j (F_lt := F_lt) (F' := F') (F := F) (M := M)
+    intro x hx
+    rw [Set.mem_setOf_eq] at hx ⊢
+    obtain ⟨r, ⟨hr1, ⟨a, hr2⟩⟩⟩ := hx
+    use r
+    constructor
+    · exact (IsFiltration.mono hij (F := F) (A := R)) hr1
+    · exact ⟨a, hr2⟩
+  is_le {j i} hij := by
+    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F'_lt j from
+      InducedFilteredModule.closureF (F'_lt j) this (F_lt := F_lt) (F' := F')
+
+  is_sup := sorry
+
+theorem induced (h : InducedFilteredModule F F_lt M σMod F') :
+    IsModuleFiltration F F_lt F' F'_lt where
+  mono {i j} hij := by
+    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' j from
+      InducedFilteredModule.closureF (F' j) this (F_lt := F_lt) (F' := F')
+    suffices {x : M.1 | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ {x | ∃ r ∈ F j, ∃ a, x = r • a} from
+      Set.Subset.trans this <|
+        InducedFilteredModule.containsF j (F_lt := F_lt) (F' := F') (F := F) (M := M)
+    intro x hx
+    rw [Set.mem_setOf_eq] at hx ⊢
+    obtain ⟨r, ⟨hr1, ⟨a, hr2⟩⟩⟩ := hx
+    use r
+    constructor
+    · exact (IsFiltration.mono hij (F := F) (A := R)) hr1
+    · exact ⟨a, hr2⟩
+  is_le {j i} hij := by
+    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F'_lt j from
+      InducedFilteredModule.closureF (F'_lt j) this (F_lt := F_lt) (F' := F')
+    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ {x | ∃ r ∈ F_lt j, ∃ a : M.1, x = r • a} from
+      Set.Subset.trans this <|
+        InducedFilteredModule.containsFlt j (F'_lt := F'_lt) (F := F) (M := M) (F_lt := F_lt) (F' := F')
+    intro x hx
+    rw [Set.mem_setOf_eq] at hx ⊢
+    obtain ⟨r, ⟨hr1, ⟨a, hr2⟩⟩⟩ := hx
+    use r
+    constructor
+    · exact (IsFiltration.is_le hij (F := F) (A := R)) hr1
+    · exact ⟨a, hr2⟩
+  is_sup := by
+    intro B j hij
+    suffices {x : M.1 | ∃ r ∈ F_lt j, ∃ a : M.1, x = r • a} ⊆ B from
+      InducedFilteredModule.closureFlt F F' B this
+    have : ∀ i < j, F' i ≤ B := by
+      intro i hji
+      replace hij := hij i hji
+      have : {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ B := by
+
+  smul_mem := sorry
+
 
 noncomputable def F' : ι → σMod := fun i ↦ Classical.choose (hclosure i)
 noncomputable def F'_lt : ι → σMod := fun i ↦ Classical.choose (hclosure' i)
@@ -105,80 +168,6 @@ private def proofGP (i j : ι) (x : R) : AddSubgroup M.1 := {
   neg_mem' := by
     simp only [Set.mem_setOf_eq, smul_neg, neg_mem_iff, imp_self, implies_true]
 }
-
-open AddSubgroup in
-theorem toFilteredModule [IsRingFiltration F F_lt] :
-  IsModuleFiltration F F_lt (F' F M σMod hclosure) (F'_lt F_lt M σMod hclosure') where
-    mono := fun {i j} hij ↦ by
-      simp only [F', closure_le]
-      rintro x hx
-      set sub1 := Classical.choose (hclosure i) with def_sub1
-      set sub2 := Classical.choose (hclosure j) with def_sub2
-      have h1 := Classical.choose_spec (hclosure i)
-      have h2 := Classical.choose_spec (hclosure j)
-      rw [← def_sub1] at h1
-      rw [← def_sub2] at h2
-      simp only [AddSubgroupClass.coeSubtype, range_coe_subtype] at h1 h2
-      replace h1 := Eq.subset h1 hx
-      have := IsFiltration.mono hij (F := F) (F_lt := F_lt) (A := R)
-      have gen_sub : {x : M.1 | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ {x : M.1 | ∃ r ∈ F j, ∃ a, x = r • a} := by
-        simp only [Set.setOf_subset_setOf, forall_exists_index, and_imp]
-        exact fun x r hr a hra ↦ ⟨r, ⟨this hr, ⟨a, hra⟩⟩⟩
-      have gen_le := closure_mono gen_sub
-      replace this : (AddSubgroup.closure {x : M.1 | ∃ r ∈ F i, ∃ a, x = r • a}).carrier ⊆ {x | x ∈ sub2} := by
-        rw [h2]; exact gen_le
-      exact this h1
-    is_le := fun {j i} hij ↦ by
-      unfold F' F'_lt
-      intro x hx
-      set sub2 := Classical.choose (hclosure' j) with def_sub2
-      have h1 := Classical.choose_spec (hclosure' i)
-      have h2 := Classical.choose_spec (hclosure' j)
-      rw [← def_sub2] at h2
-      set sub0 := Classical.choose (hclosure i) with def_sub0
-      have h0 := Classical.choose_spec (hclosure i)
-      rw [← def_sub0] at h0
-      simp only [AddSubgroupClass.coeSubtype, range_coe_subtype] at h1 h2 h0
-      replace h0 := Eq.subset h0 hx
-      have := IsFiltration.is_le hij (F := F) (F_lt := F_lt) (A := R)
-      have gen_sub : {x : M.1 | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ {x : M.1 | ∃ r ∈ F_lt j, ∃ a, x = r • a} := by
-        simp only [Set.setOf_subset_setOf, forall_exists_index, and_imp]
-        exact fun x r hr a hra ↦ ⟨r, ⟨this hr, ⟨a, hra⟩⟩⟩
-      have gen_le := closure_mono gen_sub
-      replace this : (AddSubgroup.closure {x : M.1 | ∃ r ∈ F i, ∃ a, x = r • a}).carrier ⊆ {x | x ∈ sub2} := by
-        rw [h2]; exact gen_le
-      exact this h0
-    is_sup := fun B j hij ↦ by
-      intro x hx
-      unfold F' at hij
-      unfold F'_lt at hx
-      set sub1 := Classical.choose (hclosure' j) with def_sub1
-      have h1 := Classical.choose_spec (hclosure' j)
-      rw [← def_sub1] at h1
-      simp only [AddSubgroupClass.coeSubtype, range_coe_subtype] at h1
-      replace h1 := Eq.subset h1 hx
-      have base := IsFiltration.is_sup (F := F) (F_lt := F_lt) (A := R) (F j) j
-        fun i hij ↦ IsFiltration.mono (F := F) (F_lt := F_lt) (A := R) (le_of_lt hij)
-      have gen_sub : {x : M.1 | ∃ r ∈ F_lt j, ∃ a, x = r • a} ⊆ {x : M.1 | ∃ r ∈ F j, ∃ a, x = r • a} := by
-        simp only [Set.setOf_subset_setOf, forall_exists_index, and_imp]
-        exact fun x r hr a hra ↦ ⟨r, ⟨base hr, ⟨a, hra⟩⟩⟩
-      have gen_le := closure_mono gen_sub
-      have : (AddSubgroup.closure {x : M.1 | ∃ r ∈ F_lt j, ∃ a, x = r • a}).carrier ⊆ (AddSubgroup.closure {x | ∃ r ∈ F j, ∃ a, x = r • a}).carrier := gen_le
-      replace this := this h1
-
-    smul_mem := sorry
-  -- mono := fun hij ↦ by
-  --   simp only [F', closure_le]
-  --   rintro x ⟨r, ⟨hr, ⟨a, ha⟩⟩⟩
-  --   exact mem_closure.mpr fun K hk ↦ hk <| Exists.intro r ⟨FilteredRing.mono hij hr,
-  --     Exists.intro a ha⟩
-  -- smul_mem {j i x y} hx hy := by
-  --   have : F' F m i ≤ proofGP F m i j x := by
-  --     apply closure_le.2
-  --     rintro h ⟨r', hr', ⟨a, ha⟩⟩
-  --     exact ha.symm ▸ mem_closure.mpr fun K hk ↦ hk ⟨x * r', ⟨FilteredRing.mul_mem hx hr',
-  --       ⟨a, smul_smul x r' a⟩⟩⟩
-  --   exact this hy
 
 open AddSubmonoid in
 def DeducedFunctor [IsRingFiltration F F_lt] : CategoryTheory.Functor (ModuleCat.{w, u} R)
