@@ -38,9 +38,10 @@ class hasGMul extends IsRingFiltration F F_lt : Prop where
   F_lt_mul_mem {i j : ι} {x y} : x ∈ F_lt i → y ∈ F j → x * y ∈ F_lt (i + j)
   mul_F_lt_mem {i j : ι} {x y} : x ∈ F i → y ∈ F_lt j → x * y ∈ F_lt (i + j)
 
-instance (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) (one_mem : 1 ∈ F 0)
+omit [AddSubgroupClass σ R] in
+lemma hasGMul_int (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) (one_mem : 1 ∈ F 0)
   (mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)) : hasGMul F (fun n ↦ F (n - 1)) := {
-    instIsRingFiltrationIntHSubOfNat F mono one_mem mul_mem with
+    IsRingFiltration_int F mono one_mem mul_mem with
     F_lt_mul_mem := fun h1 h2 ↦ by
       have := mul_mem h1 h2
       rwa [sub_add_eq_add_sub] at this
@@ -364,10 +365,9 @@ instance : DirectSum.GRing (GradedPiece F F_lt) where
   intCast_ofNat := GradedPiece.intCast_ofNat F F_lt
   intCast_negSucc_ofNat := GradedPiece.intCast_negSucc_ofNat F F_lt
 
-/-
+
 open DirectSum in
-instance : Ring (⨁ i, GradedPiece F F_lt i) := by infer_instance
--/
+instance [DecidableEq ι] : Ring (⨁ i, GradedPiece F F_lt i) := DirectSum.ring (GradedPiece F F_lt)
 
 end GradedMul
 
@@ -377,14 +377,26 @@ end GradedRing
 
 section GradedModule
 
-variable {R : Type u} [Ring R] {σ : Type*} [SetLike σ R] [AddSubgroupClass σ R]
+variable {R : Type u} [Ring R] {σ : Type*} [SetLike σ R]
 
-variable (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]
+variable (F : ι → σ) (F_lt : outParam <| ι → σ)
 
-variable {M : Type*} [AddCommMonoid M] [Module R M] {ιM : Type*} [OrderedAddCommMonoid ιM] [VAdd ι ιM] {σM : Type*} [SetLike σM M] [AddSubmonoidClass σM M]
+variable {M : Type*} {ιM : Type*} [OrderedAddCommMonoid ιM] [VAdd ι ιM] {σM : Type*} [SetLike σM M]
 
-class hasGSMul (FM : ιM → σM) (FM_lt : outParam <| ιM → σM) extends IsModuleFiltration F F_lt FM FM_lt where
-  F_lt_mul_mem {i : ι} {j : ιM} {x y} : x ∈ F_lt i → y ∈ FM j → x • y ∈ FM_lt (i +ᵥ j)
-  mul_F_lt_mem {i : ι} {j : ιM} {x y} : x ∈ F i → y ∈ FM_lt j → x • y ∈ FM_lt (i +ᵥ j)
+class hasGSMul [AddCommMonoid M] [Module R M] [isfil : IsRingFiltration F F_lt] (FM : ιM → σM) (FM_lt : outParam <| ιM → σM) extends IsModuleFiltration F F_lt FM FM_lt : Prop where
+  F_lt_smul_mem {i : ι} {j : ιM} {x y} : x ∈ F_lt i → y ∈ FM j → x • y ∈ FM_lt (i +ᵥ j)
+  smul_F_lt_mem {i : ι} {j : ιM} {x y} : x ∈ F i → y ∈ FM_lt j → x • y ∈ FM_lt (i +ᵥ j)
+
+lemma hasGSMul_int [AddCommMonoid M] [Module R M] (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) (one_mem : 1 ∈ F 0)
+    (mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)) (F' : ℤ → σM)
+    (mono' : ∀ {a b : ℤ}, a ≤ b → F' a ≤ F' b) (smul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F' j → x • y ∈ F' (i + j)) :
+    hasGSMul (isfil := IsRingFiltration_int F mono one_mem mul_mem) F (fun n ↦ F (n - 1)) F' (fun n ↦ F' (n - 1)) :=
+  letI := IsRingFiltration_int F mono one_mem mul_mem
+  letI := IsModuleFiltration_int F mono one_mem mul_mem F' mono' smul_mem
+{ F_lt_smul_mem := fun {i j x y} hx hy ↦ by simpa [add_sub_right_comm i j 1] using IsModuleFiltration.smul_mem hx hy
+  smul_F_lt_mem := fun {i j x y} hx hy ↦ by
+    simpa [add_sub_assoc i j 1] using IsModuleFiltration.smul_mem hx hy}
+
+variable [AddSubgroupClass σ R] [AddCommGroup M] [AddSubgroupClass σM M]
 
 end GradedModule

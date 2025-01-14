@@ -71,8 +71,7 @@ class IsModuleFiltration (F : ι → σ) (F_lt : outParam <| ι → σ) [isfil :
 --for integer
 lemma IsModuleFiltration_int (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) (one_mem : 1 ∈ F 0)
     (mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)) (F' : ℤ → σM)
-    (mono' : ∀ {a b : ℤ}, a ≤ b → F' a ≤ F' b)
-    (smul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F' j → x • y ∈ F' (i + j)):
+    (mono' : ∀ {a b : ℤ}, a ≤ b → F' a ≤ F' b) (smul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F' j → x • y ∈ F' (i + j)):
     IsModuleFiltration (isfil := IsRingFiltration_int F mono one_mem mul_mem) F (fun n ↦ F (n - 1)) F' (fun n ↦ F' (n - 1)) :=
   letI := IsRingFiltration_int F mono one_mem mul_mem
 { IsFiltration_int F' mono' with
