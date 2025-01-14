@@ -372,3 +372,19 @@ instance : Ring (⨁ i, GradedPiece F F_lt i) := by infer_instance
 end GradedMul
 
 end HasGMul
+
+end GradedRing
+
+section GradedModule
+
+variable {R : Type u} [Ring R] {σ : Type*} [SetLike σ R] [AddSubgroupClass σ R]
+
+variable (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]
+
+variable {M : Type*} [AddCommMonoid M] [Module R M] {ιM : Type*} [OrderedAddCommMonoid ιM] [VAdd ι ιM] {σM : Type*} [SetLike σM M] [AddSubmonoidClass σM M]
+
+class hasGSMul (FM : ιM → σM) (FM_lt : outParam <| ιM → σM) extends IsModuleFiltration F F_lt FM FM_lt where
+  F_lt_mul_mem {i : ι} {j : ιM} {x y} : x ∈ F_lt i → y ∈ FM j → x • y ∈ FM_lt (i +ᵥ j)
+  mul_F_lt_mem {i : ι} {j : ιM} {x y} : x ∈ F i → y ∈ FM_lt j → x • y ∈ FM_lt (i +ᵥ j)
+
+end GradedModule
