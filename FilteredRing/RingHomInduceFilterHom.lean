@@ -26,18 +26,15 @@ class SubmonoidClasscomap (f : A → B) where
 open SubmonoidClassHom Set
 instance HomtoFiltration [fil : IsFiltration FA FA_lt] [SubmonoidClassHom σA σB f]
 [SubmonoidClasscomap σA σB f] : IsFiltration (FB σA σB FA f) (FB_lt σA σB FA_lt f) (ι := ι) where
-  mono := by
-    intro i j i_le_j
+  mono {i j i_le_j}:= by
     show (((map f <| FA i) : σB) : Set B) ≤ (((map f <| FA j) : σB) : Set B)
     rw[← image_coe_eq_coe_map <| FA i, ← image_coe_eq_coe_map <| FA j]
     exact le_iff_subset.mpr <| image_mono <| IsFiltration.mono i_le_j
-  is_le := by
-    intro j i i_lt_j
+  is_le {j i i_lt_j}:= by
     show (((map f <| FA i) : σB) : Set B) ≤ (((map f <| FA_lt j) : σB) : Set B)
     rw[← image_coe_eq_coe_map <| FA i, ← image_coe_eq_coe_map <| FA_lt j]
     exact le_iff_subset.mpr <| image_mono <| IsFiltration.is_le i_lt_j
-  is_sup := by
-    intro Sup j h
+  is_sup {Sup j h}:= by
     show ((map f (FA_lt j) : σB): Set B) ≤ (Sup : Set B)
     rw[← image_coe_eq_coe_map <| FA_lt j]
 
@@ -47,8 +44,7 @@ instance HomtoFiltration [fil : IsFiltration FA FA_lt] [SubmonoidClassHom σA σ
       intro i i_lt_j
       have : (f '' (FA i) : Set B) ≤ Sup := by
         have : ((map f (FA i) : σB) : Set B) ≤ (Sup : Set B) := h i i_lt_j
-        rw[← image_coe_eq_coe_map <| FA i] at this
-        exact this
+        rwa[← image_coe_eq_coe_map <| FA i] at this
       exact le_iff_subset.mpr <| image_subset_iff.mp this
 
     have : (SubmonoidClasscomap.comap f Sup : σA) = f ⁻¹' Sup := SubmonoidClasscomap.property Sup
@@ -89,9 +85,7 @@ instance RingHomtoFiltration [fil : IsRingFiltration FR FR_lt] [SubmonoidClassco
       apply ele_map_to_image
       use 1
       simp only [SetLike.mem_coe, IsRingFiltration.one_mem, map_one, and_self]
-    mul_mem := by
-      intro i j x y x_in_i y_in_j
-
+    mul_mem {i j x y x_in_i y_in_j}:= by
       apply ele_map_to_image
 
       have x_in_i : x ∈ ((map f (FR i) : σS) : Set S) := x_in_i
@@ -135,8 +129,7 @@ open SubmonoidClassHom
 instance ModuleHomtoFiltration [SubmonoidClassHom σM σN f] [SubmonoidClasscomap σM σN f.toFun] :
     IsModuleFiltration FR FR_lt (FN σM σN FM f) (FN_lt σM σN FM_lt f) where
   __ := HomtoFiltration σM σN (f := f.toFun) (ι := ι) (FA := FM) (FA_lt := FM_lt)
-  smul_mem := by
-    intro i j r n hr hn
+  smul_mem {i j r n hr hn}:= by
     have hn : n ∈ ((map f <| FM j : σN) : Set N) := hn
     rw[← image_coe_eq_coe_map <| FM j] at hn
     obtain⟨m, hm, heq⟩ := hn
@@ -163,7 +156,7 @@ variable {R : Type*} [CommSemiring R]
 {ℬ : Type*}[Ring ℬ][Algebra R ℬ]{σB : Type*}[SetLike σB ℬ][AddSubmonoidClass σB ℬ][SMulMemClass σB R ℬ]
 (f : 𝒜 →ₐ[R] ℬ)
 
-theorem AlgebraHomtoFiltration [SubmonoidClassHom σA σB f] [SubmonoidClasscomap σA σB f.toFun] [IsAlgebraFiltration FA FA_lt]:
+instance AlgebraHomtoFiltration [SubmonoidClassHom σA σB f] [SubmonoidClasscomap σA σB f.toFun] [IsAlgebraFiltration FA FA_lt]:
     IsAlgebraFiltration (FB σA σB FA f.toFun) (FB_lt σA σB FA_lt f.toFun) where
   __ := RingHomtoFiltration σA σB FA FA_lt f.toRingHom
 
