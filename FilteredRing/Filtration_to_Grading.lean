@@ -2,8 +2,6 @@ import FilteredRing.Basic
 
 universe u
 
-set_option maxHeartbeats 0
-
 variable {ι : Type v} [OrderedCancelAddCommMonoid ι]
 
 section GeneralGraded
