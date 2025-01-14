@@ -49,7 +49,7 @@ lemma hasGMul_int (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ 
       have := mul_mem h1 h2
       rwa [add_sub_assoc'] at this }
 
-instance (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [IsRingFiltration F F_lt] :
+lemma hasGMul_AddSubgroup (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [IsRingFiltration F F_lt] :
     hasGMul F F_lt where
   F_lt_mul_mem := by
     intro i j x y hx hy
@@ -58,8 +58,8 @@ instance (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [I
       add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_mul, add_mem ha.out hb.out]
       zero_mem' := by simp only [Set.mem_setOf_eq, zero_mul, zero_mem]
       neg_mem' := by simp only [Set.mem_setOf_eq, neg_mul, neg_mem_iff, imp_self, implies_true]}
-    exact IsRingFiltration.toIsFiltration.is_sup S i
-      (fun k hk z hz ↦ IsFiltration.is_le (add_lt_add_right  hk j) (IsRingFiltration.mul_mem hz hy)) hx
+    exact IsFiltration.is_sup S i
+      (fun k hk z hz ↦ IsFiltration.is_le (add_lt_add_right hk j) (IsRingFiltration.mul_mem hz hy)) hx
   mul_F_lt_mem := by
     intro i j x y hx hy
     let S : AddSubgroup R := {
@@ -67,7 +67,7 @@ instance (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [I
       add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, mul_add, add_mem ha.out hb.out]
       zero_mem' := by simp only [Set.mem_setOf_eq, mul_zero, zero_mem]
       neg_mem' := by simp only [Set.mem_setOf_eq, mul_neg, neg_mem_iff, imp_self, implies_true]}
-    exact IsRingFiltration.toIsFiltration.is_sup S j
+    exact IsFiltration.is_sup S j
       (fun k hk z hz ↦ IsFiltration.is_le (add_lt_add_left hk i) (IsRingFiltration.mul_mem hx hz)) hy
 
 def Filtration.hMul [IsRingFiltration F F_lt] (i j : ι) (x : (AddSubgroupClass.subtype (F i)).range) (y : (AddSubgroupClass.subtype (F j)).range) : (AddSubgroupClass.subtype (F (i + j))).range where
@@ -397,6 +397,27 @@ lemma hasGSMul_int [AddCommMonoid M] [Module R M] (F : ℤ → σ) (mono : ∀ {
   smul_F_lt_mem := fun {i j x y} hx hy ↦ by
     simpa [add_sub_assoc i j 1] using IsModuleFiltration.smul_mem hx hy}
 
-variable [AddSubgroupClass σ R] [AddCommGroup M] [AddSubgroupClass σM M]
+variable [AddSubgroupClass σ R] [AddCommGroup M] [Module R M] [AddSubgroupClass σM M] [IsOrderedCancelVAdd ι ιM]
+
+lemma hasGSMul_AddSubgroup (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [IsRingFiltration F F_lt]
+    (FM : ιM → AddSubgroup M) (FM_lt : outParam <| ιM → AddSubgroup M) [IsModuleFiltration F F_lt FM FM_lt] : hasGSMul F F_lt FM FM_lt where
+  F_lt_smul_mem := by
+    intro i j x y hx hy
+    let S : AddSubgroup R := {
+      carrier := {z : R | z • y ∈ FM_lt (i +ᵥ j)}
+      add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, add_smul, add_mem ha.out hb.out]
+      zero_mem' := by simp only [Set.mem_setOf_eq, zero_smul, zero_mem]
+      neg_mem' := by simp only [Set.mem_setOf_eq, neg_smul, neg_mem_iff, imp_self, implies_true]}
+    apply IsFiltration.is_sup (F := F) (F_lt := F_lt) S i
+      (fun k hk z hz ↦ IsFiltration.is_le (VAdd.vadd_lt_vadd_of_lt_of_le hk (Preorder.le_refl j)) (IsModuleFiltration.smul_mem hz hy)) hx
+  smul_F_lt_mem := by
+    intro i j x y hx hy
+    let S : AddSubgroup M := {
+      carrier := {z | x • z ∈ FM_lt (i +ᵥ j)}
+      add_mem' := fun ha hb ↦ by simp only [Set.mem_setOf_eq, smul_add, add_mem ha.out hb.out]
+      zero_mem' := by simp only [Set.mem_setOf_eq, smul_zero, zero_mem]
+      neg_mem' := by simp only [Set.mem_setOf_eq, smul_neg, neg_mem_iff, imp_self, implies_true]}
+    apply IsFiltration.is_sup (F := FM) (F_lt := FM_lt) S j
+      (fun k hk z hz ↦ IsFiltration.is_le (VAdd.vadd_lt_vadd_of_le_of_lt (Preorder.le_refl i) hk) (IsModuleFiltration.smul_mem hx hz)) hy
 
 end GradedModule
