@@ -86,72 +86,36 @@ namespace DeducedFunctor
 
 variable (M : ModuleCat.{w, u} R) (σMod : Type*)
   [SetLike σMod M.1] [AddSubgroupClass σMod M.1]
-  (F' : ι → σMod) (F'_lt : outParam <| ι → σMod) [IsRingFiltration F F_lt]
+  (F' : ι → σMod) (F'_lt : outParam <| ι → σMod) [ringFil : IsRingFiltration F F_lt]
 
-class InducedFilteredModule extends IsRingFiltration F F_lt : Prop where
+include ringFil
+
+class InducedFilteredModule extends IsFiltration F' F'_lt : Prop where
   containsF : ∀ i : ι, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' i
   closureF : ∀ s : σMod, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ s → F' i ≤ s
-  -- containsFlt : ∀ i : ι, {x | ∃ r ∈ F_lt i, ∃ a : M.1, x = r • a} ⊆ F'_lt i
-  -- closureFlt : ∀ s : σMod, {x | ∃ r ∈ F_lt i, ∃ a : M.1, x = r • a} ⊆ s → F'_lt i ≤ s
+-- #check AddSubmonoid.closure_mono
+theorem closure.mono (h : InducedFilteredModule F M σMod F' F'_lt) : F' i ≤ F' j ↔
+    {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ {x | ∃ r ∈ F j, ∃ a : M.1, x = r • a} := by
+  constructor
+  · intro hij
+    have base1 := InducedFilteredModule.containsF i (self := h)
+    suffices (F' i) ≤ {x : M.1 | ∃ r ∈ F j, ∃ a, x = r • a} from
+      Set.Subset.trans base1 this
+    -- have base2 := InducedFilteredModule.closureF (F' i) (self := h) (i := j)
 
-theorem induceFil [InducedFilteredModule F F_lt M σMod F'] : IsFiltration F' F'_lt where
-  mono {i j} hij := by
-    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' j from
-      InducedFilteredModule.closureF (F' j) this (F_lt := F_lt) (F' := F')
-    suffices {x : M.1 | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ {x | ∃ r ∈ F j, ∃ a, x = r • a} from
-      Set.Subset.trans this <|
-        InducedFilteredModule.containsF j (F_lt := F_lt) (F' := F') (F := F) (M := M)
-    intro x hx
-    rw [Set.mem_setOf_eq] at hx ⊢
-    obtain ⟨r, ⟨hr1, ⟨a, hr2⟩⟩⟩ := hx
-    use r
-    constructor
-    · exact (IsFiltration.mono hij (F := F) (A := R)) hr1
-    · exact ⟨a, hr2⟩
-  is_le {j i} hij := by
-    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F'_lt j from
-      InducedFilteredModule.closureF (F'_lt j) this (F_lt := F_lt) (F' := F')
+  sorry
 
-  is_sup := sorry
-
-theorem induced (h : InducedFilteredModule F F_lt M σMod F') :
+theorem induced (h : InducedFilteredModule F M σMod F' F'_lt) :
     IsModuleFiltration F F_lt F' F'_lt where
-  mono {i j} hij := by
-    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' j from
-      InducedFilteredModule.closureF (F' j) this (F_lt := F_lt) (F' := F')
-    suffices {x : M.1 | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ {x | ∃ r ∈ F j, ∃ a, x = r • a} from
-      Set.Subset.trans this <|
-        InducedFilteredModule.containsF j (F_lt := F_lt) (F' := F') (F := F) (M := M)
-    intro x hx
-    rw [Set.mem_setOf_eq] at hx ⊢
-    obtain ⟨r, ⟨hr1, ⟨a, hr2⟩⟩⟩ := hx
-    use r
-    constructor
-    · exact (IsFiltration.mono hij (F := F) (A := R)) hr1
-    · exact ⟨a, hr2⟩
-  is_le {j i} hij := by
-    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F'_lt j from
-      InducedFilteredModule.closureF (F'_lt j) this (F_lt := F_lt) (F' := F')
-    suffices {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ {x | ∃ r ∈ F_lt j, ∃ a : M.1, x = r • a} from
-      Set.Subset.trans this <|
-        InducedFilteredModule.containsFlt j (F'_lt := F'_lt) (F := F) (M := M) (F_lt := F_lt) (F' := F')
-    intro x hx
-    rw [Set.mem_setOf_eq] at hx ⊢
-    obtain ⟨r, ⟨hr1, ⟨a, hr2⟩⟩⟩ := hx
-    use r
-    constructor
-    · exact (IsFiltration.is_le hij (F := F) (A := R)) hr1
-    · exact ⟨a, hr2⟩
-  is_sup := by
-    intro B j hij
-    suffices {x : M.1 | ∃ r ∈ F_lt j, ∃ a : M.1, x = r • a} ⊆ B from
-      InducedFilteredModule.closureFlt F F' B this
-    have : ∀ i < j, F' i ≤ B := by
-      intro i hji
-      replace hij := hij i hji
-      have : {x : M.1 | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ B := by
-
-  smul_mem := sorry
+  mono {i j} hij :=
+    IsFiltration.mono hij (F := F') (F_lt := F'_lt) (A := M)
+  is_le {j i} hij :=
+    IsFiltration.is_le hij (F := F') (F_lt := F'_lt) (A := M)
+  is_sup B j hij := IsFiltration.is_sup B j hij
+  smul_mem {i j x y} hx hy := by
+    show x • y ∈ F' (i + j)
+    -- have :
+    sorry
 
 
 noncomputable def F' : ι → σMod := fun i ↦ Classical.choose (hclosure i)
