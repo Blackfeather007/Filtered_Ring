@@ -82,7 +82,7 @@ instance ele_map_to_image [SubmonoidClasscomap σR σS f] {A: σR}{x : S} :
   show x ∈ ⇑f '' (A : Set R) → x ∈ (((map f <| A) : σS) : Set S)
   simp only[← image_coe_eq_coe_map <| A, imp_self]
 
-instance [fil : IsRingFiltration FR FR_lt] [SubmonoidClasscomap σR σS f] :
+instance RingHomtoFiltration [fil : IsRingFiltration FR FR_lt] [SubmonoidClasscomap σR σS f] :
   IsRingFiltration (FS σR σS FR f) (FS_lt σR σS FR_lt f) where
     __ := HomtoFiltration σR σS
     one_mem := by
@@ -112,7 +112,7 @@ end RingHomtoFiltration
 
 
 
-section
+section ModuleHomtoFiltration
 
 variable {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
 variable (FR : ι → σR) (FR_lt : outParam <| ι → σR) [fil : IsRingFiltration FR FR_lt]
@@ -131,11 +131,9 @@ def FN (FM : ι → σM) (f : M →ₗ[R] N)[SubmonoidClassHom σM σN f] [Submo
 def FN_lt (FM_lt : ι → σM) (f : M →ₗ[R] N) [SubmonoidClassHom σM σN f] [SubmonoidClassHom σM σN f]
 : outParam <| ι → σN := FB_lt σM σN FM_lt f
 
-variable [SubmonoidClassHom σM σN f] [SubmonoidClasscomap σM σN f.toFun]
-
 open SubmonoidClassHom
-instance FilMod_map_range :
- IsModuleFiltration FR FR_lt (FN σM σN FM f) (FN_lt σM σN FM_lt f) where
+instance ModuleHomtoFiltration [SubmonoidClassHom σM σN f] [SubmonoidClasscomap σM σN f.toFun] :
+    IsModuleFiltration FR FR_lt (FN σM σN FM f) (FN_lt σM σN FM_lt f) where
   __ := HomtoFiltration σM σN (f := f.toFun) (ι := ι) (FA := FM) (FA_lt := FM_lt)
   smul_mem := by
     intro i j r n hr hn
@@ -150,3 +148,23 @@ instance FilMod_map_range :
     have := IsModuleFiltration.smul_mem hr hm
     rw[vadd_eq_add] at this
     simp only [SetLike.mem_coe, this, map_smul, and_self]
+
+end ModuleHomtoFiltration
+
+
+
+
+
+section AlgebraHomtoFiltration
+
+variable {R : Type*} [CommSemiring R]
+{𝒜 : Type*}[Ring 𝒜][Algebra R 𝒜]{σA : Type*}[SetLike σA 𝒜][AddSubmonoidClass σA 𝒜][SMulMemClass σA R 𝒜]
+(FA : ι → σA)(FA_lt : outParam <| ι → σA)
+{ℬ : Type*}[Ring ℬ][Algebra R ℬ]{σB : Type*}[SetLike σB ℬ][AddSubmonoidClass σB ℬ][SMulMemClass σB R ℬ]
+(f : 𝒜 →ₐ[R] ℬ)
+
+theorem AlgebraHomtoFiltration [SubmonoidClassHom σA σB f] [SubmonoidClasscomap σA σB f.toFun] [IsAlgebraFiltration FA FA_lt]:
+    IsAlgebraFiltration (FB σA σB FA f.toFun) (FB_lt σA σB FA_lt f.toFun) where
+  __ := RingHomtoFiltration σA σB FA FA_lt f.toRingHom
+
+end AlgebraHomtoFiltration
