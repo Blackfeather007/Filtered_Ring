@@ -29,9 +29,6 @@ instance : Category (FilteredModuleCat F F_lt) where
   id _ := ⟨LinearMap.id, fun i x ↦ by
     simp only [LinearMap.id_coe, id_eq, SetLike.coe_mem]⟩
   comp f g := ⟨g.1.comp f.1, fun i x ↦ g.2 i ⟨f.1 x, f.2 i x⟩⟩
-  id_comp _ := rfl
-  comp_id _ := rfl
-  assoc _ _ _ := rfl
 
 instance {M N : FilteredModuleCat F F_lt} : FunLike (M ⟶ N) M.1 N.1 where
   coe f := f.1.toFun
@@ -60,8 +57,6 @@ private instance {M N : FilteredModuleCat F F_lt} : AddCommMonoid (M ⟶ N) wher
 private instance {M N : FilteredModuleCat F F_lt} [AddSubgroupClass N.σMod N.Mod.carrier] :
     SubNegMonoid (M ⟶ N) where
   neg a := ⟨-a.1, fun i x ↦ neg_mem (a.2 i x)⟩
-  sub a b := ⟨a.1 - b.1, fun i x ↦ sub_mem (a.2 i x) (b.2 i x)⟩
-  sub_eq_add_neg a b := val_inj.1 <| sub_eq_add_neg a.1 b.1
   zsmul z a := ⟨z • a.1, fun i x ↦ zsmul_mem (a.2 i x) z⟩
   zsmul_zero' a := by simp only [zero_smul]; rfl
   zsmul_succ' n a := by
@@ -93,7 +88,7 @@ include ringFil
 class InducedFilteredModule extends IsFiltration F' F'_lt : Prop where
   containsF : ∀ i : ι, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' i
   closureF : ∀ s : σMod, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ s → F' i ≤ s
--- #check AddSubmonoid.closure_mono
+
 theorem closure.mono (h : InducedFilteredModule F M σMod F' F'_lt) : F' i ≤ F' j ↔
     {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ {x | ∃ r ∈ F j, ∃ a : M.1, x = r • a} := by
   constructor
@@ -114,6 +109,7 @@ theorem induced (h : InducedFilteredModule F M σMod F' F'_lt) :
   is_sup B j hij := IsFiltration.is_sup B j hij
   smul_mem {i j x y} hx hy := by
     show x • y ∈ F' (i + j)
+    suffices {x : M.1 | ∃ r : F i, ∃ m : F' j, x = r • m}
     -- have :
     sorry
 
