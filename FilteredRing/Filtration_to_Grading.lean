@@ -538,7 +538,27 @@ theorem GradedPiece.add_mul {i : ι} {j : ιM} (a b : GradedPiece F F_lt i) (c :
   rw [this]
   exact zero_mem (FM_lt (i +ᵥ j))
 
-lemma GradedPiece.HEq_mul_assoc [hasGMul F F_lt] {i j : ι} {k : ιM}
+theorem GradedPiece.mul_zero {i : ι} {j : ιM} (a : GradedPiece F F_lt i) : a • (0 : GradedPiece FM FM_lt j) = (0 : GradedPiece FM FM_lt (i +ᵥ j)) := by
+  rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
+  induction a using Quotient.ind'
+  show Quotient.mk'' _ = Quotient.mk'' _
+  rw [Quotient.eq'']
+  simp only [ZeroMemClass.coe_zero, mul_zero, QuotientAddGroup.leftRel_apply, add_zero, neg_mem_iff]
+  use 0
+  simpa only [AddSubgroupClass.coeSubtype, ZeroMemClass.coe_zero, AddSubgroup.coeSubtype]
+    using (smul_zero _).symm
+
+theorem GradedPiece.zero_mul  {i : ι} {j : ιM} (a : GradedPiece FM FM_lt j) : (0 : GradedPiece F F_lt i) • a = (0 : GradedPiece FM FM_lt (i +ᵥ j)) := by
+  rw [← QuotientAddGroup.mk_zero, ← QuotientAddGroup.mk_zero]
+  induction a using Quotient.ind'
+  change Quotient.mk'' _ = Quotient.mk'' _
+  rw [Quotient.eq'']
+  simp only [ZeroMemClass.coe_zero, zero_mul, QuotientAddGroup.leftRel_apply, add_zero, neg_mem_iff]
+  use 0
+  simpa only [AddSubgroupClass.coeSubtype, ZeroMemClass.coe_zero, AddSubgroup.coeSubtype]
+    using (zero_smul _ _).symm
+
+lemma GradedPiece.HEq_mul_smul [hasGMul F F_lt] {i j : ι} {k : ιM}
     (a : GradedPiece F F_lt i) (b : GradedPiece F F_lt j) (c : GradedPiece FM FM_lt k) :
     HEq ((a * b) • c) (a • (b • c)) := by
   let ra := Quotient.out' a
