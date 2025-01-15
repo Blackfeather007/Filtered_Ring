@@ -116,23 +116,12 @@ variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] {σ : Typ
 variable (F' : ι → AddSubgroup M.1) (F'_lt : outParam <| ι → AddSubgroup M.1)
   [Induced.closure F F'] [IsFiltration F' F'_lt]
 
-private def preimage_group (i j : ι) (x : R) : AddSubgroup M := {
-  carrier := {z | x • z ∈ F' (j + i)}
-  add_mem' := fun {a b} ha hb ↦ by
-    simp only [Set.mem_setOf_eq, smul_add] at ha hb ⊢
-    exact AddSubgroup.add_mem_cancel_right (F' (j + i)) hb |>.2 ha
-  zero_mem' := by
-    simp only [Set.mem_setOf_eq, smul_zero]
-    exact zero_mem (F' (j + i))
-  neg_mem' := by
-    simp only [Set.mem_setOf_eq, smul_neg, neg_mem_iff, imp_self, implies_true]
-}
-
 instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
   smul_mem {i j x y} hx hy := by
-    have : F' j ≤ preimage_group F' j i x := by
+    have : F' j ≤ AddSubgroup.comap (DistribSMul.toAddMonoidHom M x) (F' (i + j)) := by
       refine Induced.closure_le F F' |>.2 <| fun h ⟨r', hr', ⟨a, ha⟩⟩ ↦ ?_
       refine Induced.mem_closure F F' |>.2 <| fun K hK ↦ ?_
+      show x • h ∈ K
       rw [ha, smul_smul]
       exact hK ⟨(x * r'), ⟨IsRingFiltration.mul_mem hx hr', ⟨a, rfl⟩⟩⟩
     have : y ∈ {z | x • z ∈ F' (i + j)} := this hy
@@ -149,21 +138,12 @@ variable {R : Type u} [CommRing R] {σ : Type o} [SetLike σ R] (F : ι → σ)
 
 variable [Induced.closure F F'] [IsFiltration F' F'_lt]
 
-private def preimage_module (i j : ι) (x : R) : Submodule R M := {
-  carrier := {z | x • z ∈ F' (j + i)}
-  add_mem' := fun {a b} ha hb ↦ by
-    simpa only [Set.mem_setOf_eq, smul_add] using (Submodule.add_mem_iff_right (F' (j + i)) ha).2 hb
-  zero_mem' := by simpa only [Set.mem_setOf_eq, smul_zero] using zero_mem (F' (j + i))
-  smul_mem' := fun r m hm ↦ by
-    rw [Set.mem_setOf_eq, ← smul_assoc, smul_eq_mul, mul_comm, mul_smul]
-    exact (Submodule.smul_mem (F' (j + i)) r hm)
-}
-
 instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
   smul_mem {i j x y} hx hy := by
-    have : F' j ≤ preimage_module F' j i x := by
+    have : F' j ≤ Submodule.comap (LinearMap.lsmul R M x) (F' (i + j)) := by
       refine Induced.closure_le F F' |>.2 <| fun h ⟨r', hr', ⟨a, ha⟩⟩ ↦ ?_
       refine Induced.mem_closure F F' |>.2 <| fun K hK ↦ ?_
+      show x • h ∈ K
       rw [ha, smul_smul]
       exact hK ⟨(x * r'), ⟨IsRingFiltration.mul_mem hx hr', ⟨a, rfl⟩⟩⟩
     have : y ∈ {z | x • z ∈ F' (i + j)} := this hy
@@ -193,15 +173,8 @@ instance {M : ModuleCat R} : IsFiltration (F' F) (F'_lt F_lt) (σ := AddSubgroup
     rw [closure_le, flt_unfold F F_lt]
     intro x ⟨r, ⟨hr, ⟨a, ha⟩⟩⟩
     rw [ha]
-    set preimage : AddSubgroup R := {
-      carrier := { s : R | s • a ∈ B}
-      add_mem' := fun {a₁ a₂} ha₁ ha₂ ↦ by
-        rw [Set.mem_setOf_eq, add_smul]; exact add_mem ha₁ ha₂
-      zero_mem' := by
-        rw [Set.mem_setOf_eq, zero_smul]; exact zero_mem B
-      neg_mem' := fun {x} hx ↦ by
-        rw [Set.mem_setOf_eq, neg_smul]; exact neg_mem hx
-    } with preimage_def
+    set preimage := AddSubgroup.comap (G := R)
+      (LinearMap.smulRight (R := R) (M₁ := R) LinearMap.id a) B with preimage_def
     suffices ⨆ i, ⨆ (_ : i < j), F i ≤ preimage from this hr
     refine iSup_le <| fun i ↦ iSup_le <| fun hij' r' hr' ↦ ?_
     rw [preimage_def]
