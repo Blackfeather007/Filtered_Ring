@@ -12,11 +12,6 @@ class IsFiltration (F : ι → σ) (F_lt : outParam <| ι → σ) : Prop where
   is_sup (B : σ) (j : ι) : (∀ i < j, F i ≤ B) → F_lt j ≤ B
 -- F_lt j = ⨆ i < j, F i
 
-lemma flt_unfold (F : ι → σ) (F_lt : outParam <| ι → σ) [IsFiltration F F_lt] [SupSet σ] :
-    F_lt j = ⨆ i < j, F i := by
-
-  sorry
-
 --for integer
 lemma IsFiltration_int (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) : IsFiltration F (fun n ↦ F (n - 1)) where
   mono := mono
