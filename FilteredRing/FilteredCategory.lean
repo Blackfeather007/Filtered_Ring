@@ -66,8 +66,7 @@ private instance {M N : FilteredModuleCat F F_lt} : AddCommMonoid (M ⟶ N) wher
   nsmul_succ n a := val_inj.1 <| succ_nsmul a.1 n
   add_comm a b := val_inj.1 <| add_comm a.1 b.1
 
-private instance {M N : FilteredModuleCat F F_lt} [AddSubgroupClass N.σMod N.Mod.carrier] :
-    SubNegMonoid (M ⟶ N) where
+private instance {M N : FilteredModuleCat F F_lt} : SubNegMonoid (M ⟶ N) where
   neg a := ⟨-a.1, fun i x ↦ neg_mem (a.2 i x)⟩
   zsmul z a := ⟨z • a.1, fun i x ↦ zsmul_mem (a.2 i x) z⟩
   zsmul_zero' a := by simp only [zero_smul]; rfl
@@ -82,8 +81,7 @@ private instance {M N : FilteredModuleCat F F_lt} [AddSubgroupClass N.σMod N.Mo
     show -((z + 1) • a.1) = -(((z : ℤ) + 1) • a.1)
     rw [add_smul, add_smul, natCast_zsmul, one_smul, one_smul]
 
-instance {M N : FilteredModuleCat F F_lt} [AddSubgroupClass N.σMod N.Mod.carrier] :
-    AddCommGroup (M ⟶ N) where
+instance {M N : FilteredModuleCat F F_lt} : AddCommGroup (M ⟶ N) where
   neg_add_cancel f := val_inj.1 <| neg_add_cancel f.1
   add_comm := AddCommMagma.add_comm
 
@@ -103,7 +101,7 @@ theorem closure_le [closure F F'] : F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M
     (⟨fun s ↦ s, fun ⦃_ _⦄ a ↦ a⟩ : σMod →o Set M)
 
 theorem mem_closure [closure F F'] : x ∈ F' i ↔
-    ∀ (K : σMod), {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ (K : Set M) → x ∈ K :=
+    ∀ (K : σMod), {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K → x ∈ K :=
   Indexed.mem_closure (fun i ↦ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a}) F'
     (⟨fun s ↦ s, fun ⦃_ _⦄ a ↦ a⟩ : σMod →o Set M)
 
@@ -122,7 +120,7 @@ private def preimage_group (i j : ι) (x : R) : AddSubgroup M := {
   carrier := {z | x • z ∈ F' (j + i)}
   add_mem' := fun {a b} ha hb ↦ by
     simp only [Set.mem_setOf_eq, smul_add] at ha hb ⊢
-    exact (AddSubgroup.add_mem_cancel_right (F' (j + i)) hb).2 ha
+    exact AddSubgroup.add_mem_cancel_right (F' (j + i)) hb |>.2 ha
   zero_mem' := by
     simp only [Set.mem_setOf_eq, smul_zero]
     exact zero_mem (F' (j + i))
@@ -138,13 +136,9 @@ instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
       apply (Induced.mem_closure F F').2
       intro K hK
       rw [ha, smul_smul]
-      have mul_mem := IsRingFiltration.mul_mem hx hr'
-      set result := (x * r') • a
-      have : result ∈ {x | ∃ r ∈ F (i + j), ∃ a, x = r • a} := by
-        rw [Set.mem_setOf_eq]
-        exact ⟨(x * r'), ⟨mul_mem, ⟨a, rfl⟩⟩⟩
+      have : (x * r') • a ∈ {x | ∃ r ∈ F (i + j), ∃ a, x = r • a} :=
+        ⟨(x * r'), ⟨IsRingFiltration.mul_mem hx hr', ⟨a, rfl⟩⟩⟩
       exact hK this
-    have : (F' j).carrier ⊆ {z | x • z ∈ F' (i + j)} := this
     have : y ∈ {z | x • z ∈ F' (i + j)} := this hy
     rwa [Set.mem_setOf_eq] at this
 
@@ -177,9 +171,8 @@ instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
       apply (Induced.mem_closure F F').2
       intro K hK
       rw [ha, smul_smul]
-      have : (x * r') • a ∈ {x | ∃ r ∈ F (i + j), ∃ a, x = r • a} := by
-        rw [Set.mem_setOf_eq]
-        exact ⟨(x * r'), ⟨IsRingFiltration.mul_mem hx hr', ⟨a, rfl⟩⟩⟩
+      have : (x * r') • a ∈ {x | ∃ r ∈ F (i + j), ∃ a, x = r • a} :=
+        ⟨(x * r'), ⟨IsRingFiltration.mul_mem hx hr', ⟨a, rfl⟩⟩⟩
       exact hK this
     have : y ∈ {z | x • z ∈ F' (i + j)} := this hy
     rwa [Set.mem_setOf_eq] at this
