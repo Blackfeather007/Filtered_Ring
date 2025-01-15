@@ -47,6 +47,13 @@ instance [AddSubmonoidClass σ R] (F : ι → σ) (F_lt : outParam <| ι → σ)
   one_mul := fun a ↦ SetCoe.ext (one_mul a.1)
   mul_one := fun a ↦ SetCoe.ext (mul_one a.1) }
 
+theorem flt_unfold [Ring R] (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [IsRingFiltration F F_lt] : F_lt j = ⨆ i < j, F i := by
+  apply le_antisymm
+  · apply IsFiltration.is_sup (F := F)
+    exact fun i hij ↦ le_biSup F hij
+  · apply iSup_le
+    exact fun i ↦ iSup_le IsFiltration.is_le
+
 --for integer
 lemma IsRingFiltration_int (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) (one_mem : 1 ∈ F 0)
   (mul_mem : ∀ {i j x y}, x ∈ F i → y ∈ F j → x * y ∈ F (i + j)) : IsRingFiltration F (fun n ↦ F (n - 1)) := {

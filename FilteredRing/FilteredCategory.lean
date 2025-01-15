@@ -131,10 +131,8 @@ private def preimage_group (i j : ι) (x : R) : AddSubgroup M := {
 instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
   smul_mem {i j x y} hx hy := by
     have : F' j ≤ preimage_group F' j i x := by
-      apply (Induced.closure_le F F').2
-      intro h ⟨r', hr', ⟨a, ha⟩⟩
-      apply (Induced.mem_closure F F').2
-      intro K hK
+      refine Induced.closure_le F F' |>.2 <| fun h ⟨r', hr', ⟨a, ha⟩⟩ ↦ ?_
+      refine Induced.mem_closure F F' |>.2 <| fun K hK ↦ ?_
       rw [ha, smul_smul]
       have : (x * r') • a ∈ {x | ∃ r ∈ F (i + j), ∃ a, x = r • a} :=
         ⟨(x * r'), ⟨IsRingFiltration.mul_mem hx hr', ⟨a, rfl⟩⟩⟩
@@ -166,10 +164,8 @@ private def preimage_module (i j : ι) (x : R) : Submodule R M := {
 instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
   smul_mem {i j x y} hx hy := by
     have : F' j ≤ preimage_module F' j i x := by
-      apply (Induced.closure_le F F').2
-      intro h ⟨r', hr', ⟨a, ha⟩⟩
-      apply (Induced.mem_closure F F').2
-      intro K hK
+      refine Induced.closure_le F F' |>.2 <| fun h ⟨r', hr', ⟨a, ha⟩⟩ ↦ ?_
+      refine Induced.mem_closure F F' |>.2 <| fun K hK ↦ ?_
       rw [ha, smul_smul]
       have : (x * r') • a ∈ {x | ∃ r ∈ F (i + j), ∃ a, x = r • a} :=
         ⟨(x * r'), ⟨IsRingFiltration.mul_mem hx hr', ⟨a, rfl⟩⟩⟩
@@ -181,8 +177,7 @@ end Submodule
 
 namespace DeducedFunctor
 
-variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] {σ : Type o}
-  [SetLike σ R] (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]
+variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [IsRingFiltration F F_lt]
 
 def F' {M : ModuleCat R} :=
   fun i ↦ AddSubgroup.closure {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a}
@@ -190,8 +185,39 @@ def F' {M : ModuleCat R} :=
 def F'_lt {M : ModuleCat R} :=
   fun i ↦ AddSubgroup.closure {x | ∃ r ∈ F_lt i, ∃ a : M.1, x = r • a}
 
--- instance {M : ModuleCat R} : IsFiltration (F' F) (F'_lt F_lt) (σ := (AddSubgroup M.1)) :=
---     sorry
+instance {M : ModuleCat R} : IsFiltration (F' F) (F'_lt F_lt) (σ := AddSubgroup M) where
+  mono := sorry
+  is_le := sorry
+  is_sup := by
+    intro B j hij
+    unfold F'_lt
+    rw [AddSubgroup.closure_le]
+    replace hij : ∀ i < j, {x | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ B.carrier :=
+      fun i hi ↦ (AddSubgroup.closure_le B).1 (hij i hi)
+    rw [flt_unfold F F_lt]
+    intro x ⟨r, ⟨hr, ⟨a, ha⟩⟩⟩
+    rw [ha]
+    set preimage : AddSubgroup R := {
+      carrier := { s : R | s • a ∈ B}
+      add_mem' := by
+        intro a₁ a₂ ha₁ ha₂
+        rw [Set.mem_setOf_eq, add_smul]
+        exact add_mem ha₁ ha₂
+      zero_mem' := by
+        rw [Set.mem_setOf_eq, zero_smul]
+        exact zero_mem B
+      neg_mem' := by
+        intro x hx
+        rw [Set.mem_setOf_eq, neg_smul]
+        exact neg_mem hx
+    } with preimage_def
+    suffices ⨆ i, ⨆ (_ : i < j), F i ≤ preimage from this hr
+    refine iSup_le <| fun i ↦ iSup_le <| fun hij' r' hr' ↦ ?_
+    rw [preimage_def]
+    replace hij := hij i hij'
+    have : r' • a ∈ {x | ∃ r ∈ F i, ∃ a, x = r • a} := ⟨r', ⟨hr', ⟨a, rfl⟩⟩⟩
+    exact hij this
+
 
 -- instance {M : ModuleCat R} : Induced.IsInducedFiltration F M (F' F) (F'_lt F_lt) where
 --   containsF := sorry
