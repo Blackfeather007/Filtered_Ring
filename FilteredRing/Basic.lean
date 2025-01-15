@@ -12,6 +12,10 @@ class IsFiltration (F : ι → σ) (F_lt : outParam <| ι → σ) : Prop where
   is_sup (B : σ) (j : ι) : (∀ i < j, F i ≤ B) → F_lt j ≤ B
 -- F_lt j = ⨆ i < j, F i
 
+theorem le_lt [IsFiltration (F : ι → σ) (F_lt : outParam <| ι → σ)] :
+    ∀ i : ι, F_lt i ≤ F i := fun i ↦
+  IsFiltration.is_sup (F i) i <| fun _ hij ↦ IsFiltration.mono <| le_of_lt hij
+
 --for integer
 lemma IsFiltration_int (F : ℤ → σ) (mono : ∀ {a b : ℤ}, a ≤ b → F a ≤ F b) : IsFiltration F (fun n ↦ F (n - 1)) where
   mono := mono
