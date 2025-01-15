@@ -2,11 +2,25 @@ import FilteredRing.Basic
 
 universe o u v w
 
-class SubmoduleClass (R T M : Type*)
-  [Semiring R] [AddCommMonoid M] [Module R M] [SetLike T M]
-  extends AddSubmonoidClass T M, SMulMemClass T R M
+namespace Indexed
 
-open Pointwise CategoryTheory Subtype
+variable {M γ σ : Type*} (gen : ι → γ) (F' : ι → σ) [Preorder γ] [SetLike σ M] (le : σ →o γ)
+
+class closure : Prop where
+  contains : ∀ i : ι, gen i ≤ le.toFun (F' i)
+  closure : ∀ s : σ, gen i ≤ le.toFun s → F' i ≤ s
+
+theorem closure_le [closure gen F' le] : F' i ≤ K ↔ gen i ≤ le.toFun K :=
+  ⟨fun h ↦ le_trans (closure.contains i) (le.monotone' h), fun h ↦ closure.closure K h⟩
+
+theorem mem_closure [closure gen F' le] : x ∈ F' i ↔ ∀ K, gen i ≤ le.toFun K → x ∈ K :=
+  ⟨fun h K hK ↦ (closure.closure K hK) h, fun h ↦ h (F' i) <| closure.contains i⟩
+
+end Indexed
+
+namespace FilteredModule
+
+open CategoryTheory Subtype
 
 variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] {σ : Type o}
   [SetLike σ R] (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]
@@ -19,8 +33,6 @@ structure FilteredModuleCat where
   fil : ι → σMod
   fil_lt : ι → σMod
   [instIsModuleFiltration : IsModuleFiltration F F_lt fil fil_lt]
-
-namespace FilteredModuleCat
 
 attribute [instance] FilteredModuleCat.instSetLike FilteredModuleCat.instAddSubgroupClass FilteredModuleCat.instIsModuleFiltration
 
@@ -75,47 +87,38 @@ instance {M N : FilteredModuleCat F F_lt} [AddSubgroupClass N.σMod N.Mod.carrie
   neg_add_cancel f := val_inj.1 <| neg_add_cancel f.1
   add_comm := AddCommMagma.add_comm
 
-end FilteredModuleCat
+end FilteredModule
 
 namespace Induced
 
-variable (M : ModuleCat.{w, u} R) [IsRingFiltration F F_lt]
+variable {R : Type u} {ι : Type v} [Ring R] {σ : Type o}
+  [SetLike σ R] (F : ι → σ) (F_lt : outParam <| ι → σ)
+variable {M : ModuleCat.{w, u} R} {σMod : Type*} [SetLike σMod M.1] (F' : ι → σMod)
 
-class IsInducedFiltration {σMod : Type*}
-    [SetLike σMod M.1] [AddSubgroupClass σMod M.1] (F' : ι → σMod)
-    (F'_lt : outParam <| ι → σMod) extends IsFiltration F' F'_lt : Prop where
-  containsF : ∀ i : ι, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ F' i
-  closureF : ∀ s : σMod, {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ s → F' i ≤ s
+abbrev closure := Indexed.closure (fun i ↦ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a})
+  F' (⟨fun s ↦ s, fun ⦃_ _⦄ a ↦ a⟩ : σMod →o Set M)
 
-section
+theorem closure_le [closure F F'] : F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K :=
+  Indexed.closure_le (fun i ↦ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a}) F'
+    (⟨fun s ↦ s, fun ⦃_ _⦄ a ↦ a⟩ : σMod →o Set M)
 
-variable {σMod : Type*} [SetLike σMod M.1] [AddSubgroupClass σMod M.1] (F' : ι → σMod)
-    (F'_lt : outParam <| ι → σMod)
+theorem mem_closure [closure F F'] : x ∈ F' i ↔
+    ∀ (K : σMod), {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ (K : Set M) → x ∈ K :=
+  Indexed.mem_closure (fun i ↦ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a}) F'
+    (⟨fun s ↦ s, fun ⦃_ _⦄ a ↦ a⟩ : σMod →o Set M)
 
-instance closure_le [hfil : IsInducedFiltration F M F' F'_lt] :
-    F' i ≤ K ↔ {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ K where
-  mp := by
-    intro h _ ⟨r, r_in, m, eq⟩
-    have : r • m ∈ F' i := by
-      apply hfil.containsF
-      use r
-      simp only [r_in, exists_apply_eq_apply', and_self]
-    exact Set.mem_of_eq_of_mem eq (h this)
-  mpr := fun h ↦ IsInducedFiltration.closureF K h
-
-instance mem_closure [hfil : IsInducedFiltration F M F' F'_lt] :
-    x ∈ F' i ↔ ∀ (K : σMod), {x | ∃ r ∈ F i, ∃ a : M.1, x = r • a} ⊆ (K : Set M) → x ∈ K :=
-  ⟨fun hi K hK ↦ IsInducedFiltration.closureF (self := hfil) K (i := i) hK hi,
-  fun h ↦ h (F' i) <| IsInducedFiltration.containsF i (self := hfil)⟩
-
-end
+end Induced
 
 namespace AddSubgroup
 
-variable (F' : ι → AddSubgroup M.1) (F'_lt : outParam <| ι → AddSubgroup M.1)
-  [hfil : IsInducedFiltration F M F' F'_lt]
+variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] {σ : Type o}
+  [SetLike σ R] (F : ι → σ) (F_lt : outParam <| ι → σ) [IsRingFiltration F F_lt]
+  {M : ModuleCat.{w, u} R}
 
-private def proofGP (i j : ι) (x : R) : AddSubgroup M.1 := {
+variable (F' : ι → AddSubgroup M.1) (F'_lt : outParam <| ι → AddSubgroup M.1)
+  [Induced.closure F F'] [IsFiltration F' F'_lt]
+
+private def preimage_group (i j : ι) (x : R) : AddSubgroup M := {
   carrier := {z | x • z ∈ F' (j + i)}
   add_mem' := fun {a b} ha hb ↦ by
     simp only [Set.mem_setOf_eq, smul_add] at ha hb ⊢
@@ -129,10 +132,10 @@ private def proofGP (i j : ι) (x : R) : AddSubgroup M.1 := {
 
 instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
   smul_mem {i j x y} hx hy := by
-    have : F' j ≤ proofGP M F' j i x := by
-      apply (closure_le F M F' F'_lt).2
+    have : F' j ≤ preimage_group F' j i x := by
+      apply (Induced.closure_le F F').2
       intro h ⟨r', hr', ⟨a, ha⟩⟩
-      apply (mem_closure F M F' F'_lt).2
+      apply (Induced.mem_closure F F').2
       intro K hK
       rw [ha, smul_smul]
       have mul_mem := IsRingFiltration.mul_mem hx hr'
@@ -149,11 +152,14 @@ end AddSubgroup
 
 namespace Submodule
 
-variable {R : Type u} [CommRing R] {σ : Type o} [SetLike σ R] (F : ι → σ) (F_lt : outParam <| ι → σ)
-  [IsRingFiltration F F_lt] (M : ModuleCat.{w, u} R) (F' : ι → Submodule R M.1)
-  (F'_lt : outParam <| ι → Submodule R M.1) [hfil : IsInducedFiltration F M F' F'_lt]
+variable {R : Type u} [CommRing R] {σ : Type o} [SetLike σ R] (F : ι → σ)
+  (F_lt : outParam <| ι → σ) [OrderedAddCommMonoid ι]
+  [IsRingFiltration F F_lt] {M : ModuleCat.{w, u} R} (F' : ι → Submodule R M.1)
+  (F'_lt : outParam <| ι → Submodule R M.1)
 
-private def proofMOD (i j : ι) (x : R) : Submodule R M.1 := {
+variable [Induced.closure F F'] [IsFiltration F' F'_lt]
+
+private def preimage_module (i j : ι) (x : R) : Submodule R M := {
   carrier := {z | x • z ∈ F' (j + i)}
   add_mem' := fun {a b} ha hb ↦ by
     simpa only [Set.mem_setOf_eq, smul_add] using (Submodule.add_mem_iff_right (F' (j + i)) ha).2 hb
@@ -165,10 +171,10 @@ private def proofMOD (i j : ι) (x : R) : Submodule R M.1 := {
 
 instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
   smul_mem {i j x y} hx hy := by
-    have : F' j ≤ proofMOD M F' j i x := by
-      apply (closure_le F M F' F'_lt).2
+    have : F' j ≤ preimage_module F' j i x := by
+      apply (Induced.closure_le F F').2
       intro h ⟨r', hr', ⟨a, ha⟩⟩
-      apply (mem_closure F M F' F'_lt).2
+      apply (Induced.mem_closure F F').2
       intro K hK
       rw [ha, smul_smul]
       have : (x * r') • a ∈ {x | ∃ r ∈ F (i + j), ∃ a, x = r • a} := by
@@ -179,9 +185,6 @@ instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
     rwa [Set.mem_setOf_eq] at this
 
 end Submodule
-
-end Induced
-
 
 namespace DeducedFunctor
 
