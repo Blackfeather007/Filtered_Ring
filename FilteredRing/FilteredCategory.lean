@@ -151,7 +151,7 @@ instance ModuleFiltration : IsModuleFiltration F F_lt F' F'_lt where
 
 end Submodule
 
-namespace Functor
+namespace FunctorAddSubgroup
 
 variable {R : Type u} {ι : Type v} [Ring R] [OrderedAddCommMonoid ι] (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [IsRingFiltration F F_lt]
 
@@ -213,4 +213,66 @@ def DeducedFunctor : CategoryTheory.Functor (ModuleCat.{w, u} R)
     obtain ⟨r, ⟨hr, ⟨a, rfl⟩⟩⟩ := hx
     exact ⟨r, ⟨hr, ⟨hom a, map_smul hom r a⟩⟩⟩⟩
 
-end Functor
+end FunctorAddSubgroup
+
+namespace FunctorSubmonoid
+
+variable {R : Type u} {ι : Type v} [CommRing R] [OrderedAddCommMonoid ι] (F : ι → AddSubgroup R) (F_lt : outParam <| ι → AddSubgroup R) [IsRingFiltration F F_lt]
+
+open Submodule
+
+private def F' {M : ModuleCat R} : ι → Submodule R M :=
+  fun i ↦ span R {x : M | ∃ r ∈ F i, ∃ a : M, x = r • a}
+
+private def F'_lt {M : ModuleCat R} : ι → Submodule R M :=
+  fun i ↦ span R {x : M | ∃ r ∈ F_lt i, ∃ a : M, x = r • a}
+
+instance {M : ModuleCat R} : IsFiltration (F' F) (F'_lt F_lt) (σ := Submodule R M) where
+  mono {i j} hij := span_mono <| fun x ⟨r, hr⟩ ↦ ⟨r, ⟨IsFiltration.mono hij hr.1, hr.2⟩⟩
+  is_le {j i} hij := span_mono <| fun x ⟨r, hr⟩ ↦ ⟨r, ⟨IsFiltration.is_le hij hr.1, hr.2⟩⟩
+  is_sup B j hij := by
+    unfold F'_lt
+    replace hij : ∀ i < j, {x | ∃ r ∈ F i, ∃ a, x = r • a} ⊆ B.carrier :=
+      fun i hi ↦ span_le.1 (hij i hi)
+    rw [span_le, flt_unfold F F_lt]
+    intro x ⟨r, ⟨hr, ⟨a, ha⟩⟩⟩
+    rw [ha]
+    set preimage := AddSubgroup.comap (G := R) (N := M)
+      (LinearMap.smulRight (R := R) (M₁ := R) LinearMap.id a) B.toAddSubgroup with preimage_def
+    suffices ⨆ i, ⨆ (_ : i < j), F i ≤ preimage from this hr
+    refine iSup_le <| fun i ↦ iSup_le <| fun hij' r' hr' ↦ ?_
+    rw [preimage_def]
+    exact (hij i hij') ⟨r', ⟨hr', ⟨a, rfl⟩⟩⟩
+
+instance {M : ModuleCat R} : Induced.closure F (F' F) (M := M) where
+  contains i := span_le.1 <| by rfl
+  closure {i} s hs := span_le.2 hs
+
+open FilteredModule
+
+def DeducedFunctor : CategoryTheory.Functor (ModuleCat.{w, u} R)
+  (FilteredModuleCat F F_lt) where
+  obj m := { Mod := m, σMod := Submodule R m, fil := F' F, fil_lt := F'_lt F_lt }
+  map := fun {X Y} hom ↦ ⟨hom, fun i p y ⟨y', hy'⟩ ↦ by
+    have inter : ∀ a, a ∈ ⋂ (_ : {z | ∃ r ∈ F i, ∃ a, z = r • a} ⊆ y'.carrier), y'
+      ↔ a ∈ y := fun a ↦ Eq.to_iff <| congrFun hy' a
+    simp only [Set.mem_iInter, SetLike.mem_coe] at inter
+    refine inter (hom p) |>.1 <| fun h ↦ ?_
+    set map_group := (span R {z : Y | ∃ r ∈ F i, ∃ a, z = r • a}).comap hom
+      with map_group_def
+    suffices p.1 ∈ map_group from span_le.2 h this
+    suffices span R {z : X | ∃ r ∈ F i, ∃ a, z = r • a} ≤ map_group from this p.2
+    suffices hpre : {z : X | ∃ r ∈ F i, ∃ a, z = r • a} ⊆ hom ⁻¹' {z : Y | ∃ r ∈ F i, ∃ a, z = r • a} from by
+      refine span_le.2 <| fun x hx ↦ ?_
+      obtain ⟨r, ⟨hr, ⟨a, rfl⟩⟩⟩ := hx
+      rw [map_group_def]
+      simp only [comap_coe, Set.mem_preimage, map_smul, SetLike.mem_coe]
+      suffices r • hom a ∈ {x | ∃ r ∈ F i, ∃ a, x = r • a} from
+        mem_span.2 <| fun K hK ↦ hK this
+      rw [← map_smul]
+      exact hpre ⟨r, ⟨hr, ⟨a, rfl⟩⟩⟩
+    intro x hx
+    obtain ⟨r, ⟨hr, ⟨a, rfl⟩⟩⟩ := hx
+    exact ⟨r, ⟨hr, ⟨hom a, map_smul hom r a⟩⟩⟩⟩
+
+end FunctorSubmonoid
