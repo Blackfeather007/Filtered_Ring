@@ -6,7 +6,7 @@ variable {ι : Type v} [OrderedCancelAddCommMonoid ι]
 
 section GeneralGraded
 
-variable {A : Type u} [AddCommGroup A] {σ : Type*} [SetLike σ A] [AddSubgroupClass σ A]
+variable {A : Type*} [AddCommGroup A] {σ : Type*} [SetLike σ A] [AddSubgroupClass σ A]
 
 variable (F : ι → σ) (F_lt : outParam <| ι → σ)
 

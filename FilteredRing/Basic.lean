@@ -1,7 +1,5 @@
 import Mathlib
 
-universe u v w
-
 variable {ι : Type v} [OrderedAddCommMonoid ι]
 
 variable {A : Type u} {σ : Type*} [SetLike σ A]
