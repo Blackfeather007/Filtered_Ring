@@ -445,19 +445,28 @@ lemma GradedPiece.algebraMap.map_mul [hasGMul F F_lt] : GradedMonoid.mk 0
     apply HEq_eq_mk_eq F F_lt (AddZeroClass.zero_add 0).symm this ((s * r) • (1 : F 0)).2
       (IsRingFiltration.mul_mem (r • (1 : F 0)).2 (s • (1 : F 0)).2) rfl rfl
 
+lemma GradedPiece.algebraMap.commutes [hasGMul F F_lt] (r : R) (i : ι) (a : GradedPiece F F_lt i) :
+    HEq ((mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0))) * a)
+    (a * (mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0)))) := by
+
+  sorry
+
+lemma GradedPiece.algebraMap.smul_def [hasGMul F F_lt] (r : R) (i : ι) (a : GradedPiece F F_lt i) :
+    HEq (r • a) (GradedMonoid.GMul.mul (mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0))) a) := by
+
+  sorry
+
 instance [hasGMul F F_lt] : DirectSum.GAlgebra R (GradedPiece F F_lt) where
   toFun := GradedPiece.algebraMap F F_lt
   map_one := by
     simp only [GradedPiece.algebraMap, GradedPiece.mk_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, one_smul]
     rfl
   map_mul r s := GradedPiece.algebraMap.map_mul F F_lt
-  commutes r := fun ⟨i, a⟩ ↦ by
-
-    sorry
-  smul_def r := fun ⟨i, a⟩ ↦ by
-    simp [GradedPiece.algebraMap]
-
-    sorry
+  commutes r := fun ⟨i, a⟩ ↦ Sigma.ext (by simp [add_comm]) (GradedPiece.algebraMap.commutes F F_lt r i a)
+  smul_def r := fun ⟨i, a⟩ ↦ Sigma.ext (by
+    --missing simp lemma
+    have : (GradedMonoid.mk 0 ((GradedPiece.algebraMap F F_lt) r)).fst = 0 := rfl
+    simp [this]) (GradedPiece.algebraMap.smul_def F F_lt r i a)
 
 end GradedAlgebra
 
