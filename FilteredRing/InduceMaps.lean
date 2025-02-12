@@ -7,16 +7,16 @@ and extend it to get the filtration on ring and module.
 * `SetLikeHom` This class adds the necessary conditions to describe `σA` and `σB`, ensuring that f
 can induce a map from σA to σB. In this way, we can define `FB` and `FB_lt` under very weak
 conditions.
-* `HomtoFiltration` If `FA` and `FA_lt` is a filtration of A, then a map f: A → B induces a
+* `HomtoFil` If `FA` and `FA_lt` is a filtration of A, then a map f: A → B induces a
 filtration of B, which we call `FB` and `FB_lt`
-* `RingHomtoFiltration` If `FA` and `FA_lt` is a ring filtration of A, then a ring homomorphism
+* `RingHomtoFil` If `FA` and `FA_lt` is a ring filtration of A, then a ring homomorphism
  f: A →+* B induces a ring filtration of B, which we call `FB` and `FB_lt`
-* `ModuleHomtoFiltration` When FM and FM_lt is a filtration of M, then a module homomorphism
+* `ModtoFil` When FM and FM_lt is a filtration of M, then a module homomorphism
  f: M → N induces a module filtration of N, which we call `FB` and `FB_lt`-/
 
 variable {ι : Type*} [OrderedCancelAddCommMonoid ι]
 
-section HomtoFiltration
+section HomtoFil
 
 variable {A : Type*} (σA : Type*) [SetLike σA A] {B : Type*} (σB : Type*) [SetLike σB B]
 
@@ -24,13 +24,11 @@ variable {A : Type*} (σA : Type*) [SetLike σA A] {B : Type*} (σB : Type*) [Se
 class SetLikeHom (f : A → B) where
   /-- It is the corresponding map from σA → σB with `coe_map` property -/
   map : σA → σB
-  /-- It is a map from σB → σA with `galois` property-/
-  comap : σB → σA
   coe_map (x : σA) : f '' (x : Set A) = map x
-  /-- the design of `GaloisConnection` avoid adding `Preorder` to `σA` and `σB`, there are also
-  theorems such as `Subgroup.gc_map_comap` to handle different conditions in the similar structures.
-  -/
-  galois : GaloisConnection map comap
+  /-- `GaloisConnection` is a weakening of `LeftInverse comap map`, this design avoid adding
+  `Preorder` to `σA` and `σB`, there are also theorems such as `Subgroup.gc_map_comap` to handle
+  different conditions in the similar structures such as `AddSubroup`, `module`, `Ideal`. -/
+  galois : ∃ comap : σB → σA, GaloisConnection map comap
 
 
 
@@ -43,7 +41,7 @@ def FB_lt (FA_lt : ι → σA) (f : A → B) [SetLikeHom σA σB f] : outParam <
 
 /-- When FA and FA_lt is a filtration of A, then f: A → B induce a filtration of B which is called
 `FB` and `FB_lt`-/
-instance HomtoFiltration (FA FA_lt : ι → σA) (f : A → B) [fil : IsFiltration FA FA_lt]
+instance HomtoFil (FA FA_lt : ι → σA) (f : A → B) [fil : IsFiltration FA FA_lt]
 [SetLikeHom σA σB f] : IsFiltration (FB σA σB FA f) (FB_lt σA σB FA_lt f) (ι := ι) where
   mono {i j i_le_j}:= by
     show (((map f <| FA i) : σB) : Set B) ≤ (((map f <| FA j) : σB) : Set B)
@@ -54,15 +52,27 @@ instance HomtoFiltration (FA FA_lt : ι → σA) (f : A → B) [fil : IsFiltrati
     rw[← coe_map <| FA i, ← coe_map <| FA_lt j]
     exact le_iff_subset.mpr <| image_mono <| IsFiltration.is_le i_lt_j
   is_sup {Sup j h}:= by
+    obtain⟨comap, galois⟩ := galois (f := f) (σA := σA) (σB := σB)
     apply galois.l_le
-    have h : ∀ i < j, FA i ≤ comap f Sup := fun i i_lt_j ↦ galois.le_u <| h i i_lt_j
-    exact IsFiltration.is_sup (comap f Sup) j h
+    have h : ∀ i < j, FA i ≤ comap Sup := fun i i_lt_j ↦ galois.le_u <| h i i_lt_j
+    exact IsFiltration.is_sup (comap Sup) j h
 
-end HomtoFiltration
+instance InjHomtoInjFil (f : A → B) [Nonempty A] [SetLikeHom σA σB f] (hf : f.Injective):
+ Function.Injective fun (FA : ι → σA) ↦ (FB σA σB FA f) := by
+  intro FA₁ FA₂ feq
+  refine (eqOn_univ FA₁ FA₂).mp fun i _ ↦ ? i
+  have eq: f '' (FA₁ i : Set A) = f ''  (FA₂ i : Set A) := by
+    have feq: (fun i ↦ (map f (FA₁ i) : σB)) = (fun i ↦ (map f (FA₂ i) : σB)) := feq
+    have : (fun i ↦ (map f (FA₁ i) : σB)) i = (fun i ↦ (map f (FA₂ i) : σB)) i := by rw[feq]
+    rw[coe_map (FA₁ i) (σA := σA) (σB := σB), coe_map (FA₂ i) (σA := σA) (σB := σB)]
+    exact congrArg SetLike.coe this
+  exact SetLike.coe_set_eq.mp <| (Set.image_eq_image hf).mp eq
+
+end HomtoFil
 
 
 
-section RingHomtoFiltration
+section RingHomtoFil
 
 variable {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R] {S : Type*}
  [Ring S] (σS : Type*) [SetLike σS S] [AddSubgroupClass σS S]
@@ -80,9 +90,9 @@ variable (FR : ι → σR) (FR_lt : outParam <| ι → σR) (f : R →+* S) [IsR
 open SetLikeHom Set
 /- When FA and FA_lt is a ring filtration of A, then ring hom f: A →+* B induce a ring filtration
  of B which is called `FB` and `FB_lt` -/
-instance RingHomtoFiltration (FR FR_lt: ι → σR) [fil : IsRingFiltration FR FR_lt] :
+instance RingHomtoFil (FR FR_lt: ι → σR) [fil : IsRingFiltration FR FR_lt] :
     IsRingFiltration (FS σR σS FR f) (FS_lt σR σS FR_lt f) where
-  __ := HomtoFiltration σR σS FR FR_lt f
+  __ := HomtoFil σR σS FR FR_lt f
   one_mem := by
     show 1 ∈ ((map f <| FR 0 : σS) : Set S)
     rw[← coe_map <| FR 0]
@@ -101,11 +111,14 @@ instance RingHomtoFiltration (FR FR_lt: ι → σR) [fil : IsRingFiltration FR F
     simp only [SetLike.mem_coe, IsRingFiltration.mul_mem x_in y_in, map_mul,
       Mathlib.Tactic.LinearCombination'.mul_pf x_eq y_eq, and_self]
 
-end RingHomtoFiltration
+instance InjtoInj2 (f : R →+* S) [SetLikeHom σR σS f] (hf : f.toFun.Injective):
+ Function.Injective fun (FR : ι → σR) ↦ (FS σR σS FR f) := InjHomtoInjFil σR σS (⇑f) hf
+
+end RingHomtoFil
 
 
 
-section ModuleHomtoFiltration
+section ModHomtoFil
 
 variable {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
 variable (FR : ι → σR) (FR_lt : outParam <| ι → σR) [fil : IsRingFiltration FR FR_lt]
@@ -128,9 +141,9 @@ def FN_lt (FM_lt : ι → σM) (f : M →ₗ[R] N) [SetLikeHom σM σN f] : outP
 /- When FM and FM_lt is a filtration of M, then module hom f: M → N induce a module filtration of B
  which is called `FB` and `FB_lt`-/
 open SetLikeHom
-instance ModuleHomtoFiltration [SetLikeHom σM σN f] :
+instance ModHomtoFil [SetLikeHom σM σN f] :
     IsModuleFiltration FR FR_lt (FN σM σN FM f) (FN_lt σM σN FM_lt f) where
-  __ := HomtoFiltration σM σN (f := f.toFun) (ι := ι) (FA := FM) (FA_lt := FM_lt)
+  __ := HomtoFil σM σN (f := f.toFun) (ι := ι) (FA := FM) (FA_lt := FM_lt)
   smul_mem {i j r n hr hn}:= by
     have hn : n ∈ ((map f <| FM j : σN) : Set N) := hn
     rw[← coe_map <| FM j] at hn
@@ -142,4 +155,4 @@ instance ModuleHomtoFiltration [SetLikeHom σM σN f] :
     rw[vadd_eq_add] at this
     simp only [SetLike.mem_coe, this, map_smul, and_self]
 
-end ModuleHomtoFiltration
+end ModHomtoFil
