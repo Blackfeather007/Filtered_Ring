@@ -448,13 +448,32 @@ lemma GradedPiece.algebraMap.map_mul [hasGMul F F_lt] : GradedMonoid.mk 0
 lemma GradedPiece.algebraMap.commutes [hasGMul F F_lt] (r : R) (i : ι) (a : GradedPiece F F_lt i) :
     HEq ((mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0))) * a)
     (a * (mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0)))) := by
-
-  sorry
+  have : mk F F_lt a.out = a := by simp only [mk_eq, Quotient.out_eq]
+  have eq1 : (mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0))) * a =
+    (mk F F_lt ((r • (⟨1, IsRingFiltration.one_mem⟩ : F 0)) * a.out)) := by
+    nth_rw 1 [← this]
+    rfl
+  have eq2 : a * (mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0))) =
+    (mk F F_lt (a.out * (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0)))) := by
+    nth_rw 1 [← this]
+    rfl
+  refine HEq_eq_mk_coe_eq F F_lt _ _ (add_comm 0 i) ?e eq1 eq2
+  show (r • (1 : A)) * a.out.val = a.out.val * (r • (1 : A))
+  simp
 
 lemma GradedPiece.algebraMap.smul_def [hasGMul F F_lt] (r : R) (i : ι) (a : GradedPiece F F_lt i) :
-    HEq (r • a) (GradedMonoid.GMul.mul (mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0))) a) := by
-
-  sorry
+    HEq (r • a) ((mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0))) * a) := by
+  have : mk F F_lt a.out = a := by simp only [mk_eq, Quotient.out_eq]
+  have eq1 : r • a = (mk F F_lt (r • (⟨a.out.1, a.out.2⟩ : F i))) := by
+    nth_rw 1 [← this]
+    rfl
+  have eq2 : (mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0))) * a =
+    (mk F F_lt ((r • (⟨1, IsRingFiltration.one_mem⟩ : F 0)) * a.out)) := by
+    nth_rw 1 [← this]
+    rfl
+  refine HEq_eq_mk_coe_eq F F_lt _ _ (zero_add i).symm ?e eq1 eq2
+  show r • a.out.val = (r • (1 : A)) * a.out.val
+  simp
 
 instance [hasGMul F F_lt] : DirectSum.GAlgebra R (GradedPiece F F_lt) where
   toFun := GradedPiece.algebraMap F F_lt
