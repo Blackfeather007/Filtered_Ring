@@ -11,7 +11,7 @@ class FilteredHom
 
 end FilteredHom
 
-section FilteredRingHom
+section
 
 variable {ι R S γ σ : Type*} [OrderedAddCommMonoid ι]
 
@@ -20,26 +20,29 @@ variable [Ring R] [Ring S] [SetLike γ R] [SetLike σ S]
 variable (FR : ι → γ) (FR_lt : outParam <| ι → γ) (FS : ι → σ) (FS_lt : outParam <| ι → σ)
 
 variable (f : R →+* S) [IsRingFiltration FR FR_lt] [IsRingFiltration FS FS_lt]
+section FilteredRingHom
 
 class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt f
 
-variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι]
+end FilteredRingHom
 
-private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
-  intro a
-  let s := Quotient.out' a
-  simp at s
-  let s' := f s
+section DirectSum
 
+variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι] [FilteredRingHom FR FR_lt FS FS_lt f]
 
-  sorry
+private noncomputable def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i :=
+  fun a ↦ let s := Quotient.out' a
+    GradedPiece.mk FS FS_lt
+      ⟨f s, FilteredRingHom.toFilteredHom.pieces_wise i s (FB_lt := FS_lt)⟩
 
 open DirectSum in
-noncomputable def G : (⨁ i, GradedPiece FR FR_lt i) → (⨁ i, GradedPiece FS FS_lt i) := by
-  intro a
-  let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun i x ↦
-    Classical.propDecidable (x ≠ 0)
-  let s := DFinsupp.support a
-  exact mk (fun i ↦ GradedPiece FS FS_lt i) s (fun i ↦ (Gf FR FR_lt FS FS_lt i) (a i))
+noncomputable def G : (⨁ i, GradedPiece FR FR_lt i) → (⨁ i, GradedPiece FS FS_lt i) :=
+  fun a ↦
+    let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun _ x ↦
+      Classical.propDecidable (x ≠ 0)
+    mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
+      <| fun i ↦ (Gf FR FR_lt FS FS_lt f i) (a i)
 
-end FilteredRingHom
+end DirectSum
+
+end
