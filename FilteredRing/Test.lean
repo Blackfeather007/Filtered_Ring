@@ -114,13 +114,6 @@ lemma G.comp : (G g).comp (G f) = G (g ∘ f) := by
   apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp
   sorry
 
--- instance : (G g).comp (G f) = (G (g ∘ f)) := by
-
-
---     fun x a ↦ ? x
-
---   sorry
-
 end DirectSum
 
 
