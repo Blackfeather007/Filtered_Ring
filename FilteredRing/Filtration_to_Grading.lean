@@ -25,6 +25,9 @@ instance [Preorder ι] [IsFiltration F F_lt] (i : ι) :
 /-- `GradedPiece i` of the associated graded ring is defined as `F i` quotient by `F_lt i`-/
 abbrev GradedPiece (i : ι) := ((F i) : AddSubgroup A) ⧸ ((F_lt i) : AddSubgroup A).addSubgroupOf ((F i) : AddSubgroup A)
 
+open DirectSum in
+abbrev Graded := (⨁ i, GradedPiece F F_lt i)
+
 namespace GradedPiece
 
 /--Obtaining an element of `GradedPiece i` from an element of `F i`-/
@@ -403,8 +406,7 @@ instance [hasGMul F F_lt] : DirectSum.GRing (GradedPiece F F_lt) where
   intCast_ofNat := GradedPiece.intCast_ofNat F F_lt
   intCast_negSucc_ofNat := GradedPiece.intCast_negSucc_ofNat F F_lt
 
-open DirectSum in
-instance [hasGMul F F_lt] [DecidableEq ι] : Ring (⨁ i, GradedPiece F F_lt i) :=
+instance [hasGMul F F_lt] [DecidableEq ι] : Ring (Graded F F_lt) :=
   DirectSum.ring (GradedPiece F F_lt)
 
 end GradedMul
@@ -722,7 +724,7 @@ instance [hasGMul F F_lt] : DirectSum.Gmodule (GradedPiece F F_lt) (GradedPiece 
 
 open DirectSum in
 instance [hasGMul F F_lt] [DecidableEq ι] [DecidableEq ιM] :
-    Module (⨁ i, GradedPiece F F_lt i) (⨁ i, GradedPiece FM FM_lt i) :=
+    Module (Graded F F_lt) (Graded FM FM_lt) :=
   Gmodule.module (GradedPiece F F_lt) (GradedPiece FM FM_lt)
 
 end gradedSMul

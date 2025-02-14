@@ -35,9 +35,9 @@ variable (f : R →+* S) [IsRingFiltration FR FR_lt] [IsRingFiltration FS FS_lt]
 
 section FilteredRingHom
 
-class FilteredRingHom extends IsFilteredHom FR FS f
+class IsFilteredRingHom extends IsFilteredHom FR FS f
 
-class StrictFilteredRingHom extends FilteredRingHom FR FS f where
+class FilteredRingHom.IsStrict extends IsFilteredRingHom FR FS f where
   strict : ∀ p : ι, ∀ x : S, x ∈ f '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
 
 end FilteredRingHom
@@ -55,7 +55,7 @@ variable {N : Type*} [AddCommMonoid N] [Module R N] (σN : Type*) [SetLike σN N
 (f : M →ₗ[R] N)
 
 
-class FilteredModuleHom : Prop where
+class IsFilteredModuleHom : Prop where
   piece_wise : ∀ i : ι, ∀ m ∈ FM i, f m ∈ FN i
 
 end
@@ -64,15 +64,15 @@ end
 
 section DirectSum
 
-variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι] [FilteredRingHom FR FS f]
+variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι] [IsFilteredRingHom FR FS f]
 
 private noncomputable def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i :=
   fun a ↦ let s := Quotient.out' a
     GradedPiece.mk FS FS_lt
-      ⟨f s, FilteredRingHom.toIsFilteredHom.pieces_wise i s⟩
+      ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise i s⟩
 
 open DirectSum in
-noncomputable def G : (⨁ i, GradedPiece FR FR_lt i) → (⨁ i, GradedPiece FS FS_lt i) :=
+noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
   fun a ↦
     let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun _ x ↦
       Classical.propDecidable (x ≠ 0)
@@ -91,7 +91,7 @@ variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
 
 variable [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
 
-variable (f g : R →+* R) [FilteredRingHom L M f] [FilteredRingHom M N g]
+variable (f g : R →+* R) [IsFilteredRingHom L M f] [IsFilteredRingHom M N g]
 
 theorem exact_of_exact (exact : Function.Exact f g) (strict : 0 = 0):
   Function.Exact (G L L_lt M M_lt f) (G M M_lt N N_lt g) := by
