@@ -25,8 +25,6 @@ def FilteredHom.comp : FilteredHom FA FA_lt FC FC_lt := {
 
 infixl:100 "∘" => FilteredHom.comp
 
-#check f ∘ g
-
 end FilteredHom
 
 
@@ -62,8 +60,6 @@ def FilteredRingHom.comp : FilteredRingHom FR FR_lt FT FT_lt := {
 
 infixl:100 "∘" => FilteredRingHom.comp
 
-#check f ∘ g
-
 end FilteredRingHom
 
 section FilteredModuleHom
@@ -93,11 +89,9 @@ variable {FR FR_lt FS FS_lt} in
 private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
   intro a
   let h(i) := fun (s : FR i) ↦ GradedPiece.mk FS FS_lt
-      ⟨f.toRingHom s, f.pieces_wise i s (SetLike.coe_mem s)⟩
+    ⟨f.toRingHom s, f.pieces_wise i s (SetLike.coe_mem s)⟩
   use Quotient.lift (fun (s : FR i)↦ GradedPiece.mk FS FS_lt
-      ⟨f.toRingHom s, f.pieces_wise i s (SetLike.coe_mem s)⟩) (fun a b h ↦ ?_) a
-  show GradedPiece.mk FS FS_lt ⟨f.toRingHom a, f.pieces_wise i a (SetLike.coe_mem a)⟩
-    = GradedPiece.mk FS FS_lt ⟨f.toRingHom b, f.pieces_wise i b (SetLike.coe_mem b)⟩
+    ⟨f.toRingHom s, f.pieces_wise i s (SetLike.coe_mem s)⟩) (fun a b h ↦ ?_) a
   rw [← Quotient.eq_iff_equiv] at h
   have : - a + b ∈ ((FR_lt i) : AddSubgroup R).addSubgroupOf (FR i : AddSubgroup R) :=
     QuotientAddGroup.eq.mp h
@@ -152,13 +146,10 @@ theorem exact_of_exact (exact : Function.Exact f.toRingHom g.toRingHom) (strict 
     have : ∃ y : L p, f.toRingHom y = x - x' := sorry
     rcases this with ⟨y, feq⟩
     use y
-    let _ : (i : ι) → (x : GradedPiece L L_lt i) → Decidable (x ≠ 0) := fun _ x ↦ Classical.propDecidable (x ≠ 0)
-
-
-    have : ∃ fy : M p, fy = f.toRingHom y := by
-      refine CanLift.prf (f.toRingHom y)
-        (f.pieces_wise p y (SetLike.coe_mem y))
-
+    let _ : (i : ι) → (x : GradedPiece L L_lt i) → Decidable (x ≠ 0) :=
+      fun _ x ↦ Classical.propDecidable (x ≠ 0)
+    have : ∃ fy : M p, fy = f.toRingHom y :=
+      CanLift.prf (f.toRingHom y) <| f.pieces_wise p y <| SetLike.coe_mem y
     rcases this with ⟨fy, huh⟩
 
     #check Quotient.lift_mk (fun (s : L p)↦ GradedPiece.mk M M_lt ⟨f.toRingHom s, f.pieces_wise p s (SetLike.coe_mem s)⟩) ?_ y
@@ -167,12 +158,9 @@ theorem exact_of_exact (exact : Function.Exact f.toRingHom g.toRingHom) (strict 
       unfold Gf
       simp
 
-
-
-
-
       sorry
     sorry
+  sorry
 
 
 
