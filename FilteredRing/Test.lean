@@ -139,15 +139,40 @@ variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
 
 variable [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
 
-variable (f g : R →+* R) [IsFilteredRingHom L M f] [IsFilteredRingHom M N g]
-[IsFilteredRingHom L_lt M_lt f] [IsFilteredRingHom M_lt N_lt g]
-
-theorem exact_of_exact (exact : Function.Exact f g) (strict : 0 = 0):
-  Function.Exact (G L L_lt M M_lt f) (G M M_lt N N_lt g) := by
-    sorry
+variable (f g : R →+* R) [IsFilteredRingHom L_lt M_lt f] [IsFilteredRingHom M_lt N_lt g]
 
 
+theorem exact_of_exact (exact : Function.Exact f g) [FilteredRingHom.IsStrict L M f]
+  [FilteredRingHom.IsStrict M N g] : Function.Exact (G L L_lt M M_lt f) (G M M_lt N N_lt g) := by
 
+  have component_exact : ∀ p : ι, ∀ x : M p, (Gf M M_lt N N_lt g) p (Quotient.mk' x) = 0 →
+    ∃ y : L p, (Gf L L_lt M M_lt f) p (Quotient.mk' y) = Quotient.mk' x := by
+      intro p x noname
+      have : ∃ x' : M_lt p, g x = g x' := sorry
+      rcases this with ⟨x', geq⟩
+      have : ∃ y : L p, f y = x - x' := sorry
+      rcases this with ⟨y, feq⟩
+      use y
+      let _ : (i : ι) → (x : GradedPiece L L_lt i) → Decidable (x ≠ 0) := fun _ x ↦ Classical.propDecidable (x ≠ 0)
+
+
+      have : ∃ fy : M p, fy = f y := by
+        refine CanLift.prf (f ↑y) (IsFilteredHom.pieces_wise p y)
+
+      rcases this with ⟨fy, huh⟩
+
+      #check Quotient.lift_mk (fun (s : L p)↦ GradedPiece.mk M M_lt ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise p s⟩) ?_ y
+
+      have : (Gf L L_lt M M_lt f) p (Quotient.mk' y) = Quotient.mk' (fy) := by
+        unfold Gf
+        simp
+
+
+
+
+
+      sorry
+  sorry
 
 
 end exactness
