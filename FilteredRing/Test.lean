@@ -20,6 +20,7 @@ variable [Ring R] [Ring S] [SetLike γ R] [SetLike σ S]
 variable (FR : ι → γ) (FR_lt : outParam <| ι → γ) (FS : ι → σ) (FS_lt : outParam <| ι → σ)
 
 variable (f : R →+* S) [IsRingFiltration FR FR_lt] [IsRingFiltration FS FS_lt]
+
 section FilteredRingHom
 
 class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt f
@@ -44,5 +45,28 @@ noncomputable def G : (⨁ i, GradedPiece FR FR_lt i) → (⨁ i, GradedPiece FS
       <| fun i ↦ (Gf FR FR_lt FS FS_lt f i) (a i)
 
 end DirectSum
+
+section exactness
+
+variable {ι R σ : Type*} [DecidableEq ι] [OrderedAddCommMonoid ι]
+
+variable [Ring R] [SetLike σ R] [AddSubgroupClass σ R]
+
+variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
+
+variable [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
+
+variable (f g : R →+* R) [FilteredRingHom L L_lt M M_lt f] [FilteredRingHom M M_lt N N_lt g]
+
+theorem exact_of_exact (exact : Function.Exact f g) (strict : 0 = 0):
+  Function.Exact (G L L_lt M M_lt f) (G M M_lt N N_lt g) := by
+    sorry
+
+
+
+
+
+end exactness
+
 
 end
