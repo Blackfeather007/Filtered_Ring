@@ -111,6 +111,38 @@ lemma G.comp : (G g).comp (G f) = G (g ∘ f) := by
   apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp
   sorry
 
+open DirectSum DFinsupp
+instance : (G g).comp (G f) = (G (g.comp f)) := by
+  let _ : (i : ι) → (x : GradedPiece FS FS_lt i) → Decidable (x ≠ 0) := fun _ x ↦
+    Classical.propDecidable (x ≠ 0)
+  let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun _ x ↦
+    Classical.propDecidable (x ≠ 0)
+
+  apply (Set.eqOn_univ (G g ∘ G f) (G (g.comp f))).mp
+    fun x a ↦ ? x
+  apply ext (fun i ↦ GradedPiece FT FT_lt i)
+  intro j
+
+  set s := mk (fun i ↦ GradedPiece FS FS_lt i) (support x)
+              (fun i ↦ Gf f i (x i)) with hs
+  show mk (fun i ↦ GradedPiece FT FT_lt i) (support s)
+          (fun i ↦ Gf g i (s i)) j
+     = mk (fun i ↦ GradedPiece FT FT_lt i) (support x)
+          (fun i ↦ Gf (g.comp f) i (x i)) j
+  by_cases hjx : j ∈ support x
+  · rw[mk_apply_of_mem hjx]
+    simp
+    sorry
+  · rw[mk_apply_of_not_mem hjx]
+    by_cases hjs : j ∈ support s
+    · simp only [Gf, GradedPiece.mk_eq]
+      have : (0 : GradedPiece FS FS_lt j) = ⟦0⟧ := rfl
+      rw[mk_apply_of_mem hjs, mk_apply_of_not_mem hjx, this, Quotient.lift_mk]
+      simp only [ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
+      apply (QuotientAddGroup.eq_zero_iff _).mp rfl
+    · exact mk_apply_of_not_mem hjs
+
+
 end DirectSum
 
 
