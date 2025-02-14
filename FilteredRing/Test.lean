@@ -5,16 +5,14 @@ import FilteredRing.Filtration_to_Grading
 
 section IsFilteredHom
 
-variable {ι A B α β : Type*} [Preorder ι] [SetLike α A] [SetLike β B]
+variable {ι A B C α β σ: Type*} [Preorder ι] [SetLike α A] [SetLike β B] [SetLike σ C]
 
-variable (FA : ι → α) (FA_lt : outParam <| ι → α) (FB : ι → β) (FB_lt : outParam <| ι → β)
-  [IsFiltration FA FA_lt] [IsFiltration FB FB_lt]
+variable (FA : ι → α) (FA_lt : outParam <| ι → α) [IsFiltration FA FA_lt]
+variable (FB : ι → β) (FB_lt : outParam <| ι → β) [IsFiltration FB FB_lt]
+variable (FC : ι → σ) (FC_lt : outParam <| ι → σ) [IsFiltration FC FC_lt]
 
 class IsFilteredHom (f : A → B) : Prop where
   pieces_wise : ∀ i : ι, ∀ a : FA i, f a ∈ FB i
-
-variable {C σ : Type*} [SetLike σ C] (FC : ι → σ) (FC_lt : outParam <| ι → σ)
-  [IsFiltration FC FC_lt]
 
 variable (f : A → B) [IsFilteredHom FA FB f] (g : B → C) [IsFilteredHom FB FC g]
 
@@ -33,22 +31,17 @@ section
 
 variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι]
 
-variable [Ring R] [Ring S] [Ring T] [SetLike γ R] [SetLike σ S] [SetLike τ T]
+variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [IsRingFiltration FR FR_lt]
+variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [IsRingFiltration FS FS_lt]
+variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [IsRingFiltration FT FT_lt]
 
-variable (FR : ι → γ) (FR_lt : outParam <| ι → γ) (FS : ι → σ) (FS_lt : outParam <| ι → σ)
-(FT : ι → τ) (FT_lt : outParam <| ι → τ)
-
-variable (f : R →+* S) (g : S →+* T) [IsRingFiltration FR FR_lt] [IsRingFiltration FS FS_lt]
-[IsRingFiltration FT FT_lt]
-
+variable (f : R →+* S) (g : S →+* T)
 
 section FilteredRingHom
 
 class IsFilteredRingHom extends IsFilteredHom FR FS f
 
 attribute [instance] IsFilteredRingHom.toIsFilteredHom
-
-#check IsFilteredRingHom FR FS f
 
 class FilteredRingHom.IsStrict extends IsFilteredRingHom FR FS f where
   strict : ∀ p : ι, ∀ x : S, x ∈ f '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
@@ -120,7 +113,11 @@ noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
     mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
       <| fun i ↦ (Gf FR FR_lt FS FS_lt f i) (a i)
 
-variable [IsFilteredRingHom FS_lt FT_lt g]
+variable [IsFilteredRingHom FR_lt FS_lt f] [IsFilteredRingHom FS_lt FT_lt g]
+
+-- lemma : IsFilteredRingHom FR_lt FT_lt (g.comp f) := by
+  -- apply?
+  -- exact IsFilteredRingHom.comp FR_lt FS_lt FT_lt f g
 
 instance : (G FS FS_lt FT FT_lt g).comp (G FR FR_lt FS FS_lt f) = (G FR FR_lt FT FT_lt (g.comp f)) := by
 
