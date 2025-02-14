@@ -46,8 +46,28 @@ section FilteredRingHom
 
 class IsFilteredRingHom extends IsFilteredHom FR FS f
 
+attribute [instance] IsFilteredRingHom.toIsFilteredHom
+
+#check IsFilteredRingHom FR FS f
+
 class FilteredRingHom.IsStrict extends IsFilteredRingHom FR FS f where
   strict : ∀ p : ι, ∀ x : S, x ∈ f '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
+
+variable [IsFilteredRingHom FR FS f] [IsFilteredRingHom FS FT g]
+
+instance : IsFilteredRingHom FR FT (g.comp f) := by
+  -- apply IsFilteredRingHom.mk
+
+  -- have : IsFilteredHom FR FT (g.comp f) := by
+  --   -- apply?
+  --   --   apply?
+  --   apply IsFilteredHom.comp FR FS FT f
+  --   sorry
+  -- exact IsFilteredRingHom.mk
+    --   apply?
+  -- apply IsFilteredRingHom.mk
+  -- apply?
+  sorry
 
 end FilteredRingHom
 
@@ -73,7 +93,9 @@ end
 
 section DirectSum
 
-variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι] [IsFilteredRingHom FR FS f]
+variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι]
+[IsFilteredRingHom FR FS f] [IsFilteredRingHom FR_lt FS_lt f]
+
 
 variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [AddSubgroupClass τ T]
 [DecidableEq ι] [IsFilteredRingHom FR FS f] [IsFilteredRingHom FS FT g]
@@ -84,20 +106,19 @@ private noncomputable def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece F
       ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise i s⟩
 
   use Quotient.lift (fun (s : FR i)↦ GradedPiece.mk FS FS_lt
-      ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise i s⟩)
-    (by
-    intro a b h
-    show GradedPiece.mk FS FS_lt ⟨f a, IsFilteredRingHom.toIsFilteredHom.pieces_wise i a⟩
-      = GradedPiece.mk FS FS_lt ⟨f b, IsFilteredRingHom.toIsFilteredHom.pieces_wise i b⟩
-    rw [← Quotient.eq_iff_equiv] at h
-    have : a - b ∈ ((FR_lt i) : AddSubgroup R).addSubgroupOf ((FR i) : AddSubgroup R) :=
-      QuotientAddGroup.eq_iff_sub_mem.mp h
-    have : (a - b : R) ∈ (FR_lt i : AddSubgroup R) := this
-    apply QuotientAddGroup.eq.mpr
+      ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise i s⟩) ?_ a
 
-    have : f (a - b) ∈ (FS_lt i) := sorry
-    have : - f a + f b ∈ (FS_lt i : AddSubgroup S) := sorry
-    exact this) a
+  intro a b h
+  show GradedPiece.mk FS FS_lt ⟨f a, IsFilteredRingHom.toIsFilteredHom.pieces_wise i a⟩
+    = GradedPiece.mk FS FS_lt ⟨f b, IsFilteredRingHom.toIsFilteredHom.pieces_wise i b⟩
+  rw [← Quotient.eq_iff_equiv] at h
+  have : - a + b ∈ ((FR_lt i) : AddSubgroup R).addSubgroupOf ((FR i) : AddSubgroup R) :=
+    QuotientAddGroup.eq.mp h
+  apply QuotientAddGroup.eq.mpr
+  have : f (- a + b) ∈ (FS_lt i) :=
+    IsFilteredRingHom.toIsFilteredHom.pieces_wise i (⟨- a + b, this⟩ : FR_lt i)
+  rw [map_add, map_neg] at this
+  exact this
 
 open DirectSum in
 noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
@@ -107,7 +128,26 @@ noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
     mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
       <| fun i ↦ (Gf FR FR_lt FS FS_lt f i) (a i)
 
+variable [IsFilteredRingHom FS_lt FT_lt g]
+
+
+#check (G FS FS_lt FT FT_lt g).comp (G FR FR_lt FS FS_lt f)
+#check g.comp f
+
+
+
+#check (G FR FR_lt FT FT_lt (g.comp f))
+-- variable {f : }
+
+instance : (G FS FS_lt FT FT_lt g).comp (G FR FR_lt FS FS_lt f) = (G FR FR_lt FT FT_lt (g.comp f)) := by
+
+  apply (Set.eqOn_univ (G FS FS_lt FT FT_lt g ∘ G FR FR_lt FS FS_lt f) (G FR FR_lt FT FT_lt (g.comp f))).mp
+    fun x a ↦ ? x
+
+  sorry
+
 end DirectSum
+
 
 section exactness
 
@@ -120,6 +160,7 @@ variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
 variable [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
 
 variable (f g : R →+* R) [IsFilteredRingHom L M f] [IsFilteredRingHom M N g]
+[IsFilteredRingHom L_lt M_lt f] [IsFilteredRingHom M_lt N_lt g]
 
 theorem exact_of_exact (exact : Function.Exact f g) (strict : 0 = 0):
   Function.Exact (G L L_lt M M_lt f) (G M M_lt N N_lt g) := by

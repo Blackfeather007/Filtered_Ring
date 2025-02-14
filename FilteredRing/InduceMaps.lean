@@ -68,8 +68,7 @@ instance HomtoFil (FA FA_lt : ι → σA) (f : A → B) [fil : IsFiltration FA F
     have h : ∀ i < j, FA i ≤ comap Sup := fun i i_lt_j ↦ galois.le_u <| h i i_lt_j
     exact IsFiltration.is_sup (comap Sup) j h
 
-instance (FA FA_lt : ι → σA) (f : A → B) [fil : IsFiltration FA FA_lt]
-[SetLikeHom σA σB f]: FilteredHom FA FA_lt (FB σA σB FA f) (FB_lt σA σB FA_lt f) f where
+instance (FA : ι → σA) (f : A → B) [SetLikeHom σA σB f]: IsFilteredHom FA (FB σA σB FA f) f where
   pieces_wise := by
     intro i a
     simp[FB, coe_map]
