@@ -1,5 +1,8 @@
 import FilteredRing.Filtration_to_Grading
 
+
+
+
 section IsFilteredHom
 
 variable {ι A B α β : Type*} [Preorder ι] [SetLike α A] [SetLike β B]
@@ -23,15 +26,21 @@ lemma IsFilteredHom.comp : IsFilteredHom FA FC (g.comp f) :=
 
 end IsFilteredHom
 
+
+
+
 section
 
-variable {ι R S γ σ : Type*} [OrderedAddCommMonoid ι]
+variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι]
 
-variable [Ring R] [Ring S] [SetLike γ R] [SetLike σ S]
+variable [Ring R] [Ring S] [Ring T] [SetLike γ R] [SetLike σ S] [SetLike τ T]
 
 variable (FR : ι → γ) (FR_lt : outParam <| ι → γ) (FS : ι → σ) (FS_lt : outParam <| ι → σ)
+(FT : ι → τ) (FT_lt : outParam <| ι → τ)
 
-variable (f : R →+* S) [IsRingFiltration FR FR_lt] [IsRingFiltration FS FS_lt]
+variable (f : R →+* S) (g : S →+* T) [IsRingFiltration FR FR_lt] [IsRingFiltration FS FS_lt]
+[IsRingFiltration FT FT_lt]
+
 
 section FilteredRingHom
 
