@@ -55,19 +55,11 @@ class FilteredRingHom.IsStrict extends IsFilteredRingHom FR FS f where
 
 variable [IsFilteredRingHom FR FS f] [IsFilteredRingHom FS FT g]
 
-instance : IsFilteredRingHom FR FT (g.comp f) := by
-  -- apply IsFilteredRingHom.mk
-
-  -- have : IsFilteredHom FR FT (g.comp f) := by
-  --   -- apply?
-  --   --   apply?
-  --   apply IsFilteredHom.comp FR FS FT f
-  --   sorry
-  -- exact IsFilteredRingHom.mk
-    --   apply?
-  -- apply IsFilteredRingHom.mk
-  -- apply?
-  sorry
+include FS in
+omit [OrderedAddCommMonoid ι] in
+lemma IsFilteredRingHom.comp : IsFilteredRingHom FR FT (g.comp f) :=
+  let _ : IsFilteredHom FR FT (g.comp f) := IsFilteredHom.comp FR FS FT f g
+  mk
 
 end FilteredRingHom
 
@@ -129,15 +121,6 @@ noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
       <| fun i ↦ (Gf FR FR_lt FS FS_lt f i) (a i)
 
 variable [IsFilteredRingHom FS_lt FT_lt g]
-
-
-#check (G FS FS_lt FT FT_lt g).comp (G FR FR_lt FS FS_lt f)
-#check g.comp f
-
-
-
-#check (G FR FR_lt FT FT_lt (g.comp f))
--- variable {f : }
 
 instance : (G FS FS_lt FT FT_lt g).comp (G FR FR_lt FS FS_lt f) = (G FR FR_lt FT FT_lt (g.comp f)) := by
 
