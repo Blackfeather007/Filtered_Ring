@@ -427,8 +427,7 @@ instance (i : ι) : Module R (GradedPiece F F_lt i) :=
 def GradedPiece.algebraMap [IsRingFiltration F F_lt] : R →+ GradedPiece F F_lt 0 where
   toFun r := (mk F F_lt (r • (⟨1, IsRingFiltration.one_mem⟩ : F 0)))
   map_zero' := by
-    simp
-    rfl
+    simp only [zero_smul, mk_eq, QuotientAddGroup.mk_zero]
   map_add' x y := by
     simp [add_smul]
     rfl

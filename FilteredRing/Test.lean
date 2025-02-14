@@ -75,10 +75,29 @@ section DirectSum
 
 variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι] [IsFilteredRingHom FR FS f]
 
-private noncomputable def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i :=
-  fun a ↦ let s := Quotient.out' a
-    GradedPiece.mk FS FS_lt
+variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [AddSubgroupClass τ T]
+[DecidableEq ι] [IsFilteredRingHom FR FS f] [IsFilteredRingHom FS FT g]
+
+private noncomputable def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
+  intro a
+  let h(i) := fun (s : FR i) ↦ GradedPiece.mk FS FS_lt
       ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise i s⟩
+
+  use Quotient.lift (fun (s : FR i)↦ GradedPiece.mk FS FS_lt
+      ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise i s⟩)
+    (by
+    intro a b h
+    show GradedPiece.mk FS FS_lt ⟨f a, IsFilteredRingHom.toIsFilteredHom.pieces_wise i a⟩
+      = GradedPiece.mk FS FS_lt ⟨f b, IsFilteredRingHom.toIsFilteredHom.pieces_wise i b⟩
+    rw [← Quotient.eq_iff_equiv] at h
+    have : a - b ∈ ((FR_lt i) : AddSubgroup R).addSubgroupOf ((FR i) : AddSubgroup R) :=
+      QuotientAddGroup.eq_iff_sub_mem.mp h
+    have : (a - b : R) ∈ (FR_lt i : AddSubgroup R) := this
+    apply QuotientAddGroup.eq.mpr
+
+    have : f (a - b) ∈ (FS_lt i) := sorry
+    have : - f a + f b ∈ (FS_lt i : AddSubgroup S) := sorry
+    exact this) a
 
 open DirectSum in
 noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
