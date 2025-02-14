@@ -14,7 +14,7 @@ class FilteredHom where
   pieces_wise : ∀ i : ι, ∀ a ∈ FA i, toFun a ∈ FB i
   pieces_wise_lt : ∀ i : ι, ∀ a ∈ FA_lt i, toFun a ∈ FB_lt i
 
-variable (f : FilteredHom FA FA_lt FB FB_lt) (g : FilteredHom FB FB_lt FC FC_lt)
+variable (g : FilteredHom FB FB_lt FC FC_lt) (f : FilteredHom FA FA_lt FB FB_lt)
 
 variable {FA FB FC FA_lt FB_lt FC_lt} in
 def FilteredHom.comp : FilteredHom FA FA_lt FC FC_lt := {
@@ -49,7 +49,7 @@ variable {FR FS FR_lt FS_lt} in
 def FilteredRingHom.IsStrict (f : FilteredRingHom FR FR_lt FS FS_lt) : Prop :=
   ∀ p : ι, ∀ x : S, x ∈ f.toFun '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
 
-variable (f : FilteredRingHom FR FR_lt FS FS_lt) (g : FilteredRingHom FS FS_lt FT FT_lt)
+variable (g : FilteredRingHom FS FS_lt FT FT_lt) (f : FilteredRingHom FR FR_lt FS FS_lt)
 
 variable {FR FS FT FR_lt FS_lt FT_lt} in
 def FilteredRingHom.comp : FilteredRingHom FR FR_lt FT FT_lt := {
@@ -110,13 +110,13 @@ noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
     mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
       <| fun i ↦ (Gf f i) (a i)
 
--- lemma : IsFilteredRingHom FR_lt FT_lt (g.comp f) := by
-  -- apply?
-  -- exact IsFilteredRingHom.comp FR_lt FS_lt FT_lt f g
+lemma G.comp : (G g).comp (G f) = G (g ∘ f) := by
+  apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp
+  sorry
 
 -- instance : (G g).comp (G f) = (G (g ∘ f)) := by
 
---   apply (Set.eqOn_univ (G FS FS_lt FT FT_lt g ∘ G FR FR_lt FS FS_lt f) (G FR FR_lt FT FT_lt (g.comp f))).mp
+
 --     fun x a ↦ ? x
 
 --   sorry
@@ -127,17 +127,15 @@ end DirectSum
 section exactness
 
 variable {ι R σ : Type*} [DecidableEq ι] [OrderedAddCommMonoid ι]
-
-variable [Ring R] [SetLike σ R] [AddSubgroupClass σ R]
+  [Ring R] [SetLike σ R] [AddSubgroupClass σ R]
 
 variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
-
-variable [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
+  [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
 
 variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
 
-theorem exact_of_exact (exact : Function.Exact f.toRingHom g.toRingHom) (strict : 0 = 0) :
-    Function.Exact (G f) (G g) := by
+theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
+    (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
   have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) (Quotient.mk' x) = 0 →
       ∃ y : L p, (Gf f p) (Quotient.mk' y) = Quotient.mk' x := by
     intro p x noname
