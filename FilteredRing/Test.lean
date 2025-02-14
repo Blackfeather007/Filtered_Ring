@@ -25,6 +25,9 @@ section FilteredRingHom
 
 class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt f
 
+class StrictFilteredRingHom extends FilteredRingHom FR FR_lt FS FS_lt f where
+  strict : ∀ p : ι, ∀ x : S, x ∈ f '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
+
 end FilteredRingHom
 
 section
