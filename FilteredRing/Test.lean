@@ -4,10 +4,20 @@ section FilteredHom
 
 variable {ι A B α β : Type*} [Preorder ι] [SetLike α A] [SetLike β B]
 
-class FilteredHom
-    (FA : ι → α) (FA_lt : outParam <| ι → α) (FB : ι → β) (FB_lt : outParam <| ι → β)
-    [IsFiltration FA FA_lt] [IsFiltration FB FB_lt] (f : A → B) : Prop where
+variable (FA : ι → α) (FA_lt : outParam <| ι → α) (FB : ι → β) (FB_lt : outParam <| ι → β)
+  [IsFiltration FA FA_lt] [IsFiltration FB FB_lt]
+
+class FilteredHom (f : A → B) : Prop where
   pieces_wise : ∀ i : ι, ∀ a : FA i, f a ∈ FB i
+
+variable {C σ : Type*} [SetLike σ C] (FC : ι → σ) (FC_lt : outParam <| ι → σ)
+  [IsFiltration FC FC_lt]
+
+variable (f : A → B) [FilteredHom FA FB f] (g : B → C) [FilteredHom FB FC g]
+
+def FilteredHom.comp : FilteredHom FA FC (g.comp f) :=
+  ⟨fun i a ↦ FilteredHom.pieces_wise i
+    ⟨f a, FilteredHom.pieces_wise (FA := FA) (FB := FB) i a⟩⟩
 
 end FilteredHom
 
@@ -23,9 +33,9 @@ variable (f : R →+* S) [IsRingFiltration FR FR_lt] [IsRingFiltration FS FS_lt]
 
 section FilteredRingHom
 
-class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt f
+class FilteredRingHom extends FilteredHom FR FS f
 
-class StrictFilteredRingHom extends FilteredRingHom FR FR_lt FS FS_lt f where
+class StrictFilteredRingHom extends FilteredRingHom FR FS f where
   strict : ∀ p : ι, ∀ x : S, x ∈ f '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
 
 end FilteredRingHom
@@ -52,7 +62,7 @@ end
 
 section DirectSum
 
-variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι] [FilteredRingHom FR FR_lt FS FS_lt f]
+variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι] [FilteredRingHom FR FS f]
 
 private noncomputable def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i :=
   fun a ↦ let s := Quotient.out' a
@@ -79,7 +89,7 @@ variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
 
 variable [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
 
-variable (f g : R →+* R) [FilteredRingHom L L_lt M M_lt f] [FilteredRingHom M M_lt N N_lt g]
+variable (f g : R →+* R) [FilteredRingHom L M f] [FilteredRingHom M N g]
 
 theorem exact_of_exact (exact : Function.Exact f g) (strict : 0 = 0):
   Function.Exact (G L L_lt M M_lt f) (G M M_lt N N_lt g) := by
