@@ -143,34 +143,35 @@ variable [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N
 variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
 
 theorem exact_of_exact (exact : Function.Exact f.toRingHom g.toRingHom) (strict : 0 = 0) :
-  Function.Exact (G f) (G g) := by
-    have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) (Quotient.mk' x) = 0 →
-    ∃ y : L p, (Gf f p) (Quotient.mk' y) = Quotient.mk' x := by
-      intro p x noname
-      have : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := sorry
-      rcases this with ⟨x', geq⟩
-      have : ∃ y : L p, f.toRingHom y = x - x' := sorry
-      rcases this with ⟨y, feq⟩
-      use y
-      let _ : (i : ι) → (x : GradedPiece L L_lt i) → Decidable (x ≠ 0) := fun _ x ↦ Classical.propDecidable (x ≠ 0)
+    Function.Exact (G f) (G g) := by
+  have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) (Quotient.mk' x) = 0 →
+      ∃ y : L p, (Gf f p) (Quotient.mk' y) = Quotient.mk' x := by
+    intro p x noname
+    have : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := sorry
+    rcases this with ⟨x', geq⟩
+    have : ∃ y : L p, f.toRingHom y = x - x' := sorry
+    rcases this with ⟨y, feq⟩
+    use y
+    let _ : (i : ι) → (x : GradedPiece L L_lt i) → Decidable (x ≠ 0) := fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
 
-      have : ∃ fy : M p, fy = f.toRingHom y := by
-          refine CanLift.prf (f.toRingHom y) (f.pieces_wise p y)
+    have : ∃ fy : M p, fy = f.toRingHom y := by
+      refine CanLift.prf (f.toRingHom y)
+        (f.pieces_wise p y (SetLike.coe_mem y))
 
-      rcases this with ⟨fy, huh⟩
+    rcases this with ⟨fy, huh⟩
 
-      #check Quotient.lift_mk (fun (s : L p)↦ GradedPiece.mk M M_lt ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise p s⟩) ?_ y
+    #check Quotient.lift_mk (fun (s : L p)↦ GradedPiece.mk M M_lt ⟨f.toRingHom s, f.pieces_wise p s (SetLike.coe_mem s)⟩) ?_ y
 
-      have : (Gf L L_lt M M_lt f) p (Quotient.mk' y) = Quotient.mk' (fy) := by
-        unfold Gf
-        simp
-
-
-
+    have : (Gf f p) (Quotient.mk' y) = Quotient.mk' (fy) := by
+      unfold Gf
+      simp
 
 
-        sorry
+
+
+
+      sorry
     sorry
 
 
