@@ -1,4 +1,5 @@
 import FilteredRing.Basic
+import FilteredRing.test
 /-!
 # The filtration on abelian group and ring
 In this file, we defined the fitration induced by a homomorphism,
@@ -11,7 +12,7 @@ conditions.
 filtration of B, which we call `FB` and `FB_lt`
 * `RingHomtoFil` If `FA` and `FA_lt` is a ring filtration of A, then a ring homomorphism
  f: A →+* B induces a ring filtration of B, which we call `FB` and `FB_lt`
-* `ModtoFil` When FM and FM_lt is a filtration of M, then a module homomorphism
+* `ModHomtoFil` When FM and FM_lt is a filtration of M, then a module homomorphism
  f: M → N induces a module filtration of N, which we call `FB` and `FB_lt`-/
 
 variable {ι : Type*} [OrderedCancelAddCommMonoid ι]
@@ -30,11 +31,21 @@ class SetLikeHom (f : A → B) where
   different conditions in the similar structures such as `AddSubroup`, `module`, `Ideal`. -/
   galois : ∃ comap : σB → σA, GaloisConnection map comap
 
-
-
 open SetLikeHom Set
+instance SetLikeHomInj (f : A → B)[SetLikeHom σA σB f](hf : f.Injective ):
+  (map f (σA := σA) (σB := σB)).Injective := by
+  intro A₁ A₂ feq
+  have eq: f '' (A₁ : Set A) = f ''  (A₂ : Set A) := by
+    rw[coe_map A₁ (σA := σA) (σB := σB), coe_map A₂ (σA := σA) (σB := σB)]
+    exact congrArg SetLike.coe feq
+  exact SetLike.coe_set_eq.mp <| (Set.image_eq_image hf).mp eq
+
+
+
 /-- It is `F` part of the filtration induced by f: A → B -/
+-- def FB (f : A → B) [SetLikeHom σA σB f] := fun (FA : ι → σA) ↦ (fun i ↦ map f (FA i) : ι → σB)
 def FB (FA : ι → σA) (f : A → B) [SetLikeHom σA σB f]: ι → σB := fun i ↦ map f (FA i)
+
 /-- It is `F_lt` part of the filtration induced by f: A → B -/
 def FB_lt (FA_lt : ι → σA) (f : A → B) [SetLikeHom σA σB f] : outParam <| ι → σB :=
  fun i ↦ map f (FA_lt i)
@@ -57,16 +68,42 @@ instance HomtoFil (FA FA_lt : ι → σA) (f : A → B) [fil : IsFiltration FA F
     have h : ∀ i < j, FA i ≤ comap Sup := fun i i_lt_j ↦ galois.le_u <| h i i_lt_j
     exact IsFiltration.is_sup (comap Sup) j h
 
-instance InjHomtoInjFil (f : A → B) [Nonempty A] [SetLikeHom σA σB f] (hf : f.Injective):
- Function.Injective fun (FA : ι → σA) ↦ (FB σA σB FA f) := by
-  intro FA₁ FA₂ feq
-  refine (eqOn_univ FA₁ FA₂).mp fun i _ ↦ ? i
-  have eq: f '' (FA₁ i : Set A) = f ''  (FA₂ i : Set A) := by
-    have feq: (fun i ↦ (map f (FA₁ i) : σB)) = (fun i ↦ (map f (FA₂ i) : σB)) := feq
-    have : (fun i ↦ (map f (FA₁ i) : σB)) i = (fun i ↦ (map f (FA₂ i) : σB)) i := by rw[feq]
-    rw[coe_map (FA₁ i) (σA := σA) (σB := σB), coe_map (FA₂ i) (σA := σA) (σB := σB)]
-    exact congrArg SetLike.coe this
-  exact SetLike.coe_set_eq.mp <| (Set.image_eq_image hf).mp eq
+instance (FA FA_lt : ι → σA) (f : A → B) [fil : IsFiltration FA FA_lt]
+[SetLikeHom σA σB f]: FilteredHom FA FA_lt (FB σA σB FA f) (FB_lt σA σB FA_lt f) f where
+  pieces_wise := by
+    intro i a
+    simp[FB, coe_map]
+    have t1:= coe_map (FA i) (σA := σA) (σB := σB) (f := f)
+    have : f a ∈ f '' ↑(FA i) := mem_image_of_mem f <| Subtype.coe_prop a
+    rw[t1] at this
+    exact this
+
+-- variable (i : ι) (f : A → B) [SetLikeHom σA σB f] (hf : f.Injective) (FA : ι → σA)
+
+-- #check fun ((FA i) : σA) ↦ ((FB σA σB FA f) i : σB)
+
+-- instance InjEletoInjEle (i : ι) (f : A → B) [SetLikeHom σA σB f] (hf : f.Injective) (FA : ι → σA):
+--  Function.Injective (fun (FA i) ↦ ((FB σA σB FA f) i)) := by
+-- --   intro FA₁ FA₂ feq
+-- --   refine (eqOn_univ FA₁ FA₂).mp fun i _ ↦ ? i
+-- --   have feq: (fun i ↦ (map f (FA₁ i) : σB)) = (fun i ↦ (map f (FA₂ i) : σB)) := feq
+-- --   have : (fun i ↦ (map f (FA₁ i) : σB)) i = (fun i ↦ (map f (FA₂ i) : σB)) i := by rw[feq]
+-- --   apply (SetLikeHomInj σA σB f hf) this
+
+
+
+-- instance InjHomtoInjFil (f : A → B) [SetLikeHom σA σB f] (hf : f.Injective):
+--  Function.Injective fun (FA : ι → σA) ↦ (FB σA σB FA f) := by
+--   intro FA₁ FA₂ feq
+--   refine (eqOn_univ FA₁ FA₂).mp fun i _ ↦ ? i
+--   have feq: (fun i ↦ (map f (FA₁ i) : σB)) = (fun i ↦ (map f (FA₂ i) : σB)) := feq
+--   have : (fun i ↦ (map f (FA₁ i) : σB)) i = (fun i ↦ (map f (FA₂ i) : σB)) i := by rw[feq]
+--   apply (SetLikeHomInj σA σB f hf) this
+
+
+-- instance SurjHomtoSurjFil (f : A → B) [SetLikeHom σA σB f] (hf : f.Surjective):
+--  Function.Surjective fun (FA : ι → σA) ↦ (FB σA σB FA f) := by
+--   sorry
 
 end HomtoFil
 
@@ -111,8 +148,9 @@ instance RingHomtoFil (FR FR_lt: ι → σR) [fil : IsRingFiltration FR FR_lt] :
     simp only [SetLike.mem_coe, IsRingFiltration.mul_mem x_in y_in, map_mul,
       Mathlib.Tactic.LinearCombination'.mul_pf x_eq y_eq, and_self]
 
-instance InjtoInj2 (f : R →+* S) [SetLikeHom σR σS f] (hf : f.toFun.Injective):
- Function.Injective fun (FR : ι → σR) ↦ (FS σR σS FR f) := InjHomtoInjFil σR σS (⇑f) hf
+-- instance InjtoInj2 (f : R →+* S) [SetLikeHom σR σS f] (hf : (⇑f).Injective):
+--  Function.Injective fun (FR : ι → σR) ↦ (FS σR σS FR f) := InjHomtoInjFil σR σS (⇑f) hf
+/- Should I leave this Thm? It is quite trivial -/
 
 end RingHomtoFil
 
