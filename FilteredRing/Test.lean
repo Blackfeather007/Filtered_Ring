@@ -93,13 +93,10 @@ private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := b
   use Quotient.lift (fun (s : FR i)↦ GradedPiece.mk FS FS_lt
     ⟨f.toRingHom s, f.pieces_wise i s (SetLike.coe_mem s)⟩) (fun a b h ↦ ?_) a
   rw [← Quotient.eq_iff_equiv] at h
-  have : - a + b ∈ ((FR_lt i) : AddSubgroup R).addSubgroupOf (FR i : AddSubgroup R) :=
-    QuotientAddGroup.eq.mp h
-  apply QuotientAddGroup.eq.mpr
   have : f.toRingHom (- a + b) ∈ (FS_lt i) :=
-    f.pieces_wise_lt i (⟨- a + b, this⟩ : FR_lt i) this
+    f.pieces_wise_lt i (⟨- a + b, QuotientAddGroup.eq.mp h⟩ : FR_lt i) <| QuotientAddGroup.eq.mp h
   rw [map_add, map_neg] at this
-  exact this
+  exact QuotientAddGroup.eq.mpr this
 
 open DirectSum in
 variable {FR FR_lt FS FS_lt} in
