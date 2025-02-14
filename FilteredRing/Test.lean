@@ -27,6 +27,26 @@ class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt f
 
 end FilteredRingHom
 
+section
+
+variable {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
+variable (FR : ι → σR) (FR_lt : outParam <| ι → σR) [fil : IsRingFiltration FR FR_lt]
+
+variable {M : Type*} [AddCommMonoid M] [Module R M] (σM : Type*) [SetLike σM M]
+[AddSubmonoidClass σM M] [SMulMemClass σM R M] (FM : ι → σM) (FM_lt : outParam <| ι → σM)
+
+variable {N : Type*} [AddCommMonoid N] [Module R N] (σN : Type*) [SetLike σN N]
+[AddSubmonoidClass σN N] [SMulMemClass σN R N] (FN : ι → σN) (FN_lt : outParam <| ι → σN)
+(f : M →ₗ[R] N)
+
+
+class FilteredModuleHom : Prop where
+  piece_wise : ∀ i : ι, ∀ m ∈ FM i, f m ∈ FN i
+
+end
+
+
+
 section DirectSum
 
 variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι] [FilteredRingHom FR FR_lt FS FS_lt f]
