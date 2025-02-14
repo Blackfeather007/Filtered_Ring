@@ -1,9 +1,7 @@
 import FilteredRing.Filtration_to_Grading
 
 
-
-
-section IsFilteredHom
+section FilteredHom
 
 variable {ι A B C α β σ: Type*} [Preorder ι] [SetLike α A] [SetLike β B] [SetLike σ C]
 
@@ -11,52 +9,64 @@ variable (FA : ι → α) (FA_lt : outParam <| ι → α) [IsFiltration FA FA_lt
 variable (FB : ι → β) (FB_lt : outParam <| ι → β) [IsFiltration FB FB_lt]
 variable (FC : ι → σ) (FC_lt : outParam <| ι → σ) [IsFiltration FC FC_lt]
 
-class IsFilteredHom (f : A → B) : Prop where
-  pieces_wise : ∀ i : ι, ∀ a : FA i, f a ∈ FB i
+class FilteredHom where
+  toFun : A → B
+  pieces_wise : ∀ i : ι, ∀ a ∈ FA i, toFun a ∈ FB i
+  pieces_wise_lt : ∀ i : ι, ∀ a ∈ FA_lt i, toFun a ∈ FB_lt i
 
-variable (f : A → B) [IsFilteredHom FA FB f] (g : B → C) [IsFilteredHom FB FC g]
+variable (f : FilteredHom FA FA_lt FB FB_lt) (g : FilteredHom FB FB_lt FC FC_lt)
 
-include FB in
-omit [Preorder ι] in
-lemma IsFilteredHom.comp : IsFilteredHom FA FC (g.comp f) :=
-  ⟨fun i a ↦ IsFilteredHom.pieces_wise i
-    ⟨f a, IsFilteredHom.pieces_wise (FA := FA) (FB := FB) i a⟩⟩
+variable {FA FB FC FA_lt FB_lt FC_lt} in
+def FilteredHom.comp : FilteredHom FA FA_lt FC FC_lt := {
+  toFun := g.1.comp f.1
+  pieces_wise := fun i a ha ↦ g.pieces_wise i (f.1 a) (f.pieces_wise i a ha)
+  pieces_wise_lt := fun i a ha ↦ g.pieces_wise_lt i (f.1 a) (f.pieces_wise_lt i a ha)
+}
 
-end IsFilteredHom
+infixl:100 "∘" => FilteredHom.comp
+
+#check f ∘ g
+
+end FilteredHom
 
 
-
-
-section
+section Main
 
 variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι]
 
-variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [IsRingFiltration FR FR_lt]
-variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [IsRingFiltration FS FS_lt]
-variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [IsRingFiltration FT FT_lt]
+variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R]
+  [IsRingFiltration FR FR_lt]
+variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S]
+  [IsRingFiltration FS FS_lt]
+variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T]
+  [IsRingFiltration FT FT_lt]
 
 variable (f : R →+* S) (g : S →+* T)
 
 section FilteredRingHom
 
-class IsFilteredRingHom extends IsFilteredHom FR FS f
+class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt, R →+* S
 
-attribute [instance] IsFilteredRingHom.toIsFilteredHom
+variable {FR FS FR_lt FS_lt} in
+def FilteredRingHom.IsStrict (f : FilteredRingHom FR FR_lt FS FS_lt) : Prop :=
+  ∀ p : ι, ∀ x : S, x ∈ f.toFun '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
 
-class FilteredRingHom.IsStrict extends IsFilteredRingHom FR FS f where
-  strict : ∀ p : ι, ∀ x : S, x ∈ f '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
+variable (f : FilteredRingHom FR FR_lt FS FS_lt) (g : FilteredRingHom FS FS_lt FT FT_lt)
 
-variable [IsFilteredRingHom FR FS f] [IsFilteredRingHom FS FT g]
+variable {FR FS FT FR_lt FS_lt FT_lt} in
+def FilteredRingHom.comp : FilteredRingHom FR FR_lt FT FT_lt := {
+    g.toRingHom.comp f.toRingHom with
+  pieces_wise := fun i a ha ↦ g.pieces_wise i (f.toFun a) (f.pieces_wise i a ha)
+  pieces_wise_lt := fun i a ha ↦ g.pieces_wise_lt i (f.toFun a) (f.pieces_wise_lt i a ha)
+}
 
-include FS in
-omit [OrderedAddCommMonoid ι] in
-lemma IsFilteredRingHom.comp : IsFilteredRingHom FR FT (g.comp f) :=
-  let _ : IsFilteredHom FR FT (g.comp f) := IsFilteredHom.comp FR FS FT f g
-  mk
+infixl:100 "∘" => FilteredRingHom.comp
+
+#check f ∘ g
 
 end FilteredRingHom
 
-section
+section FilteredModuleHom
 
 variable {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
 variable (FR : ι → σR) (FR_lt : outParam <| ι → σR) [fil : IsRingFiltration FR FR_lt]
@@ -68,63 +78,54 @@ variable {N : Type*} [AddCommMonoid N] [Module R N] (σN : Type*) [SetLike σN N
 [AddSubmonoidClass σN N] [SMulMemClass σN R N] (FN : ι → σN) (FN_lt : outParam <| ι → σN)
 (f : M →ₗ[R] N)
 
+class FilteredModuleHom extends FilteredHom FM FM_lt FN FN_lt, M →ₗ[R] N
 
-class IsFilteredModuleHom : Prop where
-  piece_wise : ∀ i : ι, ∀ m ∈ FM i, f m ∈ FN i
-
-end
-
+end FilteredModuleHom
 
 
 section DirectSum
 
-variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι]
-[IsFilteredRingHom FR FS f] [IsFilteredRingHom FR_lt FS_lt f]
+variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [AddSubgroupClass τ T] [DecidableEq ι]
+  (f : FilteredRingHom FR FR_lt FS FS_lt)
+  (g : FilteredRingHom FS FS_lt FT FT_lt)
 
-
-variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [AddSubgroupClass τ T]
-[DecidableEq ι] [IsFilteredRingHom FR FS f] [IsFilteredRingHom FS FT g]
-
-private noncomputable def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
+variable {FR FR_lt FS FS_lt} in
+private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
   intro a
   let h(i) := fun (s : FR i) ↦ GradedPiece.mk FS FS_lt
-      ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise i s⟩
-
+      ⟨f.toRingHom s, f.pieces_wise i s (SetLike.coe_mem s)⟩
   use Quotient.lift (fun (s : FR i)↦ GradedPiece.mk FS FS_lt
-      ⟨f s, IsFilteredRingHom.toIsFilteredHom.pieces_wise i s⟩) ?_ a
-
-  intro a b h
-  show GradedPiece.mk FS FS_lt ⟨f a, IsFilteredRingHom.toIsFilteredHom.pieces_wise i a⟩
-    = GradedPiece.mk FS FS_lt ⟨f b, IsFilteredRingHom.toIsFilteredHom.pieces_wise i b⟩
+      ⟨f.toRingHom s, f.pieces_wise i s (SetLike.coe_mem s)⟩) (fun a b h ↦ ?_) a
+  show GradedPiece.mk FS FS_lt ⟨f.toRingHom a, f.pieces_wise i a (SetLike.coe_mem a)⟩
+    = GradedPiece.mk FS FS_lt ⟨f.toRingHom b, f.pieces_wise i b (SetLike.coe_mem b)⟩
   rw [← Quotient.eq_iff_equiv] at h
-  have : - a + b ∈ ((FR_lt i) : AddSubgroup R).addSubgroupOf ((FR i) : AddSubgroup R) :=
+  have : - a + b ∈ ((FR_lt i) : AddSubgroup R).addSubgroupOf (FR i : AddSubgroup R) :=
     QuotientAddGroup.eq.mp h
   apply QuotientAddGroup.eq.mpr
-  have : f (- a + b) ∈ (FS_lt i) :=
-    IsFilteredRingHom.toIsFilteredHom.pieces_wise i (⟨- a + b, this⟩ : FR_lt i)
+  have : f.toRingHom (- a + b) ∈ (FS_lt i) :=
+    f.pieces_wise_lt i (⟨- a + b, this⟩ : FR_lt i) this
   rw [map_add, map_neg] at this
   exact this
 
 open DirectSum in
+variable {FR FR_lt FS FS_lt} in
 noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
   fun a ↦
     let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun _ x ↦
       Classical.propDecidable (x ≠ 0)
     mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
-      <| fun i ↦ (Gf FR FR_lt FS FS_lt f i) (a i)
-
-variable [IsFilteredRingHom FR_lt FS_lt f] [IsFilteredRingHom FS_lt FT_lt g]
+      <| fun i ↦ (Gf f i) (a i)
 
 -- lemma : IsFilteredRingHom FR_lt FT_lt (g.comp f) := by
   -- apply?
   -- exact IsFilteredRingHom.comp FR_lt FS_lt FT_lt f g
 
-instance : (G FS FS_lt FT FT_lt g).comp (G FR FR_lt FS FS_lt f) = (G FR FR_lt FT FT_lt (g.comp f)) := by
+-- instance : (G g).comp (G f) = (G (g ∘ f)) := by
 
-  apply (Set.eqOn_univ (G FS FS_lt FT FT_lt g ∘ G FR FR_lt FS FS_lt f) (G FR FR_lt FT FT_lt (g.comp f))).mp
-    fun x a ↦ ? x
+--   apply (Set.eqOn_univ (G FS FS_lt FT FT_lt g ∘ G FR FR_lt FS FS_lt f) (G FR FR_lt FT FT_lt (g.comp f))).mp
+--     fun x a ↦ ? x
 
-  sorry
+--   sorry
 
 end DirectSum
 
@@ -139,18 +140,15 @@ variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
 
 variable [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
 
-variable (f g : R →+* R) [IsFilteredRingHom L M f] [IsFilteredRingHom M N g]
-[IsFilteredRingHom L_lt M_lt f] [IsFilteredRingHom M_lt N_lt g]
+variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
 
-theorem exact_of_exact (exact : Function.Exact f g) (strict : 0 = 0):
-  Function.Exact (G L L_lt M M_lt f) (G M M_lt N N_lt g) := by
+theorem exact_of_exact (exact : Function.Exact f.toRingHom g.toRingHom) (strict : 0 = 0) :
+  Function.Exact (G f) (G g) := by
     sorry
-
-
 
 
 
 end exactness
 
 
-end
+end Main
