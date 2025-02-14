@@ -1,25 +1,27 @@
 import FilteredRing.Filtration_to_Grading
 
-section FilteredHom
+section IsFilteredHom
 
 variable {ι A B α β : Type*} [Preorder ι] [SetLike α A] [SetLike β B]
 
 variable (FA : ι → α) (FA_lt : outParam <| ι → α) (FB : ι → β) (FB_lt : outParam <| ι → β)
   [IsFiltration FA FA_lt] [IsFiltration FB FB_lt]
 
-class FilteredHom (f : A → B) : Prop where
+class IsFilteredHom (f : A → B) : Prop where
   pieces_wise : ∀ i : ι, ∀ a : FA i, f a ∈ FB i
 
 variable {C σ : Type*} [SetLike σ C] (FC : ι → σ) (FC_lt : outParam <| ι → σ)
   [IsFiltration FC FC_lt]
 
-variable (f : A → B) [FilteredHom FA FB f] (g : B → C) [FilteredHom FB FC g]
+variable (f : A → B) [IsFilteredHom FA FB f] (g : B → C) [IsFilteredHom FB FC g]
 
-def FilteredHom.comp : FilteredHom FA FC (g.comp f) :=
-  ⟨fun i a ↦ FilteredHom.pieces_wise i
-    ⟨f a, FilteredHom.pieces_wise (FA := FA) (FB := FB) i a⟩⟩
+include FB in
+omit [Preorder ι] in
+lemma IsFilteredHom.comp : IsFilteredHom FA FC (g.comp f) :=
+  ⟨fun i a ↦ IsFilteredHom.pieces_wise i
+    ⟨f a, IsFilteredHom.pieces_wise (FA := FA) (FB := FB) i a⟩⟩
 
-end FilteredHom
+end IsFilteredHom
 
 section
 
@@ -33,7 +35,7 @@ variable (f : R →+* S) [IsRingFiltration FR FR_lt] [IsRingFiltration FS FS_lt]
 
 section FilteredRingHom
 
-class FilteredRingHom extends FilteredHom FR FS f
+class FilteredRingHom extends IsFilteredHom FR FS f
 
 class StrictFilteredRingHom extends FilteredRingHom FR FS f where
   strict : ∀ p : ι, ∀ x : S, x ∈ f '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
@@ -67,7 +69,7 @@ variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [DecidableEq ι] [Filte
 private noncomputable def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i :=
   fun a ↦ let s := Quotient.out' a
     GradedPiece.mk FS FS_lt
-      ⟨f s, FilteredRingHom.toFilteredHom.pieces_wise i s (FB_lt := FS_lt)⟩
+      ⟨f s, FilteredRingHom.toIsFilteredHom.pieces_wise i s⟩
 
 open DirectSum in
 noncomputable def G : (⨁ i, GradedPiece FR FR_lt i) → (⨁ i, GradedPiece FS FS_lt i) :=
