@@ -155,27 +155,24 @@ variable [Ring S] {FS : ι → σ} {FS_lt : outParam <| ι → σ} [SetLike σ S
 
 variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 
-lemma mk_eq_Gf: mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) j = Gf f j (x j) := by
-  by_cases hjx : j ∈ support x
-  · exact mk_apply_of_mem hjx
-  · simp only [Gf, GradedPiece.mk_eq, mk_apply_of_not_mem hjx]
-    simp only [mem_support_toFun, ne_eq, not_not] at hjx
-    have : (0 : GradedPiece FR FR_lt j) = ⟦0⟧ := rfl
-    simp only [hjx, this,  Quotient.lift_mk, ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
-    rfl
-
 variable [Ring T] {FT : ι → τ} {FT_lt : outParam <| ι → τ} [SetLike τ T] [AddSubgroupClass τ T]
 variable (g : FilteredRingHom FS FS_lt FT FT_lt)
 
-theorem G_to_Gf : (G f x) i = Gf f i (x i) := by rw[G, mk_eq_Gf]
+theorem G_to_Gf : (G f x) i = Gf f i (x i) := by
+  dsimp only[G]
+  by_cases hjx : i ∈ support x
+  · exact mk_apply_of_mem hjx
+  · simp only [Gf, GradedPiece.mk_eq, mk_apply_of_not_mem hjx]
+    simp only [mem_support_toFun, ne_eq, not_not] at hjx
+    have : (0 : GradedPiece FR FR_lt i) = ⟦0⟧ := rfl
+    simp only [hjx, this,  Quotient.lift_mk, ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
+    rfl
 
 theorem G.comp: (G g) ∘ (G f) = G (g ∘ f) := by
   apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp fun x a ↦ ? x
   ext j
-  set s := mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) with hs
-  show mk (GradedPiece FT FT_lt) (support s) (fun i ↦ Gf g i (s i)) j
-     = mk (GradedPiece FT FT_lt) (support x) (fun i ↦ Gf (g ∘ f) i (x i)) j
-  rw[mk_eq_Gf (g ∘ f),  mk_eq_Gf g,
-    hs, mk_eq_Gf f, Gf.comp]
+  show G g (G f x) j = (G (g ∘ f) x) j
+  repeat rw[G_to_Gf]
+  exact Gf.comp f FT FT_lt g x
 
 end GComp
