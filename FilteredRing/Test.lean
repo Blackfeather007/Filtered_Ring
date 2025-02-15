@@ -203,28 +203,36 @@ variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
 
 theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
     (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
-  have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) (Quotient.mk' x) = 0 →
+  intro m
+  constructor
+
+  · -- first prove for single component
+    have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) (Quotient.mk' x) = 0 →
       ∃ y : L p, (Gf f p) (Quotient.mk' y) = Quotient.mk' x := by
-    intro p x noname
-    have : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := sorry
-    rcases this with ⟨x', geq⟩
-    have : ∃ y : L p, f.toRingHom y = x - x' := sorry
-    rcases this with ⟨y, feq⟩
-    use y
-    let _ : (i : ι) → (x : GradedPiece L L_lt i) → Decidable (x ≠ 0) :=
-      fun _ x ↦ Classical.propDecidable (x ≠ 0)
-    have : ∃ fy : M p, fy = f.toRingHom y :=
-      CanLift.prf (f.toRingHom y) <| f.pieces_wise p y <| SetLike.coe_mem y
-    rcases this with ⟨fy, huh⟩
+        -- not sure if needed ↓
+        let _ : (i : ι) → (x : GradedPiece L L_lt i) → Decidable (x ≠ 0) :=
+          fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
-    #check Quotient.lift_mk (fun (s : L p)↦ GradedPiece.mk M M_lt ⟨f.toRingHom s, f.pieces_wise p s (SetLike.coe_mem s)⟩) ?_ y
+        intro p x xto0
+        have : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := sorry
 
-    have : (Gf f p) (Quotient.mk' y) = Quotient.mk' (fy) := by
-      unfold Gf
-      simp
+        rcases this with ⟨x', geq⟩
+        have : ∃ y : L p, f.toRingHom y = x - x' := sorry
 
-      sorry
-    sorry
-  sorry
+        rcases this with ⟨y, feq⟩
+        use y
+
+        -- really need a fy instead of (f y) ?
+        have : ∃ fy : M p, fy = f.toRingHom y :=
+          CanLift.prf (f.toRingHom y) <| f.pieces_wise p y <| SetLike.coe_mem y
+        rcases this with ⟨fy, huh⟩
+
+        have : (Gf f p) (Quotient.mk' y) = Quotient.mk' (fy) := sorry
+
+        sorry
+
+    sorry -- glue components together
+
+  · sorry -- use Gcomp
 
 end exactness
