@@ -119,7 +119,7 @@ end DirectSum
 
 
 
-section Gfcomp
+section GfComp
 
 open DirectSum
 
@@ -130,23 +130,23 @@ variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S
 
 variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 
-lemma Gf_mk (j : ι) (y : FR j) : Gf f j ⟦y⟧ =
+lemma Gf.mk (j : ι) (y : FR j) : Gf f j ⟦y⟧ =
     ⟦(⟨f.toRingHom y, f.toFilteredHom.pieces_wise j y <| SetLike.coe_mem y⟩ : FS j)⟧ := rfl
 
 variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
 variable (g : FilteredRingHom FS FS_lt FT FT_lt)
 
-lemma Gfcomp(x : AssociatedGraded FR FR_lt): Gf g j (Gf f j (x j)) = Gf (g∘f) j (x j) := by
+lemma Gf.comp (x : AssociatedGraded FR FR_lt) : Gf g j (Gf f j (x j)) = Gf (g ∘ f) j (x j) := by
   obtain⟨a, ha⟩ := Quotient.exists_rep (x j)
   rw[← ha]
-  repeat rw[Gf_mk]
+  repeat rw[Gf.mk]
   congr
 
-end Gfcomp
+end GfComp
 
 
 
-section Gcomp
+section GComp
 
 open DirectSum DFinsupp
 
@@ -161,7 +161,7 @@ lemma mk_eq_Gf: mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) j
   by_cases hjx : j ∈ support x
   · exact mk_apply_of_mem hjx
   · simp only [Gf, GradedPiece.mk_eq]
-    rw[mk_apply_of_not_mem hjx]
+    rw [mk_apply_of_not_mem hjx]
     simp only [mem_support_toFun, ne_eq, not_not] at hjx
     have : (0 : GradedPiece FR FR_lt j) = ⟦0⟧ := rfl
     rw [hjx, this,  Quotient.lift_mk]
@@ -171,7 +171,7 @@ lemma mk_eq_Gf: mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) j
 variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
 variable (g : FilteredRingHom FS FS_lt FT FT_lt)
 
-theorem Gcomp: (G g) ∘ (G f) = G (g ∘ f) := by
+theorem G.comp: (G g) ∘ (G f) = G (g ∘ f) := by
   apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp fun x a ↦ ? x
   apply ext (fun i ↦ GradedPiece FT FT_lt i)
   intro j
@@ -181,9 +181,9 @@ theorem Gcomp: (G g) ∘ (G f) = G (g ∘ f) := by
      = mk (GradedPiece FT FT_lt) (support x) (fun i ↦ Gf (g ∘ f) i (x i)) j
   rw[mk_eq_Gf FR FR_lt FT FT_lt (g ∘ f),  mk_eq_Gf FS FS_lt FT FT_lt g,
     hs, mk_eq_Gf FR FR_lt FS FS_lt f]
-  apply Gfcomp
+  apply Gf.comp
 
-end Gcomp
+end GComp
 
 
 
@@ -206,9 +206,6 @@ theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
   · -- first prove for single component
     have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 → ∃ y : L p,
       (Gf f p) ⟦y⟧ = ⟦x⟧ := by
-        -- not sure if needed ↓
-        let _ : (i : ι) → (x : GradedPiece L L_lt i) → Decidable (x ≠ 0) :=
-          fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
         intro p x xto0
         have : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := sorry
