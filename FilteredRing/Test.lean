@@ -28,18 +28,15 @@ infixl:100 " ∘ " => FilteredHom.comp
 end FilteredHom
 
 
-section Def
+
+
+section FilteredRingHom
 
 variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι]
 
-variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R]
-  [IsRingFiltration FR FR_lt]
-variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S]
-  [IsRingFiltration FS FS_lt]
-variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T]
-  [IsRingFiltration FT FT_lt]
-
-section FilteredRingHom
+variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [IsRingFiltration FR FR_lt]
+variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [IsRingFiltration FS FS_lt]
+variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [IsRingFiltration FT FT_lt]
 
 class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt, R →+* S
 
@@ -64,7 +61,12 @@ infixl:100 " ∘ " => FilteredRingHom.comp
 
 end FilteredRingHom
 
+
+
+
 section FilteredModuleHom
+
+variable {ι : Type*} [OrderedAddCommMonoid ι]
 
 variable {R σR : Type*} [Ring R] [SetLike σR R] [AddSubgroupClass σR R] (FR : ι → σR)
   (FR_lt : outParam <| ι → σR) [fil : IsRingFiltration FR FR_lt]
@@ -80,11 +82,21 @@ class FilteredModuleHom extends FilteredHom FM FM_lt FN FN_lt, M →ₗ[R] N
 end FilteredModuleHom
 
 
+
+
 section DirectSum
 
-variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [AddSubgroupClass τ T] [DecidableEq ι]
-  (f : FilteredRingHom FR FR_lt FS FS_lt)
-  (g : FilteredRingHom FS FS_lt FT FT_lt)
+open DirectSum
+
+variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι] [DecidableEq ι]
+
+variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
+variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
+
+variable (f : FilteredRingHom FR FR_lt FS FS_lt)
+
+variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
+  (f : FilteredRingHom FR FR_lt FS FS_lt) (g : FilteredRingHom FS FS_lt FT FT_lt)
 
 variable {FR FR_lt FS FS_lt} in
 private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
@@ -99,54 +111,85 @@ private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := b
   rw [map_add, map_neg] at this
   exact QuotientAddGroup.eq.mpr this
 
-open DirectSum in
 variable {FR FR_lt FS FS_lt} in
-noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
-  fun a ↦
-    let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun _ x ↦
-      Classical.propDecidable (x ≠ 0)
-    mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
-      <| fun i ↦ (Gf f i) (a i)
-@[simp]
-lemma G.comp : (G g).comp (G f) = G (g ∘ f) := by
-  apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp
-  sorry
-
-open DirectSum DFinsupp
-instance : (G g).comp (G f) = (G (g.comp f)) := by
-  let _ : (i : ι) → (x : GradedPiece FS FS_lt i) → Decidable (x ≠ 0) := fun _ x ↦
-    Classical.propDecidable (x ≠ 0)
-  let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun _ x ↦
-    Classical.propDecidable (x ≠ 0)
-
-  apply (Set.eqOn_univ (G g ∘ G f) (G (g.comp f))).mp
-    fun x a ↦ ? x
-  apply ext (fun i ↦ GradedPiece FT FT_lt i)
-  intro j
-
-  set s := mk (fun i ↦ GradedPiece FS FS_lt i) (support x)
-              (fun i ↦ Gf f i (x i)) with hs
-  show mk (GradedPiece FT FT_lt) (support s)
-          (fun i ↦ Gf g i (s i)) j
-     = mk (fun i ↦ GradedPiece FT FT_lt i) (support x)
-          (fun i ↦ Gf (g.comp f) i (x i)) j
-  by_cases hjx : j ∈ support x
-  · rw[mk_apply_of_mem hjx]
-    simp
-    sorry
-  · rw[mk_apply_of_not_mem hjx]
-    by_cases hjs : j ∈ support s
-    · simp only [Gf, GradedPiece.mk_eq]
-      have : (0 : GradedPiece FS FS_lt j) = ⟦0⟧ := rfl
-      rw[mk_apply_of_mem hjs, mk_apply_of_not_mem hjx, this, Quotient.lift_mk]
-      simp only [ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
-      apply (QuotientAddGroup.eq_zero_iff _).mp rfl
-    · exact mk_apply_of_not_mem hjs
-
+noncomputable def G : (AssociatedGraded FR FR_lt) → (AssociatedGraded FS FS_lt) := fun a ↦
+  mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
+    <| fun i ↦ (Gf f i) (a i)
 
 end DirectSum
 
-end Def
+
+
+
+
+section Gfcomp
+
+open DirectSum
+
+variable {ι R S T γ σ τ : Type*}
+
+variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
+variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
+
+variable (f : FilteredRingHom FR FR_lt FS FS_lt)
+
+lemma Gf_mk (j : ι) (y : FR j) : Gf f j ⟦y⟧ =
+    ⟦(⟨f.toRingHom y, f.toFilteredHom.pieces_wise j y <| SetLike.coe_mem y⟩ : FS j)⟧ := rfl
+
+variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
+variable (g : FilteredRingHom FS FS_lt FT FT_lt)
+
+lemma Gfcomp(x : AssociatedGraded FR FR_lt): Gf g j (Gf f j (x j)) = Gf (g∘f) j (x j) := by
+  obtain⟨a, ha⟩ := Quotient.exists_rep (x j)
+  rw[← ha]
+  repeat rw[Gf_mk]
+  congr
+
+end Gfcomp
+
+
+
+section Gcomp
+
+open DirectSum DFinsupp
+
+variable {ι R S T γ σ τ : Type*} [DecidableEq ι]
+
+variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
+variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
+
+variable (f : FilteredRingHom FR FR_lt FS FS_lt)
+
+lemma mk_eq_Gf: mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) j = Gf f j (x j) := by
+  by_cases hjx : j ∈ support x
+  · exact mk_apply_of_mem hjx
+  · simp only [Gf, GradedPiece.mk_eq]
+    rw[mk_apply_of_not_mem hjx]
+    simp only [mem_support_toFun, ne_eq, not_not] at hjx
+    have : (0 : GradedPiece FR FR_lt j) = ⟦0⟧ := rfl
+    rw [hjx, this,  Quotient.lift_mk]
+    simp only [ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
+    rfl
+
+variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
+variable (g : FilteredRingHom FS FS_lt FT FT_lt)
+
+theorem Gcomp: (G g) ∘ (G f) = G (g ∘ f) := by
+  apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp fun x a ↦ ? x
+  apply ext (fun i ↦ GradedPiece FT FT_lt i)
+  intro j
+  obtain⟨y, hy⟩ : ∃ y, ⟦y⟧ = x j := Quotient.exists_rep (x j)
+  set s := mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) with hs
+  show mk (GradedPiece FT FT_lt) (support s) (fun i ↦ Gf g i (s i)) j
+     = mk (GradedPiece FT FT_lt) (support x) (fun i ↦ Gf (g ∘ f) i (x i)) j
+  rw[mk_eq_Gf FR FR_lt FT FT_lt (g ∘ f),  mk_eq_Gf FS FS_lt FT FT_lt g,
+    hs, mk_eq_Gf FR FR_lt FS FS_lt f]
+  apply Gfcomp
+
+end Gcomp
+
+
+
 
 section exactness
 
@@ -158,11 +201,10 @@ variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
 
 variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
 
-theorem exact_of_exact (strict : FilteredRingHom.IsStrict' f)
+theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
     (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
-  have aux1 : ∀ p : ι, ∀ x : M p, (G g) (DirectSum.of p (GradedPiece M M_lt) x)
-  have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 →
-      ∃ y : L p, (Gf f p) ⟦y⟧ = ⟦x⟧ := by
+  have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) (Quotient.mk' x) = 0 →
+      ∃ y : L p, (Gf f p) (Quotient.mk' y) = Quotient.mk' x := by
     intro p x noname
     have : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := sorry
     rcases this with ⟨x', geq⟩
@@ -184,7 +226,5 @@ theorem exact_of_exact (strict : FilteredRingHom.IsStrict' f)
       sorry
     sorry
   sorry
-
-
 
 end exactness
