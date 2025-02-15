@@ -225,16 +225,7 @@ theorem exact_of_exact (fstrict : FilteredRingHom.IsStrict f) (gstrict : Filtere
       refine QuotientAddGroup.eq.mpr (AddSubgroup.mem_addSubgroupOf.mpr ?_)
       simp only [AddSubgroup.coe_add, NegMemClass.coe_neg, neg_sub, sub_add_cancel, SetLike.coe_mem]
 
-<<<<<<< HEAD
-      sorry
-
-    intro h
-    refine Set.mem_range.mpr ?_
-
-    sorry -- glue components together
-=======
     sorry
->>>>>>> b995616a43d03c14079cff3daf9566566b8a97b2
 
   · rintro ⟨l, hl⟩
     rw[← hl]
