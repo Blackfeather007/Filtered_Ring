@@ -123,8 +123,8 @@ open DirectSum
 
 variable {ι R S T γ σ τ : Type*}
 
-variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
-variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
+variable [Ring R] {FR : ι → γ} {FR_lt : outParam <| ι → γ} [SetLike γ R] [AddSubgroupClass γ R]
+variable [Ring S] {FS : ι → σ} {FS_lt : outParam <| ι → σ} [SetLike σ S] [AddSubgroupClass σ S]
 
 variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 
@@ -150,8 +150,8 @@ open DirectSum DFinsupp
 
 variable {ι R S T γ σ τ : Type*} [DecidableEq ι]
 
-variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
-variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
+variable [Ring R] {FR : ι → γ} {FR_lt : outParam <| ι → γ} [SetLike γ R] [AddSubgroupClass γ R]
+variable [Ring S] {FS : ι → σ} {FS_lt : outParam <| ι → σ} [SetLike σ S] [AddSubgroupClass σ S]
 
 variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 
@@ -164,17 +164,18 @@ lemma mk_eq_Gf: mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) j
     simp only [hjx, this,  Quotient.lift_mk, ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
     rfl
 
-variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
+variable [Ring T] {FT : ι → τ} {FT_lt : outParam <| ι → τ} [SetLike τ T] [AddSubgroupClass τ T]
 variable (g : FilteredRingHom FS FS_lt FT FT_lt)
+
+theorem G_to_Gf : (G f x) i = Gf f i (x i) := by rw[G, mk_eq_Gf]
 
 theorem G.comp: (G g) ∘ (G f) = G (g ∘ f) := by
   apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp fun x a ↦ ? x
   ext j
-  obtain⟨y, hy⟩ : ∃ y, ⟦y⟧ = x j := Quotient.exists_rep (x j)
   set s := mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) with hs
   show mk (GradedPiece FT FT_lt) (support s) (fun i ↦ Gf g i (s i)) j
      = mk (GradedPiece FT FT_lt) (support x) (fun i ↦ Gf (g ∘ f) i (x i)) j
-  rw[mk_eq_Gf FR FR_lt FT FT_lt (g ∘ f),  mk_eq_Gf FS FS_lt FT FT_lt g,
-    hs, mk_eq_Gf FR FR_lt FS FS_lt f, Gf.comp]
+  rw[mk_eq_Gf (g ∘ f),  mk_eq_Gf g,
+    hs, mk_eq_Gf f, Gf.comp]
 
 end GComp
