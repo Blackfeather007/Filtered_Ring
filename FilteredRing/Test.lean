@@ -228,12 +228,8 @@ theorem exact_of_exact (fstrict : FilteredRingHom.IsStrict f) (gstrict : Filtere
       rcases this with ⟨y, feq⟩
       use y
 
-      -- really need a fy instead of (f y) ?
-      have : ∃ fy : M p, fy = f.toRingHom y :=
-        CanLift.prf (f.toRingHom y) <| f.pieces_wise p y <| SetLike.coe_mem y
-      rcases this with ⟨fy, huh⟩
-
-      have : (Gf f p) ⟦y⟧ = ⟦fy⟧ := sorry
+      have : (Gf f p) ⟦y⟧ = ⟦⟨f.toRingHom y, f.pieces_wise p y (SetLike.coe_mem y)⟩⟧ := sorry
+      rw [this]
 
       sorry
 
