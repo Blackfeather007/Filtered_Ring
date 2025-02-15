@@ -195,7 +195,7 @@ variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
 
 set_option maxHeartbeats 0
 
-theorem exact_of_exact (fstrict : FilteredRingHom.IsStrict f) (gstrict : FilteredRingHom.IsStrict g)
+theorem exact_of_strict_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
     (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
   intro m
   constructor
