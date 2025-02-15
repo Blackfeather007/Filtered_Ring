@@ -61,9 +61,7 @@ end FilteredRingHom
 
 section FilteredModuleHom
 
-variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι]
-
-variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [IsRingFiltration FR FR_lt]
+variable {ι : Type*} [OrderedAddCommMonoid ι]
 
 variable {R σR : Type*} [Ring R] [SetLike σR R] [AddSubgroupClass σR R] (FR : ι → σR)
   (FR_lt : outParam <| ι → σR) [fil : IsRingFiltration FR FR_lt]
@@ -80,7 +78,10 @@ end FilteredModuleHom
 
 
 
+
 section DirectSum
+
+open DirectSum
 
 variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι] [DecidableEq ι]
 
@@ -106,40 +107,61 @@ private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := b
   rw [map_add, map_neg] at this
   exact QuotientAddGroup.eq.mpr this
 
-open DirectSum in
 variable {FR FR_lt FS FS_lt} in
-noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
-  fun a ↦
-    let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun _ x ↦
-      Classical.propDecidable (x ≠ 0)
-    mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
-      <| fun i ↦ (Gf f i) (a i)
+noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) := fun a ↦
+  let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun _ x ↦
+    Classical.propDecidable (x ≠ 0)
+  mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
+    <| fun i ↦ (Gf f i) (a i)
 
 end DirectSum
 
-/--/
+
+
+
+
+section Gfcomp
+
 open DirectSum DFinsupp
 
-instance t (y : FR j) : f.toRingHom ↑y ∈ FS j := by
-  apply f.toFilteredHom.pieces_wise j
-  exact SetLike.coe_mem y
+variable {ι R S T γ σ τ : Type*}
 
-instance qmap (j : ι) (y : FR j) : Gf f j ⟦y⟧ = ⟦(⟨f.toRingHom y, t FR FR_lt FS FS_lt f y⟩ :
- FS j)⟧ := rfl
+variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
+variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
 
-instance tt(x : Graded FR FR_lt): Gf g j (Gf f j (x j)) = Gf (g∘f) j (x j) := by
+variable (f : R →+* S) (f : FilteredRingHom FR FR_lt FS FS_lt)
+
+lemma Gf_mk (j : ι) (y : FR j) : Gf f j ⟦y⟧ =
+    ⟦(⟨f.toRingHom y, f.toFilteredHom.pieces_wise j y <| SetLike.coe_mem y⟩ : FS j)⟧ := rfl
+
+variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
+variable (g : FilteredRingHom FS FS_lt FT FT_lt)
+
+lemma Gfcomp(x : Graded FR FR_lt): Gf g j (Gf f j (x j)) = Gf (g∘f) j (x j) := by
   obtain⟨a, ha⟩ : ∃ a, ⟦a⟧ = x j := by exact Quotient.exists_rep (x j)
   rw[← ha]
-  repeat rw[qmap]
+  repeat rw[Gf_mk]
   congr
 
+end Gfcomp
 
+
+
+section Gcomp
+
+open DirectSum DFinsupp
+
+variable {ι R S T γ σ τ : Type*} [DecidableEq ι]
+
+variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
+variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
 
 noncomputable instance : (i : ι) → (x : GradedPiece FS FS_lt i) → Decidable (x ≠ 0) :=
     fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
-instance mk_eq_Gf: mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) j
-    = Gf f j (x j) := by
+variable (f : FilteredRingHom FR FR_lt FS FS_lt)
+
+lemma mk_eq_Gf: mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) j = Gf f j (x j) := by
   by_cases hjx : j ∈ support x
   · exact mk_apply_of_mem hjx
   · simp only [Gf, GradedPiece.mk_eq]
@@ -149,6 +171,9 @@ instance mk_eq_Gf: mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)
     rw [hjx, this,  Quotient.lift_mk]
     simp only [ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
     rfl
+
+variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
+variable (g : FilteredRingHom FS FS_lt FT FT_lt)
 
 theorem Gcomp: (G g) ∘ (G f) = G (g ∘ f) := by
   apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp fun x a ↦ ? x
@@ -161,9 +186,10 @@ theorem Gcomp: (G g) ∘ (G f) = G (g ∘ f) := by
   rw[mk_eq_Gf FR FR_lt FT FT_lt (g ∘ f),  mk_eq_Gf FS FS_lt FT FT_lt g,
     hs, mk_eq_Gf FR FR_lt FS FS_lt f]
   simp[Gf]
-  apply tt
+  apply Gfcomp
 
-end DirectSum
+end Gcomp
+
 
 
 
@@ -202,7 +228,5 @@ theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
       sorry
     sorry
   sorry
-
-
 
 end exactness
