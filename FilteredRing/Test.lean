@@ -86,11 +86,15 @@ open DirectSum
 
 variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι] [DecidableEq ι]
 
-variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [IsRingFiltration FR FR_lt]
-variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [IsRingFiltration FS FS_lt]
-variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [IsRingFiltration FT FT_lt]
+variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
+variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
 
-variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [AddSubgroupClass τ T]
+variable (f : FilteredRingHom FR FR_lt FS FS_lt)
+
+noncomputable instance : (i : ι) → (x : GradedPiece FS FS_lt i) → Decidable (x ≠ 0) :=
+    fun _ x ↦ Classical.propDecidable (x ≠ 0)
+
+variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
   (f : FilteredRingHom FR FR_lt FS FS_lt) (g : FilteredRingHom FS FS_lt FT FT_lt)
 
 variable {FR FR_lt FS FS_lt} in
@@ -108,8 +112,6 @@ private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := b
 
 variable {FR FR_lt FS FS_lt} in
 noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) := fun a ↦
-  let _ : (i : ι) → (x : GradedPiece FR FR_lt i) → Decidable (x ≠ 0) := fun _ x ↦
-    Classical.propDecidable (x ≠ 0)
   mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
     <| fun i ↦ (Gf f i) (a i)
 
@@ -154,9 +156,6 @@ variable {ι R S T γ σ τ : Type*} [DecidableEq ι]
 
 variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
 variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
-
-noncomputable instance : (i : ι) → (x : GradedPiece FS FS_lt i) → Decidable (x ≠ 0) :=
-    fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
 variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 

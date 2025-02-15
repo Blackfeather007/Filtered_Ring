@@ -1,5 +1,5 @@
 import FilteredRing.Basic
-import FilteredRing.test
+-- import FilteredRing.test
 /-!
 # The filtration on abelian group and ring
 In this file, we defined the fitration induced by a homomorphism,
@@ -68,14 +68,14 @@ instance HomtoFil (FA FA_lt : ι → σA) (f : A → B) [fil : IsFiltration FA F
     have h : ∀ i < j, FA i ≤ comap Sup := fun i i_lt_j ↦ galois.le_u <| h i i_lt_j
     exact IsFiltration.is_sup (comap Sup) j h
 
-instance (FA : ι → σA) (f : A → B) [SetLikeHom σA σB f]: IsFilteredHom FA (FB σA σB FA f) f where
-  pieces_wise := by
-    intro i a
-    simp[FB, coe_map]
-    have t1:= coe_map (FA i) (σA := σA) (σB := σB) (f := f)
-    have : f a ∈ f '' ↑(FA i) := mem_image_of_mem f <| Subtype.coe_prop a
-    rw[t1] at this
-    exact this
+-- instance (FA : ι → σA) (f : A → B) [SetLikeHom σA σB f]: IsFilteredHom FA (FB σA σB FA f) f where
+--   pieces_wise := by
+--     intro i a
+--     simp[FB, coe_map]
+--     have t1:= coe_map (FA i) (σA := σA) (σB := σB) (f := f)
+--     have : f a ∈ f '' ↑(FA i) := mem_image_of_mem f <| Subtype.coe_prop a
+--     rw[t1] at this
+--     exact this
 
 -- variable (i : ι) (f : A → B) [SetLikeHom σA σB f] (hf : f.Injective) (FA : ι → σA)
 
