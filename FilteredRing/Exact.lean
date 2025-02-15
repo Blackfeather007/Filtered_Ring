@@ -71,48 +71,19 @@ theorem exact_of_strict_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
     have tt (i : ι) : ∃ y, Gf f i ⟦y⟧ = m i := by
       rw[← component_1_prop i]
       exact component_exact f g fstrict gstrict exact i (component_1 i) (h i)
-    let component_2 := fun (i : support m) ↦ (⟦Classical.choose (tt i)⟧ : GradedPiece L L_lt i) --()
-    have (i : support m) :=  Gf f i (component_2 i)
-    have (i : support m): Gf f i (component_2 i) = m i := by
-
-      sorry
-      -- by_cases nh : i ∈ support m
-      -- · have : component_2 i = Classical.choose (tt i) := if_pos nh
-      --   rw[this, Classical.choose_spec (tt i)]
-      -- · have : component_2 i = 0 := if_neg nh
-      --   simp only [mem_support_toFun, ne_eq, not_not] at nh
-      --   rw[this, nh, Gf.mk L L_lt M M_lt f i 0]
-      --   simp only [Quotient.lift_mk, ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
-      --   exact zero_mem (M_lt i)
-    -- let component_3 := fun (i : ι ) ↦ (if i ∈ support m then (⟦Classical.choose (tt i)⟧ : GradedPiece L L_lt i) else ⟦0⟧)
-
+    set component_2 := fun (i : support m) ↦ (⟦Classical.choose (tt i)⟧ : GradedPiece L L_lt i) with hc
     set s : AssociatedGraded L L_lt := DirectSum.mk (fun i ↦ GradedPiece L L_lt i) (support m) component_2 with hs
-
-    #check G f
-    -- have : s ∈  := sorry
-    have (i : support m): (G f) s i = m i := by
-
-      -- refine AssociatedGraded.ext_iff.mpr ?_
-      -- intro i
-      rw[← this i]
+    have : (G f) s = m := by
+      apply AssociatedGraded.ext_iff.mpr
+      intro j
       rw[G_to_Gf]
-      congr
-      rw[hs]
-      show ((DirectSum.mk (GradedPiece L L_lt) (support m)) component_2) i = component_2 i
-      exact mk_apply_of_mem i.property
-    have : ∀ i ∉ support m, (G f) s i = m i := by
-      intro i hi
-      simp at hi
-      rw[hi, G_to_Gf]
-
-      sorry
-    have sss: (G f) s = m:= by
-      rw[hs]
-
-      sorry
-
-    sorry -- glue components together
-
+      by_cases nh : j ∈ support m
+      · rw[mk_apply_of_mem nh, hc, Classical.choose_spec (tt j)]
+      · rw[hs, mk_apply_of_not_mem nh, zero_to_zero]
+        simp only [mem_support_toFun, ne_eq, not_not] at nh
+        rw[nh]
+    rw[← this]
+    exact Set.mem_range_self s
   · rintro ⟨l, hl⟩
     rw[← hl]
     show ((G g) ∘ (G f)) l = 0

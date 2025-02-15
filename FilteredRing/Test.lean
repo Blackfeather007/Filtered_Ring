@@ -140,6 +140,11 @@ lemma Gf.comp (x : AssociatedGraded FR FR_lt) : Gf g j (Gf f j (x j)) = Gf (g �
   repeat rw[Gf.mk]
   congr
 
+lemma zero_to_zero : Gf f i 0 = 0 := by
+  have : (0 : GradedPiece FR FR_lt i) = ⟦0⟧ := rfl
+  simp only [Gf, this,  Quotient.lift_mk, ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
+  rfl
+
 end GfComp
 
 
@@ -162,11 +167,9 @@ theorem G_to_Gf : (G f x) i = Gf f i (x i) := by
   dsimp only[G]
   by_cases hjx : i ∈ support x
   · exact mk_apply_of_mem hjx
-  · simp only [Gf, GradedPiece.mk_eq, mk_apply_of_not_mem hjx]
+  · simp only [GradedPiece.mk_eq, mk_apply_of_not_mem hjx]
     simp only [mem_support_toFun, ne_eq, not_not] at hjx
-    have : (0 : GradedPiece FR FR_lt i) = ⟦0⟧ := rfl
-    simp only [hjx, this,  Quotient.lift_mk, ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
-    rfl
+    rw[hjx, ← zero_to_zero f]
 
 theorem G.comp: (G g) ∘ (G f) = G (g ∘ f) := by
   apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp fun x a ↦ ? x
