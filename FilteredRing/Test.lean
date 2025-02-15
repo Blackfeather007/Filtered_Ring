@@ -218,8 +218,8 @@ theorem exact_of_exact (fstrict : FilteredRingHom.IsStrict f) (gstrict : Filtere
         rw [sub_self, ← map_sub] at geq
         obtain ⟨y', hy'⟩ := exact (x - x') |>.1 geq
         replace strictf := fstrict.strict p (x - x') |>.2
-        have part1 : x.1 - x' ∈ M p := sub_mem (SetLike.coe_mem x) <|
-          (IsRingFiltration.toIsFiltration.is_sup (M p) p (fun i hi ↦ IsRingFiltration.toIsFiltration.mono (le_of_lt hi))) x'.2
+        have part1 : x.1 - x' ∈ M p :=
+          sub_mem (SetLike.coe_mem x) <| (IsFiltration.lt_le M M_lt p) x'.2
         have part2 : x.1 - x' ∈ f.toRingHom.range := ⟨y', hy'⟩
         replace strictf := strictf ⟨part1, part2⟩
         obtain ⟨y'', hy''⟩ := strictf
