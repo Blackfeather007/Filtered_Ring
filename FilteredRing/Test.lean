@@ -40,6 +40,7 @@ variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T
 
 class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt, R →+* S
 
+variable {FR FS FR_lt FS_lt} in
 def FilteredRingHom.IsStrict (f : FilteredRingHom FR FR_lt FS FS_lt) : Prop :=
   ∀ p : ι, ∀ x : S, x ∈ f.toFun '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
 
@@ -89,8 +90,6 @@ variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R
 variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [IsRingFiltration FS FS_lt]
 variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [IsRingFiltration FT FT_lt]
 
-variable (f : R →+* S) (g : S →+* T)
-
 variable [AddSubgroupClass γ R] [AddSubgroupClass σ S] [AddSubgroupClass τ T]
   (f : FilteredRingHom FR FR_lt FS FS_lt) (g : FilteredRingHom FS FS_lt FT FT_lt)
 
@@ -122,14 +121,14 @@ end DirectSum
 
 section Gfcomp
 
-open DirectSum DFinsupp
+open DirectSum
 
 variable {ι R S T γ σ τ : Type*}
 
 variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
 variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
 
-variable (f : R →+* S) (f : FilteredRingHom FR FR_lt FS FS_lt)
+variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 
 lemma Gf_mk (j : ι) (y : FR j) : Gf f j ⟦y⟧ =
     ⟦(⟨f.toRingHom y, f.toFilteredHom.pieces_wise j y <| SetLike.coe_mem y⟩ : FS j)⟧ := rfl
@@ -138,7 +137,7 @@ variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T
 variable (g : FilteredRingHom FS FS_lt FT FT_lt)
 
 lemma Gfcomp(x : Graded FR FR_lt): Gf g j (Gf f j (x j)) = Gf (g∘f) j (x j) := by
-  obtain⟨a, ha⟩ : ∃ a, ⟦a⟧ = x j := by exact Quotient.exists_rep (x j)
+  obtain⟨a, ha⟩ := Quotient.exists_rep (x j)
   rw[← ha]
   repeat rw[Gf_mk]
   congr
@@ -185,7 +184,6 @@ theorem Gcomp: (G g) ∘ (G f) = G (g ∘ f) := by
      = mk (GradedPiece FT FT_lt) (support x) (fun i ↦ Gf (g ∘ f) i (x i)) j
   rw[mk_eq_Gf FR FR_lt FT FT_lt (g ∘ f),  mk_eq_Gf FS FS_lt FT FT_lt g,
     hs, mk_eq_Gf FR FR_lt FS FS_lt f]
-  simp[Gf]
   apply Gfcomp
 
 end Gcomp
