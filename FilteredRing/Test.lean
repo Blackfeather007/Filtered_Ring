@@ -96,7 +96,7 @@ variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T
   (f : FilteredRingHom FR FR_lt FS FS_lt) (g : FilteredRingHom FS FS_lt FT FT_lt)
 
 variable {FR FR_lt FS FS_lt} in
-private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
+def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
   intro a
   use Quotient.lift (fun (s : FR i)↦ GradedPiece.mk FS FS_lt
     ⟨f.toRingHom s, f.pieces_wise i s <| SetLike.coe_mem s⟩) (fun a b h ↦ ?_) a
@@ -178,66 +178,3 @@ theorem G.comp: (G g) ∘ (G f) = G (g ∘ f) := by
     hs, mk_eq_Gf FR FR_lt FS FS_lt f, Gf.comp]
 
 end GComp
-
-
-
-
-section exactness
-
-variable {ι R σ : Type*} [DecidableEq ι] [OrderedAddCommMonoid ι]
-  [Ring R] [SetLike σ R] [AddSubgroupClass σ R]
-
-variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
-  [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
-
-variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
-
-
-set_option maxHeartbeats 0
-
-theorem exact_of_strict_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
-    (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
-  intro m
-  constructor
-  · have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 → ∃ y : L p, (Gf f p) ⟦y⟧ = ⟦x⟧ := by
-      intro p x xto0
-      obtain⟨x', geq⟩ : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := by
-        simp only [Gf, GradedPiece.mk_eq, Quotient.lift_mk, QuotientAddGroup.eq_zero_iff] at xto0
-        have := (gstrict.strict_lt p (g.toRingHom x)).2 ⟨xto0, RingHom.mem_range_self g.toRingHom x⟩
-        rcases (Set.mem_image _ _ _).1 this with ⟨x', x'Mltp, geq⟩
-        use ⟨x', x'Mltp⟩, geq.symm
-
-      obtain⟨y, feq⟩ : ∃ y : L p, f.toRingHom y = x - x' := by
-        apply_fun (fun m ↦ m - g.toRingHom x') at geq
-        rw [sub_self, ← map_sub] at geq
-        replace strictf := fstrict.strict p (x - x') |>.2
-        have sub_mem_mp : x.1 - x' ∈ M p :=
-          sub_mem (SetLike.coe_mem x) <| (IsFiltration.lt_le M M_lt p) x'.2
-        replace strictf := strictf ⟨sub_mem_mp, (exact (x - x')).1 geq⟩
-        obtain ⟨y'', hy''⟩ := strictf
-        exact ⟨⟨y'', hy''.1⟩, hy''.2⟩
-
-      use y
-
-      have : (Gf f p) ⟦y⟧ = ⟦⟨f.toRingHom y, f.pieces_wise p y (SetLike.coe_mem y)⟩⟧ := by
-        simp only [Gf, GradedPiece.mk_eq, Quotient.lift_mk]
-      simp only [this, feq]
-      refine QuotientAddGroup.eq.mpr (AddSubgroup.mem_addSubgroupOf.mpr ?_)
-      simp only [AddSubgroup.coe_add, NegMemClass.coe_neg, neg_sub, sub_add_cancel, SetLike.coe_mem]
-
-    sorry
-
-  · rintro ⟨l, hl⟩
-    rw[← hl]
-    show ((G g) ∘ (G f)) l = 0
-    rw[G.comp L L_lt M M_lt f N N_lt g]
-    ext i
-    obtain⟨k, hk⟩ : ∃ k, ⟦k⟧ = l i := Quotient.exists_rep (l i)
-    show ((DirectSum.mk (GradedPiece N N_lt) (DFinsupp.support l)) fun i ↦ Gf (g ∘ f) i (l i)) i = 0
-    rw [mk_eq_Gf L L_lt N N_lt (g ∘ f) (x := l) (j := i), Gf, ← hk, Quotient.lift_mk]
-    have : (⟨(g ∘ f).toRingHom k, by apply (g ∘ f).pieces_wise i k <| SetLike.coe_mem k⟩ : N i) = (0 : N i) :=
-      ZeroMemClass.coe_eq_zero.mp (Function.Exact.apply_apply_eq_zero exact k)
-    rw[this]
-    rfl
-
-end exactness
