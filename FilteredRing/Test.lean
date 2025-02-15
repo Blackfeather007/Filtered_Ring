@@ -198,7 +198,9 @@ variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
 
 variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
 
-theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
+theorem exact_of_exact
+    (strictf : FilteredRingHom.IsStrict f)
+    (strictg : FilteredRingHom.IsStrict g)
     (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
   intro m
   constructor
@@ -211,7 +213,17 @@ theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
         have : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := sorry
 
         rcases this with ⟨x', geq⟩
-        have : ∃ y : L p, f.toRingHom y = x - x' := sorry
+        have : ∃ y : L p, f.toRingHom y = x - x' := by
+          apply_fun (fun m ↦ m - g.toRingHom x') at geq
+          rw [sub_self, ← map_sub] at geq
+          obtain ⟨y', hy'⟩ := exact (x - x') |>.1 geq
+          replace strictf := strictf.strict p (x - x') |>.2
+          have part1 : x.1 - x' ∈ M p := sub_mem (SetLike.coe_mem x) <|
+            (IsRingFiltration.toIsFiltration.is_sup (M p) p (fun i hi ↦ IsRingFiltration.toIsFiltration.mono (le_of_lt hi))) x'.2
+          have part2 : x.1 - x' ∈ f.toRingHom.range := ⟨y', hy'⟩
+          replace strictf := strictf ⟨part1, part2⟩
+          obtain ⟨y'', hy''⟩ := strictf
+          exact ⟨⟨y'', hy''.1⟩, hy''.2⟩
 
         rcases this with ⟨y, feq⟩
         use y
