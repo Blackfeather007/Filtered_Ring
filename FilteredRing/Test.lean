@@ -201,26 +201,23 @@ theorem exact_of_exact (fstrict : FilteredRingHom.IsStrict f) (gstrict : Filtere
   constructor
   · have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 → ∃ y : L p, (Gf f p) ⟦y⟧ = ⟦x⟧ := by
       intro p x xto0
-      have : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := by
+      obtain⟨x', geq⟩ : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := by
         simp only [Gf, GradedPiece.mk_eq, Quotient.lift_mk, QuotientAddGroup.eq_zero_iff] at xto0
         have := (gstrict.strict_lt p (g.toRingHom x)).2 ⟨xto0, RingHom.mem_range_self g.toRingHom x⟩
         rcases (Set.mem_image _ _ _).1 this with ⟨x', x'Mltp, geq⟩
         use ⟨x', x'Mltp⟩, geq.symm
 
-      rcases this with ⟨x', geq⟩
-      have : ∃ y : L p, f.toRingHom y = x - x' := by
+      obtain⟨y, feq⟩ : ∃ y : L p, f.toRingHom y = x - x' := by
         apply_fun (fun m ↦ m - g.toRingHom x') at geq
         rw [sub_self, ← map_sub] at geq
         obtain ⟨y', hy'⟩ := exact (x - x') |>.1 geq
         replace strictf := fstrict.strict p (x - x') |>.2
         have part1 : x.1 - x' ∈ M p :=
           sub_mem (SetLike.coe_mem x) <| (IsFiltration.lt_le M M_lt p) x'.2
-        have part2 : x.1 - x' ∈ f.toRingHom.range := ⟨y', hy'⟩
-        replace strictf := strictf ⟨part1, part2⟩
+        replace strictf := strictf ⟨part1, ⟨y', hy'⟩⟩
         obtain ⟨y'', hy''⟩ := strictf
         exact ⟨⟨y'', hy''.1⟩, hy''.2⟩
 
-      rcases this with ⟨y, feq⟩
       use y
 
       have : (Gf f p) ⟦y⟧ = ⟦⟨f.toRingHom y, f.pieces_wise p y (SetLike.coe_mem y)⟩⟧ := by
