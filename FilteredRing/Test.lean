@@ -23,12 +23,12 @@ def FilteredHom.comp : FilteredHom FA FA_lt FC FC_lt := {
   pieces_wise_lt := fun i a ha ↦ g.pieces_wise_lt i (f.1 a) (f.pieces_wise_lt i a ha)
 }
 
-infixl:100 "∘" => FilteredHom.comp
+infixl:100 " ∘ " => FilteredHom.comp
 
 end FilteredHom
 
 
-section Main
+section Def
 
 variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι]
 
@@ -38,8 +38,6 @@ variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S
   [IsRingFiltration FS FS_lt]
 variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T]
   [IsRingFiltration FT FT_lt]
-
-variable (f : R →+* S) (g : S →+* T)
 
 section FilteredRingHom
 
@@ -58,21 +56,20 @@ def FilteredRingHom.comp : FilteredRingHom FR FR_lt FT FT_lt := {
   pieces_wise_lt := fun i a ha ↦ g.pieces_wise_lt i (f.toFun a) (f.pieces_wise_lt i a ha)
 }
 
-infixl:100 "∘" => FilteredRingHom.comp
+infixl:100 " ∘ " => FilteredRingHom.comp
 
 end FilteredRingHom
 
 section FilteredModuleHom
 
-variable {R : Type*} [Ring R] (σR : Type*) [SetLike σR R] [AddSubgroupClass σR R]
-variable (FR : ι → σR) (FR_lt : outParam <| ι → σR) [fil : IsRingFiltration FR FR_lt]
+variable {R σR : Type*} [Ring R] [SetLike σR R] [AddSubgroupClass σR R] (FR : ι → σR)
+  (FR_lt : outParam <| ι → σR) [fil : IsRingFiltration FR FR_lt]
 
-variable {M : Type*} [AddCommMonoid M] [Module R M] (σM : Type*) [SetLike σM M]
-[AddSubmonoidClass σM M] [SMulMemClass σM R M] (FM : ι → σM) (FM_lt : outParam <| ι → σM)
+variable {M σM : Type*} [AddCommMonoid M] [Module R M] [SetLike σM M] (FM : ι → σM)
+  [AddSubmonoidClass σM M] [SMulMemClass σM R M] (FM_lt : outParam <| ι → σM)
 
-variable {N : Type*} [AddCommMonoid N] [Module R N] (σN : Type*) [SetLike σN N]
-[AddSubmonoidClass σN N] [SMulMemClass σN R N] (FN : ι → σN) (FN_lt : outParam <| ι → σN)
-(f : M →ₗ[R] N)
+variable {N σN : Type*} [AddCommMonoid N] [Module R N] [SetLike σN N] (FN : ι → σN)
+  [AddSubmonoidClass σN N] [SMulMemClass σN R N] (FN_lt : outParam <| ι → σN)
 
 class FilteredModuleHom extends FilteredHom FM FM_lt FN FN_lt, M →ₗ[R] N
 
@@ -145,6 +142,7 @@ instance : (G g).comp (G f) = (G (g.comp f)) := by
 
 end DirectSum
 
+end Def
 
 section exactness
 
@@ -185,6 +183,3 @@ theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
 
 
 end exactness
-
-
-end Main
