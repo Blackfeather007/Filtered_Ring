@@ -45,7 +45,11 @@ class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt, R →+* S
 
 variable {FR FS FR_lt FS_lt} in
 def FilteredRingHom.IsStrict (f : FilteredRingHom FR FR_lt FS FS_lt) : Prop :=
-  ∀ p : ι, ∀ x : S, x ∈ f.toFun '' (FR p) ↔ (x ∈ (FS p) ∧ x ∈ f.range)
+  ∀ p : ι, ∀ y : S, y ∈ f.toFun '' (FR p) ↔ (y ∈ (FS p) ∧ y ∈ f.range)
+
+variable {FR FS FR_lt FS_lt} in
+def FilteredRingHom.IsStrict' (f : FilteredRingHom FR FR_lt FS FS_lt) : Prop :=
+  ∀ p : ι, ∀ y : S, y ∈ f.toFun '' (FR_lt p) ↔ (y ∈ (FS_lt p) ∧ y ∈ f.range)
 
 variable (g : FilteredRingHom FS FS_lt FT FT_lt) (f : FilteredRingHom FR FR_lt FS FS_lt)
 
@@ -103,7 +107,7 @@ noncomputable def G : (Graded FR FR_lt) → (Graded FS FS_lt) :=
       Classical.propDecidable (x ≠ 0)
     mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
       <| fun i ↦ (Gf f i) (a i)
-
+@[simp]
 lemma G.comp : (G g).comp (G f) = G (g ∘ f) := by
   apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp
   sorry
@@ -122,7 +126,7 @@ instance : (G g).comp (G f) = (G (g.comp f)) := by
 
   set s := mk (fun i ↦ GradedPiece FS FS_lt i) (support x)
               (fun i ↦ Gf f i (x i)) with hs
-  show mk (fun i ↦ GradedPiece FT FT_lt i) (support s)
+  show mk (GradedPiece FT FT_lt) (support s)
           (fun i ↦ Gf g i (s i)) j
      = mk (fun i ↦ GradedPiece FT FT_lt i) (support x)
           (fun i ↦ Gf (g.comp f) i (x i)) j
@@ -154,10 +158,11 @@ variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
 
 variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
 
-theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
+theorem exact_of_exact (strict : FilteredRingHom.IsStrict' f)
     (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
-  have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) (Quotient.mk' x) = 0 →
-      ∃ y : L p, (Gf f p) (Quotient.mk' y) = Quotient.mk' x := by
+  have aux1 : ∀ p : ι, ∀ x : M p, (G g) (DirectSum.of p (GradedPiece M M_lt) x)
+  have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 →
+      ∃ y : L p, (Gf f p) ⟦y⟧ = ⟦x⟧ := by
     intro p x noname
     have : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := sorry
     rcases this with ⟨x', geq⟩
