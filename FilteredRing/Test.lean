@@ -226,9 +226,7 @@ theorem exact_of_exact (fstrict : FilteredRingHom.IsStrict f) (gstrict : Filtere
       use y
 
       have : (Gf f p) ⟦y⟧ = ⟦⟨f.toRingHom y, f.pieces_wise p y (SetLike.coe_mem y)⟩⟧ := by
-        unfold Gf
-        simp only [RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk, GradedPiece.mk_eq,
-          Quotient.lift_mk]
+        simp only [Gf, GradedPiece.mk_eq, Quotient.lift_mk]
       rw [this]
 
       sorry
