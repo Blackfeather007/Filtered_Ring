@@ -41,12 +41,9 @@ variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T
 class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt, R →+* S
 
 variable {FR FS FR_lt FS_lt} in
-def FilteredRingHom.IsStrict (f : FilteredRingHom FR FR_lt FS FS_lt) : Prop :=
-  ∀ p : ι, ∀ y : S, y ∈ f.toFun '' (FR p) ↔ (y ∈ (FS p) ∧ y ∈ f.range)
-
-variable {FR FS FR_lt FS_lt} in
-def FilteredRingHom.IsStrict' (f : FilteredRingHom FR FR_lt FS FS_lt) : Prop :=
-  ∀ p : ι, ∀ y : S, y ∈ f.toFun '' (FR_lt p) ↔ (y ∈ (FS_lt p) ∧ y ∈ f.range)
+class FilteredRingHom.IsStrict (f : outParam <| FilteredRingHom FR FR_lt FS FS_lt) : Prop where
+  strict : ∀ p : ι, ∀ y : S, y ∈ f.toFun '' (FR p) ↔ (y ∈ (FS p) ∧ y ∈ f.range)
+  strict_lt : ∀ p : ι, ∀ y : S, y ∈ f.toFun '' (FR_lt p) ↔ (y ∈ (FS_lt p) ∧ y ∈ f.range)
 
 variable (g : FilteredRingHom FS FS_lt FT FT_lt) (f : FilteredRingHom FR FR_lt FS FS_lt)
 
@@ -207,8 +204,8 @@ theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
   constructor
 
   · -- first prove for single component
-    have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) (Quotient.mk' x) = 0 →
-      ∃ y : L p, (Gf f p) (Quotient.mk' y) = Quotient.mk' x := by
+    have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 → ∃ y : L p,
+      (Gf f p) ⟦y⟧ = ⟦x⟧ := by
         -- not sure if needed ↓
         let _ : (i : ι) → (x : GradedPiece L L_lt i) → Decidable (x ≠ 0) :=
           fun _ x ↦ Classical.propDecidable (x ≠ 0)
@@ -227,7 +224,7 @@ theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
           CanLift.prf (f.toRingHom y) <| f.pieces_wise p y <| SetLike.coe_mem y
         rcases this with ⟨fy, huh⟩
 
-        have : (Gf f p) (Quotient.mk' y) = Quotient.mk' (fy) := sorry
+        have : (Gf f p) ⟦y⟧ = ⟦fy⟧ := sorry
 
         sorry
 
