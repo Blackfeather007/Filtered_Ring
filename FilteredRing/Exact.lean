@@ -17,8 +17,10 @@ open DirectSum DFinsupp
 omit [DecidableEq ι] in
 theorem component_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
     (exact : Function.Exact f.toRingHom g.toRingHom) :
-    ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 → ∃ y : L p, (Gf f p) ⟦y⟧ = ⟦x⟧ := by
-  intro p x xto0
+    ∀ p : ι, ∀ x : GradedPiece M M_lt p, (Gf g p) x = 0 → ∃ y : L p, (Gf f p) ⟦y⟧ = x := by
+  intro p x₀ xto0
+  obtain⟨x, hx⟩ := Quotient.exists_rep x₀
+  rw[← hx] at xto0 ⊢
   obtain⟨x', geq⟩ : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := by
     simp only [Gf, GradedPiece.mk_eq, Quotient.lift_mk, QuotientAddGroup.eq_zero_iff] at xto0
     have := (gstrict.strict_lt p (g.toRingHom x)).2 ⟨xto0, RingHom.mem_range_self g.toRingHom x⟩
@@ -36,12 +38,9 @@ theorem component_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
     exact ⟨⟨y'', hy''.1⟩, hy''.2⟩
 
   use y
-
-  have : (Gf f p) ⟦y⟧ = ⟦⟨f.toRingHom y, f.pieces_wise p y (SetLike.coe_mem y)⟩⟧ := by
-    simp only [Gf, GradedPiece.mk_eq, Quotient.lift_mk]
-  simp only [this, feq]
+  simp only [Gf.mk, feq]
   refine QuotientAddGroup.eq.mpr (AddSubgroup.mem_addSubgroupOf.mpr ?_)
-  simp only [AddSubgroup.coe_add, NegMemClass.coe_neg, neg_sub, sub_add_cancel, SetLike.coe_mem]
+  simp only [AddMemClass.coe_add, NegMemClass.coe_neg, neg_sub, sub_add_cancel, SetLike.coe_mem]
 
 
 theorem exact_of_strict_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
@@ -49,27 +48,11 @@ theorem exact_of_strict_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
   intro m
   constructor
   · intro h
-    have h (i : ι): Gf g i (m i) = 0:= by
-      rw[← G_to_Gf, h]
-      rfl
-    let component_1 := fun (i : ι) ↦ (if i ∈ support m then Classical.choose (Quotient.exists_rep (m i)) else 0)
-    have component_1_prop : ∀ i, ⟦component_1 i⟧ = m i := by
-      intro i
-      by_cases nh : i ∈ support m
-      · have : component_1 i = Classical.choose (Quotient.exists_rep (m i)) := if_pos nh
-        rw[this, Classical.choose_spec (Quotient.exists_rep (m i))]
-      · have : component_1 i = 0 := if_neg nh
-        simp only [mem_support_toFun, ne_eq, not_not] at nh
-        rw[this, nh]
-        rfl
-
-    have h : ∀ i, Gf g i ⟦component_1 i⟧ = 0 := by
-      intro i
-      rw[component_1_prop i, h i]
-
     have tt (i : ι) : ∃ y, Gf f i ⟦y⟧ = m i := by
-      rw[← component_1_prop i]
-      exact component_exact f g fstrict gstrict exact i (component_1 i) (h i)
+      apply component_exact f g fstrict gstrict exact i
+      have : (G g m) i = 0 := by rw[h]; rfl
+      rw[G_to_Gf] at this
+      exact this
     set component_2 := fun (i : support m) ↦ (⟦Classical.choose (tt i)⟧ : GradedPiece L L_lt i) with hc
     set s : AssociatedGraded L L_lt := DirectSum.mk (fun i ↦ GradedPiece L L_lt i) (support m) component_2 with hs
     have : (G f) s = m := by
