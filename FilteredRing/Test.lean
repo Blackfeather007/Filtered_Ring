@@ -87,15 +87,14 @@ open DirectSum
 
 variable {ι R S T γ σ τ : Type*} [OrderedAddCommMonoid ι] [DecidableEq ι]
 
-variable [Ring R] (FR : ι → γ) (FR_lt : outParam <| ι → γ) [SetLike γ R] [AddSubgroupClass γ R]
-variable [Ring S] (FS : ι → σ) (FS_lt : outParam <| ι → σ) [SetLike σ S] [AddSubgroupClass σ S]
+variable [Ring R] {FR : ι → γ} {FR_lt : outParam <| ι → γ} [SetLike γ R] [AddSubgroupClass γ R]
+variable [Ring S] {FS : ι → σ} {FS_lt : outParam <| ι → σ} [SetLike σ S] [AddSubgroupClass σ S]
 
 variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 
 variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
   (f : FilteredRingHom FR FR_lt FS FS_lt) (g : FilteredRingHom FS FS_lt FT FT_lt)
 
-variable {FR FR_lt FS FS_lt} in
 def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
   intro a
   use Quotient.lift (fun (s : FR i)↦ GradedPiece.mk FS FS_lt
@@ -106,7 +105,6 @@ def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
   rw [map_add, map_neg] at this
   exact QuotientAddGroup.eq.mpr this
 
-variable {FR FR_lt FS FS_lt} in
 noncomputable def G : (AssociatedGraded FR FR_lt) → (AssociatedGraded FS FS_lt) := fun a ↦
   mk (fun i ↦ GradedPiece FS FS_lt i) (DFinsupp.support a)
     <| fun i ↦ (Gf f i) (a i)
@@ -163,7 +161,7 @@ variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 variable [Ring T] {FT : ι → τ} {FT_lt : outParam <| ι → τ} [SetLike τ T] [AddSubgroupClass τ T]
 variable (g : FilteredRingHom FS FS_lt FT FT_lt)
 
-theorem G_to_Gf : (G f x) i = Gf f i (x i) := by
+theorem G_to_Gf (x : AssociatedGraded FR FR_lt)(i : ι) : (G f x) i = Gf f i (x i) := by
   dsimp only[G]
   by_cases hjx : i ∈ support x
   · exact mk_apply_of_mem hjx

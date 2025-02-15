@@ -7,14 +7,14 @@ variable {ι R σ : Type*} [DecidableEq ι] [OrderedAddCommMonoid ι]
   [Ring R] [SetLike σ R] [AddSubgroupClass σ R]
 
 variable {L M N : ι → σ} {L_lt M_lt N_lt : outParam <| ι → σ}
-  [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
+ [IsRingFiltration M M_lt]
 
 variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
 
 
 open DirectSum DFinsupp
 
-omit [DecidableEq ι] [IsRingFiltration L L_lt] [IsRingFiltration N N_lt] in
+omit [DecidableEq ι] in
 theorem component_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
     (exact : Function.Exact f.toRingHom g.toRingHom) :
     ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 → ∃ y : L p, (Gf f p) ⟦y⟧ = ⟦x⟧ := by
@@ -44,14 +44,13 @@ theorem component_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
   simp only [AddSubgroup.coe_add, NegMemClass.coe_neg, neg_sub, sub_add_cancel, SetLike.coe_mem]
 
 
-
 theorem exact_of_strict_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
     (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
   intro m
   constructor
   · intro h
     have h (i : ι): Gf g i (m i) = 0:= by
-      rw[← G_to_Gf g (i := i) (x := m), h]
+      rw[← G_to_Gf, h]
       rfl
     let component_1 := fun (i : ι) ↦ (if i ∈ support m then Classical.choose (Quotient.exists_rep (m i)) else 0)
     have component_1_prop : ∀ i, ⟦component_1 i⟧ = m i := by
