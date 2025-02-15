@@ -199,9 +199,7 @@ theorem exact_of_exact (fstrict : FilteredRingHom.IsStrict f) (gstrict : Filtere
     (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
   intro m
   constructor
-
-  · -- first prove for single component
-    have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 → ∃ y : L p, (Gf f p) ⟦y⟧ = ⟦x⟧ := by
+  · have component_exact : ∀ p : ι, ∀ x : M p, (Gf g p) ⟦x⟧ = 0 → ∃ y : L p, (Gf f p) ⟦y⟧ = ⟦x⟧ := by
       intro p x xto0
       obtain⟨x', geq⟩ : ∃ x' : M_lt p, g.toRingHom x = g.toRingHom x' := by
         simp only [Gf, GradedPiece.mk_eq, Quotient.lift_mk, QuotientAddGroup.eq_zero_iff] at xto0
@@ -223,14 +221,20 @@ theorem exact_of_exact (fstrict : FilteredRingHom.IsStrict f) (gstrict : Filtere
 
       have : (Gf f p) ⟦y⟧ = ⟦⟨f.toRingHom y, f.pieces_wise p y (SetLike.coe_mem y)⟩⟧ := by
         simp only [Gf, GradedPiece.mk_eq, Quotient.lift_mk]
-      rw [this]
+      simp only [this, feq]
+      refine QuotientAddGroup.eq.mpr (AddSubgroup.mem_addSubgroupOf.mpr ?_)
+      simp only [AddSubgroup.coe_add, NegMemClass.coe_neg, neg_sub, sub_add_cancel, SetLike.coe_mem]
 
+<<<<<<< HEAD
       sorry
 
     intro h
     refine Set.mem_range.mpr ?_
 
     sorry -- glue components together
+=======
+    sorry
+>>>>>>> b995616a43d03c14079cff3daf9566566b8a97b2
 
   · rintro ⟨l, hl⟩
     rw[← hl]
