@@ -98,10 +98,8 @@ variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T
 variable {FR FR_lt FS FS_lt} in
 private def Gf (i : ι) : GradedPiece FR FR_lt i → GradedPiece FS FS_lt i := by
   intro a
-  let h(i) := fun (s : FR i) ↦ GradedPiece.mk FS FS_lt
-    ⟨f.toRingHom s, f.pieces_wise i s (SetLike.coe_mem s)⟩
   use Quotient.lift (fun (s : FR i)↦ GradedPiece.mk FS FS_lt
-    ⟨f.toRingHom s, f.pieces_wise i s (SetLike.coe_mem s)⟩) (fun a b h ↦ ?_) a
+    ⟨f.toRingHom s, f.pieces_wise i s <| SetLike.coe_mem s⟩) (fun a b h ↦ ?_) a
   rw [← Quotient.eq_iff_equiv] at h
   have : f.toRingHom (- a + b) ∈ (FS_lt i) :=
     f.pieces_wise_lt i (⟨- a + b, QuotientAddGroup.eq.mp h⟩ : FR_lt i) <| QuotientAddGroup.eq.mp h
@@ -160,12 +158,10 @@ variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 lemma mk_eq_Gf: mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) j = Gf f j (x j) := by
   by_cases hjx : j ∈ support x
   · exact mk_apply_of_mem hjx
-  · simp only [Gf, GradedPiece.mk_eq]
-    rw [mk_apply_of_not_mem hjx]
+  · simp only [Gf, GradedPiece.mk_eq, mk_apply_of_not_mem hjx]
     simp only [mem_support_toFun, ne_eq, not_not] at hjx
     have : (0 : GradedPiece FR FR_lt j) = ⟦0⟧ := rfl
-    rw [hjx, this,  Quotient.lift_mk]
-    simp only [ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
+    simp only [hjx, this,  Quotient.lift_mk, ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
     rfl
 
 variable [Ring T] (FT : ι → τ) (FT_lt : outParam <| ι → τ) [SetLike τ T] [AddSubgroupClass τ T]
@@ -173,15 +169,13 @@ variable (g : FilteredRingHom FS FS_lt FT FT_lt)
 
 theorem G.comp: (G g) ∘ (G f) = G (g ∘ f) := by
   apply (Set.eqOn_univ (G g ∘ G f) (G (g ∘ f))).mp fun x a ↦ ? x
-  apply ext (fun i ↦ GradedPiece FT FT_lt i)
-  intro j
+  ext j
   obtain⟨y, hy⟩ : ∃ y, ⟦y⟧ = x j := Quotient.exists_rep (x j)
   set s := mk (GradedPiece FS FS_lt) (support x) (fun i ↦ Gf f i (x i)) with hs
   show mk (GradedPiece FT FT_lt) (support s) (fun i ↦ Gf g i (s i)) j
      = mk (GradedPiece FT FT_lt) (support x) (fun i ↦ Gf (g ∘ f) i (x i)) j
   rw[mk_eq_Gf FR FR_lt FT FT_lt (g ∘ f),  mk_eq_Gf FS FS_lt FT FT_lt g,
-    hs, mk_eq_Gf FR FR_lt FS FS_lt f]
-  apply Gf.comp
+    hs, mk_eq_Gf FR FR_lt FS FS_lt f, Gf.comp]
 
 end GComp
 
@@ -197,6 +191,9 @@ variable (L M N : ι → σ) (L_lt M_lt N_lt : outParam <| ι → σ)
   [IsRingFiltration L L_lt] [IsRingFiltration M M_lt] [IsRingFiltration N N_lt]
 
 variable (f : FilteredRingHom L L_lt M M_lt) (g : FilteredRingHom M M_lt N N_lt)
+
+
+set_option maxHeartbeats 0
 
 theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
     (exact : Function.Exact f.toRingHom g.toRingHom) : Function.Exact (G f) (G g) := by
@@ -221,12 +218,25 @@ theorem exact_of_exact (strict : FilteredRingHom.IsStrict f)
           CanLift.prf (f.toRingHom y) <| f.pieces_wise p y <| SetLike.coe_mem y
         rcases this with ⟨fy, huh⟩
 
-        have : (Gf f p) ⟦y⟧ = ⟦fy⟧ := sorry
+        have : (Gf f p) ⟦y⟧ = ⟦fy⟧ := by
+
+          sorry
 
         sorry
 
     sorry -- glue components together
 
-  · sorry -- use Gcomp
+  · rintro ⟨l, hl⟩
+    rw[← hl]
+    show ((G g) ∘ (G f)) l = 0
+    rw[G.comp L L_lt M M_lt f N N_lt g]
+    ext i
+    obtain⟨k, hk⟩ : ∃ k, ⟦k⟧ = l i := Quotient.exists_rep (l i)
+    show ((DirectSum.mk (GradedPiece N N_lt) (DFinsupp.support l)) fun i ↦ Gf (g ∘ f) i (l i)) i = 0
+    rw [mk_eq_Gf L L_lt N N_lt (g ∘ f) (x := l) (j := i), Gf, ← hk, Quotient.lift_mk]
+    have : (⟨(g ∘ f).toRingHom k, by apply (g ∘ f).pieces_wise i k <| SetLike.coe_mem k⟩ : N i) = (0 : N i) :=
+      ZeroMemClass.coe_eq_zero.mp (Function.Exact.apply_apply_eq_zero exact k)
+    rw[this]
+    rfl
 
 end exactness
