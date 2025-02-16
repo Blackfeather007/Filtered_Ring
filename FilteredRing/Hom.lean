@@ -42,8 +42,8 @@ class FilteredRingHom extends FilteredHom FR FR_lt FS FS_lt, R →+* S
 
 variable {FR FS FR_lt FS_lt} in
 class FilteredRingHom.IsStrict (f : outParam <| FilteredRingHom FR FR_lt FS FS_lt) : Prop where
-  strict : ∀ p : ι, ∀ y : S, y ∈ f.toFun '' (FR p) ↔ (y ∈ (FS p) ∧ y ∈ f.range)
-  strict_lt : ∀ p : ι, ∀ y : S, y ∈ f.toFun '' (FR_lt p) ↔ (y ∈ (FS_lt p) ∧ y ∈ f.range)
+  strict : ∀ p : ι, ∀ y : S, y ∈ f.toRingHom '' (FR p) ↔ (y ∈ (FS p) ∧ y ∈ f.range)
+  strict_lt : ∀ p : ι, ∀ y : S, y ∈ f.toRingHom '' (FR_lt p) ↔ (y ∈ (FS_lt p) ∧ y ∈ f.range)
 
 variable (g : FilteredRingHom FS FS_lt FT FT_lt) (f : FilteredRingHom FR FR_lt FS FS_lt)
 

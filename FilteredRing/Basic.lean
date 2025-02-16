@@ -57,7 +57,7 @@ lemma IsFiltration_int (F : ℤ → σ) (mono : Monotone F) :
 -- variable [AddCommMonoid A] [AddSubmonoidClass σ A]
 
 class IsExhaustiveFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt] : Prop where
-  exhaustive : A = ⋃ i, (F i : Set A)
+  exhaustive : (⊤ : Set A) = ⋃ i, (F i : Set A)
 
 -- class IsDiscreteFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt] : Prop where
 --   discrete : ∃ n : ι, ∀ i ≤ n,
