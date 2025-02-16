@@ -43,12 +43,19 @@ lemma step2 (hx : g.toRingHom x = y)(ch : 0 < s)(hy1 : y ∈ FT p) : (Gf g (p + 
 /-- This lemma can generalize to ι -/
 lemma step3 (Gexact : Function.Exact (G f) (G g))(i : ℤ): (Gf g i).ker = (Gf f i).range := by
   ext u
-  have : (Gf g i) u = 0 ↔ (G g) (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) = 0 := sorry
-  have : (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G g).ker ↔
-         (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G f).range := by
-    rw[Function.Exact.addMonoidHom_ker_eq Gexact]
-  have : (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G f).range ↔ u ∈ (Gf f i).range := sorry
-  sorry
+  have s1 : (Gf g i) u = 0 ↔ (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G g).ker := by
+    have : (Gf g i) u = (G g) (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) i := by
+      simp only [G, AddMonoidHom.coe_mk, ZeroHom.coe_mk, GAux_apply, of_eq_same]
+    rw[this]
+    #check DirectSum.of_eq_of_ne
+    #check DirectSum.of_eq_same
+    sorry
+  have s3 : (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G f).range ↔ u ∈ (Gf f i).range := by
+    --similar with former sorry?
+    sorry
+  refine Iff.trans s1 ?_
+  rw[Function.Exact.addMonoidHom_ker_eq Gexact]
+  exact s3
 
 theorem c (Gexact : Function.Exact (G f) (G g))
 (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS (n - 1))) :
@@ -64,15 +71,22 @@ theorem c (Gexact : Function.Exact (G f) (G g))
     · rw[← hx]
       rw[ch, add_zero] at xin
       exact Set.mem_image_of_mem (⇑g.toRingHom) xin
-    · obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) z = ⟦⟨x, xin⟩⟧ := by
+    · obtain⟨z₀, hz₀⟩ : ∃ z , (Gf f (p + s)) z = ⟦⟨x, xin⟩⟧ := by
         show ⟦⟨x, xin⟩⟧ ∈ (Gf f (p + s)).range
         rw[← step3 f g Gexact (p + s)]
         exact step2 g hx ch hy1
-      obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) ⟦z⟧ = ⟦⟨x, xin⟩⟧ := sorry
-      have : x - f.toRingHom z ∈ FS (p + s - 1) := sorry
-      obtain⟨x', hx'⟩ : ∃ x' : FS (p + s - 1), y = g.toRingHom x' := sorry -- calc
+      obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
+        obtain⟨z, eq⟩ := Quotient.exists_rep z₀
+        exact ⟨z, by rw[eq, hz₀]⟩
+      have : x - f.toRingHom z ∈ FS (p + s - 1) := by
+        simp only [Gf, GradedPiece.mk_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, Quotient.lift_mk,
+          QuotientAddGroup.eq] at hz
+        have : - f.toRingHom z + x ∈ FS (p + s - 1) := hz
+        rwa[neg_add_eq_sub (f.toRingHom ↑z) x] at this
+      obtain⟨x', hx'⟩ : ∃ x' : FS (p + s - 1), y = g.toRingHom x' := by
+        sorry -- calc(easy)
       have : ∃ u : FS p, y = g.toRingHom u := by
-        -- by induction
+        -- by induction(hard)
         sorry
       sorry
 
