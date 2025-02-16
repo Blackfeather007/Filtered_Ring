@@ -54,6 +54,16 @@ lemma IsFiltration_int (F : ℤ → σ) (mono : Monotone F) :
   is_le lt := mono (Int.le_sub_one_of_lt lt)
   is_sup _ j hi := hi (j - 1) (sub_one_lt j)
 
+-- variable [AddCommMonoid A] [AddSubmonoidClass σ A]
+
+class IsExhaustiveFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt] : Prop where
+  exhaustive : A = ⋃ i, (F i : Set A)
+
+-- class IsDiscreteFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt] : Prop where
+--   discrete : ∃ n : ι, ∀ i ≤ n,
+--     Set.range (AddSubmonoidClass.subtype (F i)) = (⊥ : AddSubmonoid A)
+
+
 end GeneralFiltration
 
 section FilteredRing
