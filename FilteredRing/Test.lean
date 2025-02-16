@@ -37,12 +37,18 @@ lemma step2 (hx : g.toRingHom x = y)(ch : 0 < s)(hy1 : y ∈ FT p) : (Gf g (p + 
     QuotientAddGroup.eq_zero_iff]
   show (g.toRingHom x) ∈ FT (p + s - 1)
   rw[hx]
-  have : y ∈ FT (p + s - 1) := by
-    have : FT p ≤ FT (p + s - 1) := by
-      apply IsFiltration.mono (F := FT) (F_lt := (fun n ↦ FT (n - 1)))
-      linarith
-    exact this hy1
-  exact this
+  refine IsFiltration.mono (F := FT) (F_lt := (fun n ↦ FT (n - 1))) ?_  hy1
+  linarith
+
+/-- This lemma can generalize to ι -/
+lemma step3 (Gexact : Function.Exact (G f) (G g))(i : ℤ): (Gf g i).ker = (Gf f i).range := by
+  ext u
+  have : (Gf g i) u = 0 ↔ (G g) (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) = 0 := sorry
+  have : (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G g).ker ↔
+         (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G f).range := by
+    rw[Function.Exact.addMonoidHom_ker_eq Gexact]
+  have : (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G f).range ↔ u ∈ (Gf f i).range := sorry
+  sorry
 
 theorem c (Gexact : Function.Exact (G f) (G g))
 (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS (n - 1))) :
@@ -58,21 +64,10 @@ theorem c (Gexact : Function.Exact (G f) (G g))
     · rw[← hx]
       rw[ch, add_zero] at xin
       exact Set.mem_image_of_mem (⇑g.toRingHom) xin
-    · have : (Gf g (p + s)) ⟦⟨x, xin⟩⟧ = 0 := step2 g hx ch hy1
-      obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) z = ⟦⟨x, xin⟩⟧ := by
+    · obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) z = ⟦⟨x, xin⟩⟧ := by
         show ⟦⟨x, xin⟩⟧ ∈ (Gf f (p + s)).range
-        have s1 : (G g).ker = (G f).range := by
-          exact Function.Exact.addMonoidHom_ker_eq Gexact
-        have s2 : (Gf g (p + s)).ker = (Gf f (p + s)).range := by
-          ext u
-          have : (Gf g (p + s)) u = 0 ↔ (G g) (of (GradedPiece FS (fun n ↦ FS (n - 1))) (p + s) u) = 0:= sorry
-          have : (G g) (of (GradedPiece FS (fun n ↦ FS (n - 1))) (p + s) u) = 0 ↔
-                  (of (GradedPiece FS (fun n ↦ FS (n - 1))) (p + s) u) ∈ (G f).range := sorry
-          have : (of (GradedPiece FS (fun n ↦ FS (n - 1))) (p + s) u) ∈ (G f).range ↔
-                u ∈ (Gf f (p + s)).range := sorry
-          sorry
-        rw[← s2]
-        exact this
+        rw[← step3 f g Gexact (p + s)]
+        exact step2 g hx ch hy1
       obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) ⟦z⟧ = ⟦⟨x, xin⟩⟧ := sorry
       have : x - f.toRingHom z ∈ FS (p + s - 1) := sorry
       obtain⟨x', hx'⟩ : ∃ x' : FS (p + s - 1), y = g.toRingHom x' := sorry -- calc
@@ -80,7 +75,6 @@ theorem c (Gexact : Function.Exact (G f) (G g))
         -- by induction
         sorry
       sorry
-  -- sorry
 
 
 theorem test (Gexact : Function.Exact (G f) (G g))
