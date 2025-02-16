@@ -58,8 +58,7 @@ theorem exact_of_strict_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
     have tt (i : ι) : ∃ y, Gf f i ⟦y⟧ = m i := by
       apply exact_component_of_strict_exact_component f g fstrict gstrict exact i
       have : (G g m) i = 0 := by rw [h]; rfl
-      simp only [G, AddMonoidHom.coe_mk, ZeroHom.coe_mk, GAux_apply] at this
-      exact this
+      simpa [G, AddMonoidHom.coe_mk, ZeroHom.coe_mk, GAux_apply]
     set component_2 := fun (i : support m) ↦ (⟦Classical.choose (tt i)⟧ : GradedPiece FR FR_lt i) with hc
     set s : AssociatedGraded FR FR_lt := DirectSum.mk (fun i ↦ GradedPiece FR FR_lt i) (support m) component_2 with hs
     have : (G f) s = m := by
@@ -84,7 +83,7 @@ theorem exact_of_strict_exact (fstrict : f.IsStrict) (gstrict : g.IsStrict)
     rw [← hk, Quotient.lift_mk]
     have : (⟨(g ∘ f).toRingHom k, by apply (g ∘ f).pieces_wise i k <| SetLike.coe_mem k⟩ : FT i) = (0 : FT i) :=
       ZeroMemClass.coe_eq_zero.mp (Function.Exact.apply_apply_eq_zero exact k)
-    simp at this
+    simp only [RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk] at this
     simp only [this, QuotientAddGroup.mk_zero]
 
 end exactness

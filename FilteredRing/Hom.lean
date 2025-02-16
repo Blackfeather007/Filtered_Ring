@@ -87,7 +87,7 @@ variable [Ring R] {FR : ι → σR} {FR_lt : outParam <| ι → σR} [SetLike σ
 variable [Ring S] {FS : ι → σS} {FS_lt : outParam <| ι → σS} [SetLike σS S] [AddSubgroupClass σS S]
 variable [Ring T] (FT : ι → σT) (FT_lt : outParam <| ι → σT) [SetLike σT T] [AddSubgroupClass σT T]
 
-variable (f : FilteredRingHom FR FR_lt FS FS_lt) (g : FilteredRingHom FS FS_lt FT FT_lt)
+variable (f : FilteredRingHom FR FR_lt FS FS_lt)
 
 def Gf (i : ι) : GradedPiece FR FR_lt i →+ GradedPiece FS FS_lt i where
   toFun := by
@@ -99,9 +99,15 @@ def Gf (i : ι) : GradedPiece FR FR_lt i →+ GradedPiece FS FS_lt i where
       f.pieces_wise_lt i (⟨- a + b, QuotientAddGroup.eq.mp h⟩ : FR_lt i) <| QuotientAddGroup.eq.mp h
     rw [map_add, map_neg] at this
     exact QuotientAddGroup.eq.mpr this
-  map_zero' := sorry
+  map_zero' := by
+    have : (0 : GradedPiece FR FR_lt i) = ⟦0⟧ := rfl
+    simp only[this, Quotient.lift_mk]
+    simp only [ZeroMemClass.coe_zero, map_zero, QuotientAddGroup.eq_zero_iff]
+    rfl
   map_add' := sorry
 
+
+variable (g : FilteredRingHom FS FS_lt FT FT_lt)
 omit [OrderedAddCommMonoid ι] [DecidableEq ι] in
 lemma Gf_comp (x : AssociatedGraded FR FR_lt) : Gf g i (Gf f i (x i)) = Gf (g ∘ f) i (x i) := by
   obtain ⟨a, ha⟩ := Quotient.exists_rep (x i)
