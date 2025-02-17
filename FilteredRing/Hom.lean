@@ -117,7 +117,7 @@ lemma Gf_comp (x : AssociatedGraded FR FR_lt) : Gf g i (Gf f i (x i)) = Gf (g �
 private noncomputable def GAux : (AssociatedGraded FR FR_lt) → (AssociatedGraded FS FS_lt) :=
   fun a ↦ mk (GradedPiece FS FS_lt) (DFinsupp.support a) <| fun i ↦ (Gf f i) (a i)
 
-private lemma GAux_apply (x : AssociatedGraded FR FR_lt) (i : ι) : (GAux f x) i = Gf f i (x i) := by
+lemma GAux_apply (x : AssociatedGraded FR FR_lt) (i : ι) : (GAux f x) i = Gf f i (x i) := by
   dsimp only [GAux]
   by_cases ixsupp : i ∈ DFinsupp.support x
   · simp only [AddMonoidHom.coe_mk, ZeroHom.coe_mk, mk_apply_of_mem ixsupp]

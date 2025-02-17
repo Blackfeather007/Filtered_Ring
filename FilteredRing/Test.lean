@@ -39,34 +39,49 @@ lemma step2 (hx : g.toRingHom x = y)(ch : 0 < s)(hy1 : y ∈ FT p) : (Gf g (p + 
   rw[hx]
   apply IsFiltration.mono (F := FT) (F_lt := (fun n ↦ FT (n - 1))) (by linarith)  hy1
 
-/-- This lemma can generalize to ι -/
+omit [IsRingFiltration FS fun n ↦ FS (n - 1)] [IsRingFiltration FT fun n ↦ FT (n - 1)] in
+theorem s1 : (Gf g i) u = 0 ↔ (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G g).ker := by
+  rw[Gof_eq_piece g i u]
+  constructor
+  · intro h
+    apply AssociatedGraded.ext_iff.mpr
+    intro j
+    by_cases ch : i = j
+    · rw[← ch, h, zero_apply]
+    · rw[G_to_Gf, of_eq_of_ne i j u ch, map_zero, DirectSum.zero_apply]
+  · exact fun h ↦
+    (AddSemiconjBy.eq_zero_iff (((G g) ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) i)
+    (congrArg (HAdd.hAdd (((G g) ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) i))
+    (congrFun (congrArg DFunLike.coe (id (Eq.symm h))) i))).mp rfl
+
+omit [IsRingFiltration FS fun n ↦ FS (n - 1)] in
+lemma s33: (of (GradedPiece FS fun n ↦ FS (n - 1)) i) (((G f) ((of (GradedPiece FR fun n ↦ FR (n - 1)) i) x)) i)
+          = (G f) ((of (GradedPiece FR fun n ↦ FR (n - 1)) i) x) := by
+  have (j) : (of (GradedPiece FS fun n ↦ FS (n - 1)) i)
+   (((G f) ((of (GradedPiece FR fun n ↦ FR (n - 1)) i) x)) i) j
+    = (G f) ((of (GradedPiece FR fun n ↦ FR (n - 1)) i) x) j:= by
+      by_cases ch : i = j
+      · rw[← ch]
+        exact of_eq_same i (((G f) ((of (GradedPiece FR fun n ↦ FR (n - 1)) i) x)) i)
+      · rw[of_eq_of_ne i j (((G f) ((of (GradedPiece FR fun n ↦ FR (n - 1)) i) x)) i) ch, G_to_Gf,
+          of_eq_of_ne i j x ch, map_zero]
+
+  exact AssociatedGraded.ext_iff.mpr this
+
+-- /-- This lemma can generalize to ι -/
+omit [IsRingFiltration FS fun n ↦ FS (n - 1)] [IsRingFiltration FT fun n ↦ FT (n - 1)] in
 lemma step3 (Gexact : Function.Exact (G f) (G g))(i : ℤ): (Gf g i).ker = (Gf f i).range := by
   ext u
-  have s1 : (Gf g i) u = 0 ↔ (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G g).ker := by
-    rw[Gof_eq_piece g i u]
-    constructor
-    · intro h
-      have (j : ℤ) : ((G g) ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) j = 0 := by
-        by_cases ch : i = j
-        · rw[← ch, h]
-        · rw[G_to_Gf, of_eq_of_ne i j u ch, map_zero]
-      exact AssociatedGraded.ext_iff.mpr this
-    · exact fun h ↦
-      (AddSemiconjBy.eq_zero_iff (((G g) ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) i)
-      (congrArg (HAdd.hAdd (((G g) ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) i))
-      (congrFun (congrArg DFunLike.coe (id (Eq.symm h))) i))).mp rfl
-
   have s3 : (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G f).range ↔ u ∈ (Gf f i).range := by
     constructor
     · intro ⟨x, hx⟩
       use x i
       rw[← G_to_Gf, hx, of_eq_same i u]
     · intro ⟨x, hx⟩
-      rw[← hx]
+      rw[← hx, Gof_eq_piece, s33 f]
+      use ((of (GradedPiece FR fun n ↦ FR (n - 1)) i) x)
 
-
-      sorry
-  refine Iff.trans s1 ?_
+  refine Iff.trans (s1 g) ?_
   rw[Function.Exact.addMonoidHom_ker_eq Gexact]
   exact s3
 
