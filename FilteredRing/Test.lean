@@ -18,16 +18,16 @@ variable (f : FilteredRingHom FR (fun n ↦ FR <| n - 1) FS (fun n ↦ FS <| n -
 
 open DirectSum DFinsupp
 
--- omit [AddSubgroupClass σS S] in
--- lemma exists_nonneg_x_in_filtration (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1))
---  : ∃ s, s ≥ 0 ∧ (x : S) ∈ FS (p + s) := by
---   obtain ⟨s₀, xin⟩ : ∃ s, (x : S) ∈ FS s := by
---     apply Set.mem_iUnion.mp
---     rw[← IsExhaustiveFiltration.exhaustive (fun n ↦ FS <| n - 1) (F := FS) (A := S)]
---     trivial
---   rcases lt_or_le p s₀ with ch | ch
---   · exact ⟨s₀ - p, by simp only [ge_iff_le, sub_nonneg, add_sub_cancel, xin, and_true, le_of_lt ch]⟩
---   · exact ⟨0, by simp only [ge_iff_le, le_refl, add_zero, (IsFiltration.mono ch) xin, and_self]⟩
+omit [AddSubgroupClass σS S] in
+lemma exists_nonneg_x_in_filtration (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1))
+ : ∃ s, s ≥ 0 ∧ (x : S) ∈ FS (p + s) := by
+  obtain ⟨s₀, xin⟩ : ∃ s, (x : S) ∈ FS s := by
+    apply Set.mem_iUnion.mp
+    rw[← IsExhaustiveFiltration.exhaustive (fun n ↦ FS <| n - 1) (F := FS) (A := S)]
+    trivial
+  rcases lt_or_le p s₀ with ch | ch
+  · exact ⟨s₀ - p, by simp only [ge_iff_le, sub_nonneg, add_sub_cancel, xin, and_true, le_of_lt ch]⟩
+  · exact ⟨0, by simp only [ge_iff_le, le_refl, add_zero, (IsFiltration.mono ch) xin, and_self]⟩
 
 
 
@@ -78,23 +78,23 @@ lemma Ggker_eq_Gfrange (Gexact : Function.Exact (G f) (G g))(i : ℤ) :
     fun ⟨x, hx⟩ ↦ ⟨((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x), by rw[← hx, Gof_eq_piece, this]⟩⟩
 
 
--- #check Nat.decreasingInduction'
--- lemma Int.decreasingInduction' (m n : ℤ) {P : ℤ → Prop}
---     (h : (k : ℤ) → k ≤ n → m < k → P k → P (k - 1)) (mn : m ≤ n) (hP : P n) : P m := by
---   have (s : ℕ) (hs : s < n - m) : P (n - s) → P (n - s - 1) :=
---     h (n - s) (by linarith) (by linarith[hs])
---   obtain⟨r, hr⟩ : ∃ r : ℕ, r = n - m := CanLift.prf (n - m) (by linarith)
---   have : m = n - r := by simp only [hr, sub_sub_cancel]
---   rw[this]
---   have (t : ℕ) (hs : t ≤ n - m) : P (n - t) := by
---     induction' t with t ih
---     · simp only [CharP.cast_eq_zero, sub_zero, hP]
---     · have : n - (t : ℤ) - 1 = n - ((t + 1 : ℕ) : ℤ) := Int.sub_sub n (↑t) 1
---       rw[← this]
---       apply h (n - t) (by linarith) (by linarith[hs])
---       apply ih (by linarith[hs])
---   apply this
---   simp only [hr, le_refl]
+#check Nat.decreasingInduction'
+lemma Int.decreasingInduction' (m n : ℤ) {P : ℤ → Prop}
+    (h : (k : ℤ) → k ≤ n → m < k → P k → P (k - 1)) (mn : m ≤ n) (hP : P n) : P m := by
+  have (s : ℕ) (hs : s < n - m) : P (n - s) → P (n - s - 1) :=
+    h (n - s) (by linarith) (by linarith[hs])
+  obtain⟨r, hr⟩ : ∃ r : ℕ, r = n - m := CanLift.prf (n - m) (by linarith)
+  have : m = n - r := by simp only [hr, sub_sub_cancel]
+  rw[this]
+  have (t : ℕ) (hs : t ≤ n - m) : P (n - t) := by
+    induction' t with t ih
+    · simp only [CharP.cast_eq_zero, sub_zero, hP]
+    · have : n - (t : ℤ) - 1 = n - ((t + 1 : ℕ) : ℤ) := Int.sub_sub n (↑t) 1
+      rw[← this]
+      apply h (n - t) (by linarith) (by linarith[hs])
+      apply ih (by linarith[hs])
+  apply this
+  simp only [hr, le_refl]
 
 
 def P (y) := fun n ↦ y ∈ ⇑g.toRingHom '' (FS n)
@@ -135,6 +135,8 @@ lemma si (k)
         (g ∘ f).toFilteredHom.pieces_wise k z <| SetLike.coe_mem z⟩ : FT k)).mp tt
       have : (g ∘ f).toRingHom ↑z ∈ FT (k - 1) := by
         exact this
+      -- have : (g ∘ f).toRingHom ↑z = 0 := by
+      --   apply?
 
 
       sorry
@@ -182,62 +184,63 @@ lemma si (k)
 
 
 
--- theorem strictness_under_exact_and_exhaustive' (Gexact : Function.Exact (G f) (G g))
--- (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1)) :
---  ∀ (p : ℤ) (y : T), y ∈ ⇑g.toRingHom '' ↑(FS p) ↔ y ∈ FT p ∧ y ∈ g.toRingHom.range := by
---   intro p y
---   constructor
---   · rintro ⟨x, xin, eq⟩
---     rw[← eq]
---     exact ⟨g.pieces_wise p x xin, by use x⟩
---   · rintro ⟨hy1, ⟨x, hx⟩⟩
---     obtain⟨s, sge0, xin⟩ : ∃s, s ≥ 0 ∧ x ∈ FS (p + s) := exists_nonneg_x_in_filtration Exhaustive
---     rcases Or.symm (LE.le.gt_or_eq sge0) with ch | ch
---     · rw[← hx]
---       rw[ch, add_zero] at xin
---       exact Set.mem_image_of_mem (⇑g.toRingHom) xin
---     · obtain⟨z₀, hz₀⟩ : ∃ z , (Gf f (p + s)) z = ⟦⟨x, xin⟩⟧ := by
---         show ⟦⟨x, xin⟩⟧ ∈ (Gf f (p + s)).range
---         rw[← Ggker_eq_Gfrange f g Gexact (p + s)]
---         exact Gf_zero g hx ch hy1
---       obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
---         obtain⟨z, eq⟩ := Quotient.exists_rep z₀
---         exact ⟨z, by rw[eq, hz₀]⟩
---       obtain⟨x', hx'⟩ : ∃ x' ∈ FS (p + s - 1), y = g.toRingHom x' := by
---         rw[← hx]
---         use x - f.toRingHom ↑z
---         constructor
---         · simp only [Gf, GradedPiece.mk_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, Quotient.lift_mk,
---             QuotientAddGroup.eq] at hz
---           have : - f.toRingHom z + x ∈ FS (p + s - 1) := hz
---           rwa[neg_add_eq_sub (f.toRingHom ↑z) x] at this
---         · have : g.toRingHom (f.toRingHom ↑z)= 0 := by
---             have : (G (g ∘ f)) = 0 := sorry
---             sorry
---           rw[RingHom.map_sub g.toRingHom x (f.toRingHom z), this, sub_zero]
---       have : ∃ u : FS p, y = g.toRingHom u := by
---         -- by induction(hard)
---         sorry
---       sorry
---     -- sorry
+theorem strictness_under_exact_and_exhaustive'
+(Gexact : Function.Exact (G f) (G g))
+(Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1)) :
+ ∀ (p : ℤ) (y : T), y ∈ ⇑g.toRingHom '' ↑(FS p) ↔ y ∈ FT p ∧ y ∈ g.toRingHom.range := by
+  intro p y
+  constructor
+  · rintro ⟨x, xin, eq⟩
+    rw[← eq]
+    exact ⟨g.pieces_wise p x xin, by use x⟩
+  · rintro ⟨hy1, ⟨x, hx⟩⟩
+    obtain⟨s, sge0, xin⟩ : ∃s, s ≥ 0 ∧ x ∈ FS (p + s) := exists_nonneg_x_in_filtration Exhaustive
+    rcases Or.symm (LE.le.gt_or_eq sge0) with ch | ch
+    · rw[← hx]
+      rw[ch, add_zero] at xin
+      exact Set.mem_image_of_mem (⇑g.toRingHom) xin
+    · obtain⟨z₀, hz₀⟩ : ∃ z , (Gf f (p + s)) z = ⟦⟨x, xin⟩⟧ := by
+        show ⟦⟨x, xin⟩⟧ ∈ (Gf f (p + s)).range
+        rw[← Ggker_eq_Gfrange f g Gexact (p + s)]
+        exact Gf_zero g hx (by sorry) hy1
+      obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
+        obtain⟨z, eq⟩ := Quotient.exists_rep z₀
+        exact ⟨z, by rw[eq, hz₀]⟩
+      obtain⟨x', hx'⟩ : ∃ x' ∈ FS (p + s - 1), y = g.toRingHom x' := by
+        rw[← hx]
+        use x - f.toRingHom ↑z
+        constructor
+        · simp only [Gf, GradedPiece.mk_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, Quotient.lift_mk,
+            QuotientAddGroup.eq] at hz
+          have : - f.toRingHom z + x ∈ FS (p + s - 1) := hz
+          rwa[neg_add_eq_sub (f.toRingHom ↑z) x] at this
+        · have : g.toRingHom (f.toRingHom ↑z)= 0 := by
+            have : (G (g ∘ f)) = 0 := sorry
+            sorry
+          rw[RingHom.map_sub g.toRingHom x (f.toRingHom z), this, sub_zero]
+      have : ∃ u : FS p, y = g.toRingHom u := by
+        -- by induction(hard)
+        sorry
+      sorry
+    -- sorry
 
---     -- have : P g y (p + s) := by
---     --   use x
---     --   simp only [SetLike.mem_coe, xin, hx, and_self]
---     -- show P g y p
---     -- apply Int.decreasingInduction' p (p + s)
---     -- · apply si f g hx
---     --   exact sge0
---     --   exact xin
---     --   exact hy1
---     --   exact Gexact
---     -- · linarith
---     -- · exact this
+    -- have : P g y (p + s) := by
+    --   use x
+    --   simp only [SetLike.mem_coe, xin, hx, and_self]
+    -- show P g y p
+    -- apply Int.decreasingInduction' p (p + s)
+    -- · apply si f g hx
+    --   exact sge0
+    --   exact xin
+    --   exact hy1
+    --   exact Gexact
+    -- · linarith
+    -- · exact this
 
 
 
 
--- theorem strictness_under_exact_and_exhaustive (Gexact : Function.Exact (G f) (G g))
--- (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1)) : g.IsStrict :=
---   ⟨fun p y ↦ strictness_under_exact_and_exhaustive' f g Gexact Exhaustive p y,
---    fun p y ↦ strictness_under_exact_and_exhaustive' f g Gexact Exhaustive (p - 1) y⟩
+theorem strictness_under_exact_and_exhaustive (Gexact : Function.Exact (G f) (G g))
+(Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1)) : g.IsStrict :=
+  ⟨fun p y ↦ strictness_under_exact_and_exhaustive' f g Gexact Exhaustive p y,
+   fun p y ↦ strictness_under_exact_and_exhaustive' f g Gexact Exhaustive (p - 1) y⟩
