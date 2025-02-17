@@ -44,7 +44,17 @@ lemma step3 (Gexact : Function.Exact (G f) (G g))(i : ℤ): (Gf g i).ker = (Gf f
   ext u
   have s1 : (Gf g i) u = 0 ↔ (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G g).ker := by
     rw[Gof_eq_piece g i u]
-    sorry
+    constructor
+    · intro h
+      have (j : ℤ) : ((G g) ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) j = 0 := by
+        by_cases ch : i = j
+        · rw[← ch, h]
+        · rw[G_to_Gf, of_eq_of_ne i j u ch, map_zero]
+      exact AssociatedGraded.ext_iff.mpr this
+    · exact fun h ↦
+      (AddSemiconjBy.eq_zero_iff (((G g) ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) i)
+      (congrArg (HAdd.hAdd (((G g) ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) i))
+      (congrFun (congrArg DFunLike.coe (id (Eq.symm h))) i))).mp rfl
 
   have s3 : (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G f).range ↔ u ∈ (Gf f i).range := by
     constructor
