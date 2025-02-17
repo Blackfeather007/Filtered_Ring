@@ -81,7 +81,7 @@ section DirectSum
 
 open DirectSum
 
-variable {ι R S T σR σS σT : Type*} [OrderedAddCommMonoid ι] [DecidableEq ι]
+variable {ι R S T σR σS σT : Type*} [DecidableEq ι]
 
 variable [Ring R] {FR : ι → σR} {FR_lt : outParam <| ι → σR} [SetLike σR R] [AddSubgroupClass σR R]
 variable [Ring S] {FS : ι → σS} {FS_lt : outParam <| ι → σS} [SetLike σS S] [AddSubgroupClass σS S]
@@ -108,7 +108,7 @@ def Gf (i : ι) : GradedPiece FR FR_lt i →+ GradedPiece FS FS_lt i where
 
 
 variable (g : FilteredRingHom FS FS_lt FT FT_lt)
-omit [OrderedAddCommMonoid ι] [DecidableEq ι] in
+omit [DecidableEq ι] in
 lemma Gf_comp (x : AssociatedGraded FR FR_lt) : Gf g i (Gf f i (x i)) = Gf (g ∘ f) i (x i) := by
   obtain ⟨a, ha⟩ := Quotient.exists_rep (x i)
   rw [← ha]
@@ -117,8 +117,7 @@ lemma Gf_comp (x : AssociatedGraded FR FR_lt) : Gf g i (Gf f i (x i)) = Gf (g �
 private noncomputable def GAux : (AssociatedGraded FR FR_lt) → (AssociatedGraded FS FS_lt) :=
   fun a ↦ mk (GradedPiece FS FS_lt) (DFinsupp.support a) <| fun i ↦ (Gf f i) (a i)
 
-omit [OrderedAddCommMonoid ι] in
-lemma GAux_apply (x : AssociatedGraded FR FR_lt) (i : ι) : (GAux f x) i = Gf f i (x i) := by
+private lemma GAux_apply (x : AssociatedGraded FR FR_lt) (i : ι) : (GAux f x) i = Gf f i (x i) := by
   dsimp only [GAux]
   by_cases ixsupp : i ∈ DFinsupp.support x
   · simp only [AddMonoidHom.coe_mk, ZeroHom.coe_mk, mk_apply_of_mem ixsupp]
@@ -132,7 +131,26 @@ noncomputable def G : (AssociatedGraded FR FR_lt) →+ (AssociatedGraded FS FS_l
     ext i
     simp only [add_apply, GAux_apply, map_add]
 
-omit [OrderedAddCommMonoid ι]
+theorem G_to_Gf (x : AssociatedGraded FR FR_lt)(i : ι) : (G f x) i = Gf f i (x i) := by
+  simp only [G, AddMonoidHom.coe_mk, ZeroHom.coe_mk, GAux_apply]
+
+
+lemma Geq0_iff_pieces0 : G f = 0 ↔ ∀ i, (Gf f i) = 0 := by
+  constructor
+  · intro eq0 i
+    apply AddMonoidHom.ext_iff.mpr
+    intro x
+    set u := ((of (GradedPiece FR FR_lt) i) x) with h
+    rw[← of_eq_same i x, ← G_to_Gf, eq0]
+    simp only [AddMonoidHom.zero_apply, zero_apply, of_eq_same]
+  · intro h
+    apply AddMonoidHom.ext_iff.mpr
+    intro x
+    apply AssociatedGraded.ext_iff.mpr
+    intro i
+    rw[G_to_Gf, h]
+    simp only [AddMonoidHom.zero_apply, zero_apply]
+
 theorem G_comp: (G g) ∘ (G f) = G (g ∘ f) := by
   ext x i
   simp only [G, AddMonoidHom.coe_mk, ZeroHom.coe_mk, Function.comp_apply, GAux_apply]

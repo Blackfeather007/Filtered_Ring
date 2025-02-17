@@ -78,13 +78,17 @@ theorem c (Gexact : Function.Exact (G f) (G g))
       obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
         obtain⟨z, eq⟩ := Quotient.exists_rep z₀
         exact ⟨z, by rw[eq, hz₀]⟩
-      have : x - f.toRingHom z ∈ FS (p + s - 1) := by
-        simp only [Gf, GradedPiece.mk_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, Quotient.lift_mk,
-          QuotientAddGroup.eq] at hz
-        have : - f.toRingHom z + x ∈ FS (p + s - 1) := hz
-        rwa[neg_add_eq_sub (f.toRingHom ↑z) x] at this
-      obtain⟨x', hx'⟩ : ∃ x' : FS (p + s - 1), y = g.toRingHom x' := by
-        sorry -- calc(easy)
+      obtain⟨x', hx'⟩ : ∃ x' ∈ FS (p + s - 1), y = g.toRingHom x' := by
+        rw[← hx]
+        use x - f.toRingHom ↑z
+        constructor
+        · simp only [Gf, GradedPiece.mk_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, Quotient.lift_mk,
+            QuotientAddGroup.eq] at hz
+          have : - f.toRingHom z + x ∈ FS (p + s - 1) := hz
+          rwa[neg_add_eq_sub (f.toRingHom ↑z) x] at this
+        · have : g.toRingHom (f.toRingHom ↑z)= 0 := by
+            sorry
+          rw[RingHom.map_sub g.toRingHom x (f.toRingHom z), this, sub_zero]
       have : ∃ u : FS p, y = g.toRingHom u := by
         -- by induction(hard)
         sorry
