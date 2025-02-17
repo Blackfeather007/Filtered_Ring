@@ -37,22 +37,25 @@ lemma step2 (hx : g.toRingHom x = y)(ch : 0 < s)(hy1 : y ∈ FT p) : (Gf g (p + 
     QuotientAddGroup.eq_zero_iff]
   show (g.toRingHom x) ∈ FT (p + s - 1)
   rw[hx]
-  refine IsFiltration.mono (F := FT) (F_lt := (fun n ↦ FT (n - 1))) ?_  hy1
-  linarith
+  apply IsFiltration.mono (F := FT) (F_lt := (fun n ↦ FT (n - 1))) (by linarith)  hy1
 
 /-- This lemma can generalize to ι -/
 lemma step3 (Gexact : Function.Exact (G f) (G g))(i : ℤ): (Gf g i).ker = (Gf f i).range := by
   ext u
   have s1 : (Gf g i) u = 0 ↔ (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G g).ker := by
-    have : (Gf g i) u = (G g) (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) i := by
-      simp only [G, AddMonoidHom.coe_mk, ZeroHom.coe_mk, GAux_apply, of_eq_same]
-    rw[this]
-    #check DirectSum.of_eq_of_ne
-    #check DirectSum.of_eq_same
+    rw[Gof_eq_piece g i u]
     sorry
+
   have s3 : (of (GradedPiece FS (fun n ↦ FS (n - 1))) i u) ∈ (G f).range ↔ u ∈ (Gf f i).range := by
-    --similar with former sorry?
-    sorry
+    constructor
+    · intro ⟨x, hx⟩
+      use x i
+      rw[← G_to_Gf, hx, of_eq_same i u]
+    · intro ⟨x, hx⟩
+      rw[← hx]
+
+
+      sorry
   refine Iff.trans s1 ?_
   rw[Function.Exact.addMonoidHom_ker_eq Gexact]
   exact s3
@@ -87,6 +90,7 @@ theorem c (Gexact : Function.Exact (G f) (G g))
           have : - f.toRingHom z + x ∈ FS (p + s - 1) := hz
           rwa[neg_add_eq_sub (f.toRingHom ↑z) x] at this
         · have : g.toRingHom (f.toRingHom ↑z)= 0 := by
+            have : (G (g ∘ f)) = 0 := sorry
             sorry
           rw[RingHom.map_sub g.toRingHom x (f.toRingHom z), this, sub_zero]
       have : ∃ u : FS p, y = g.toRingHom u := by

@@ -135,19 +135,21 @@ theorem G_to_Gf (x : AssociatedGraded FR FR_lt)(i : ι) : (G f x) i = Gf f i (x 
   simp only [G, AddMonoidHom.coe_mk, ZeroHom.coe_mk, GAux_apply]
 
 
+lemma Gof_eq_piece  (i) (x : GradedPiece FR FR_lt i):
+  (Gf f i) x = (G f) (of (GradedPiece FR FR_lt) i x) i:= by
+  rw[G_to_Gf]
+  congr
+  rw[of_eq_same]
+
 lemma Geq0_iff_pieces0 : G f = 0 ↔ ∀ i, (Gf f i) = 0 := by
   constructor
   · intro eq0 i
-    apply AddMonoidHom.ext_iff.mpr
-    intro x
-    set u := ((of (GradedPiece FR FR_lt) i) x) with h
-    rw[← of_eq_same i x, ← G_to_Gf, eq0]
+    apply AddMonoidHom.ext_iff.mpr fun x ↦ ?_
+    rw[Gof_eq_piece, eq0]
     simp only [AddMonoidHom.zero_apply, zero_apply, of_eq_same]
   · intro h
-    apply AddMonoidHom.ext_iff.mpr
-    intro x
-    apply AssociatedGraded.ext_iff.mpr
-    intro i
+    apply AddMonoidHom.ext_iff.mpr fun x ↦ ?_
+    apply AssociatedGraded.ext_iff.mpr fun i ↦ ?_
     rw[G_to_Gf, h]
     simp only [AddMonoidHom.zero_apply, zero_apply]
 
