@@ -41,6 +41,9 @@ lemma IsFiltration.mk_int (F : ℤ → σ) (mono : Monotone F) :
   is_le lt := mono (Int.le_sub_one_of_lt lt)
   is_sup _ j hi := hi (j - 1) (sub_one_lt j)
 
+class IsExhaustiveFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt] : Prop where
+  exhaustive : (⊤ : Set A) = ⋃ i, (F i : Set A)
+
 end GeneralFiltration
 
 section FilteredRing

@@ -15,11 +15,13 @@ variable [IsRingFiltration FS (fun n ↦ FS <| n - 1)]
 
 variable (f : FilteredRingHom FR (fun n ↦ FR <| n - 1) FS (fun n ↦ FS <| n - 1))
          (g : FilteredRingHom FS (fun n ↦ FS <| n - 1) FT (fun n ↦ FT <| n - 1))
+         [hasGMul FR fun n ↦ FR (n - 1)]
+         [hasGMul FT fun n ↦ FT (n - 1)] [hasGMul FS fun n ↦ FS (n - 1)]
 
-open DirectSum DFinsupp
+open DirectSum DFinsupp FilteredRingHom
 
 omit [AddSubgroupClass σS S] in
-lemma exists_nonneg_x_in_filtration (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1))
+theorem exists_nonneg_x_in_filtration (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1))
  : ∃ s, s ≥ 0 ∧ (x : S) ∈ FS (p + s) := by
   obtain ⟨s₀, xin⟩ : ∃ s, (x : S) ∈ FS s := by
     apply Set.mem_iUnion.mp
@@ -32,9 +34,8 @@ lemma exists_nonneg_x_in_filtration (Exhaustive : IsExhaustiveFiltration FS (fun
 
 
 omit [IsRingFiltration FS fun n ↦ FS <| n - 1] in
-lemma Gf_zero (hx : g.toRingHom x = y)(ch : p < k)(hy1 : y ∈ FT p) : (Gf g k) ⟦⟨x, xin⟩⟧ = 0 := by
-  simp only [Gf, GradedPiece.mk_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, Quotient.lift_mk,
-    QuotientAddGroup.eq_zero_iff]
+lemma Gf_zero (hx : g.toRingHom x = y)(ch : p < k)(hy1 : y ∈ FT p) : Gr(k)[g] ⟦⟨x, xin⟩⟧ = 0 := by
+  simp only [FilteredAddGroupHom.AssociatedGradedRingHom_lift, QuotientAddGroup.eq_zero_iff]
   show (g.toRingHom x) ∈ FT (k - 1)
   rw[hx]
   apply IsFiltration.mono (F := FT) (F_lt := (fun n ↦ FT <| n - 1)) (by linarith) hy1
@@ -43,8 +44,8 @@ lemma Gf_zero (hx : g.toRingHom x = y)(ch : p < k)(hy1 : y ∈ FT p) : (Gf g k) 
 
 
 omit [IsRingFiltration FS fun n ↦ FS <| n - 1] [IsRingFiltration FT fun n ↦ FT <| n - 1] in
-theorem Gf_zero_iff_of_in_ker : (Gf g i) u = 0 ↔
-    (of (GradedPiece FS (fun n ↦ FS <| n - 1)) i u) ∈ (G g).ker := by
+theorem Gf_zero_iff_of_in_ker : Gr(i)[g] u = 0 ↔
+    (of (GradedPiece FS (fun n ↦ FS <| n - 1)) i u) ∈ Gr[g].ker := by
   rw[Gof_eq_piece g i u]
   constructor
   · intro h
@@ -53,26 +54,26 @@ theorem Gf_zero_iff_of_in_ker : (Gf g i) u = 0 ↔
     · rw[← ch, h, zero_apply]
     · rw[G_to_Gf, of_eq_of_ne i j u ch, map_zero, DirectSum.zero_apply]
   · exact fun h ↦
-    (AddSemiconjBy.eq_zero_iff (((G g) ((of (GradedPiece FS fun n ↦ FS <| n - 1) i) u)) i)
-    (congrArg (HAdd.hAdd (((G g) ((of (GradedPiece FS fun n ↦ FS <| n - 1) i) u)) i))
+    (AddSemiconjBy.eq_zero_iff ((Gr[g] ((of (GradedPiece FS fun n ↦ FS <| n - 1) i) u)) i)
+    (congrArg (HAdd.hAdd ((Gr[g] ((of (GradedPiece FS fun n ↦ FS <| n - 1) i) u)) i))
     <| congrFun (congrArg DFunLike.coe <| id h.symm) i)).mp rfl
 
 
 
 
 omit [IsRingFiltration FS fun n ↦ FS <| n - 1] [IsRingFiltration FT fun n ↦ FT <| n - 1] in
-lemma Ggker_eq_Gfrange (Gexact : Function.Exact (G f) (G g))(i : ℤ) :
-    (Gf g i).ker = (Gf f i).range := by
+lemma Ggker_eq_Gfrange (Gexact : Function.Exact Gr[f] Gr[g]) (i : ℤ) :
+    Gr(i)[g].ker = Gr(i)[f].range := by
   ext u
   refine Iff.trans (Gf_zero_iff_of_in_ker g) ?_
   rw[Function.Exact.addMonoidHom_ker_eq Gexact]
   have (x : GradedPiece FR (fun n ↦ FR (n - 1)) i) : (of (GradedPiece FS fun n ↦ FS <| n - 1) i)
-      (((G f) ((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x)) i)
-      = (G f) ((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x) := by
+      ((Gr[f] ((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x)) i)
+      = Gr[f] ((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x) := by
     apply AssociatedGraded.ext_iff.mpr fun j ↦ ?_
     by_cases ch : i = j
-    · rw[← ch, of_eq_same i (((G f) ((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x)) i)]
-    · rw[of_eq_of_ne i j (((G f) ((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x)) i) ch, G_to_Gf,
+    · rw[← ch, of_eq_same i ((Gr[f] ((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x)) i)]
+    · rw[of_eq_of_ne i j ((Gr[f] ((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x)) i) ch, G_to_Gf,
         of_eq_of_ne i j x ch, map_zero]
   exact ⟨fun ⟨x, hx⟩ ↦ ⟨x i, by rw[← G_to_Gf, hx, of_eq_same i u]⟩,
     fun ⟨x, hx⟩ ↦ ⟨((of (GradedPiece FR fun n ↦ FR <| n - 1) i) x), by rw[← hx, Gof_eq_piece, this]⟩⟩
@@ -102,38 +103,36 @@ def P (y) := fun n ↦ y ∈ ⇑g.toRingHom '' (FS n)
 lemma si (k)
 (x : S) (hx : g.toRingHom x = y)
 (s : ℤ) (hy1 : y ∈ FT p)
- (xin : x ∈ FS k) (klt : p < k) (kle : k ≤ p + s) (h : P g y k) {Gexact : Function.Exact ⇑(G f) ⇑(G g)}:
+ (xin : x ∈ FS k) (klt : p < k) (kle : k ≤ p + s) (h : P g y k) {Gexact : Function.Exact Gr[f] Gr[g]}:
  P g y (k - 1) := by
   have ch : s > 0 := by linarith
-  obtain⟨z₀, hz₀⟩ : ∃ z , (Gf f k) z = ⟦⟨x, xin⟩⟧ := by
-    show ⟦⟨x, xin⟩⟧ ∈ (Gf f k).range
+  obtain⟨z₀, hz₀⟩ : ∃ z , Gr(k)[f] z = ⟦⟨x, xin⟩⟧ := by
+    show ⟦⟨x, xin⟩⟧ ∈ Gr(k)[f].range
     rw[← Ggker_eq_Gfrange f g Gexact k]
     refine Gf_zero g hx klt hy1
-  obtain⟨z, hz⟩ : ∃ z , (Gf f k) ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
+  obtain⟨z, hz⟩ : ∃ z , Gr(k)[f] ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
     obtain⟨z, eq⟩ := Quotient.exists_rep z₀
     exact ⟨z, by rw[eq, hz₀]⟩
   obtain⟨x', hx'⟩ : ∃ x' ∈ FS (k - 1), y = g.toRingHom x' := by
     rw[← hx]
     use x - f.toRingHom ↑z
     constructor
-    · simp only [Gf, GradedPiece.mk_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, Quotient.lift_mk,
-        QuotientAddGroup.eq] at hz
+    · simp at hz
       have : - f.toRingHom z + x ∈ FS (k - 1) := hz
       rwa[neg_add_eq_sub (f.toRingHom ↑z) x] at this
     ·
-      have : ⇑(G g) ∘ ⇑(G f) = ⇑(G (g ∘ f)) := by
-          exact G_comp FT (fun n ↦ FT (n - 1)) f g
-      rw[Function.Exact.comp_eq_zero Gexact] at this
-      have : (G (g ∘ f)) = 0 := by exact Eq.symm (DirectSum.addHom_ext fun i y ↦
+      have : Gr[g].comp Gr[f] = Gr[g.comp f] := AssociatedGradedRingHom_comp g f
+      -- rw[Function.Exact.comp_eq_zero Gexact] at this
+      have : Gr[g.comp f] = 0 := by exact Eq.symm (DirectSum.addHom_ext fun i y ↦
             congrFun this ((of (GradedPiece FR fun n ↦ FR (n - 1)) i) y))
-      have tt : (Gf (g ∘ f) k) ⟦z⟧ = 0 := by
+      have tt : Gr(k)[g.comp f] ⟦z⟧ = 0 := by
         rw[(Geq0_iff_pieces0 (g ∘ f)).mp this k]
         simp
-      have : (⟨(g ∘ f).toRingHom z, (g ∘ f).toFilteredHom.pieces_wise k z <| SetLike.coe_mem z⟩ : FT k) ∈
+      have : (⟨(g.comp f).toRingHom z, (g.comp f).toFilteredHom.pieces_wise k z <| SetLike.coe_mem z⟩ : FT k) ∈
       (((fun n ↦ FT (n - 1)) k) : AddSubgroup T).addSubgroupOf ((FT k) : AddSubgroup T) :=
-        (QuotientAddGroup.eq_zero_iff (⟨(g ∘ f).toRingHom z,
-        (g ∘ f).toFilteredHom.pieces_wise k z <| SetLike.coe_mem z⟩ : FT k)).mp tt
-      have : (g ∘ f).toRingHom ↑z ∈ FT (k - 1) := by
+        (QuotientAddGroup.eq_zero_iff (⟨(g.comp f).toRingHom z,
+        (g.comp f).toFilteredHom.pieces_wise k z <| SetLike.coe_mem z⟩ : FT k)).mp tt
+      have : (g.comp f).toRingHom ↑z ∈ FT (k - 1) := by
         exact this
       -- have : (g ∘ f).toRingHom ↑z = 0 := by
       --   apply?
@@ -185,7 +184,7 @@ lemma si (k)
 
 
 theorem strictness_under_exact_and_exhaustive'
-(Gexact : Function.Exact (G f) (G g))
+(Gexact : Function.Exact Gr[f] Gr[g])
 (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1)) :
  ∀ (p : ℤ) (y : T), y ∈ ⇑g.toRingHom '' ↑(FS p) ↔ y ∈ FT p ∧ y ∈ g.toRingHom.range := by
   intro p y
@@ -199,11 +198,11 @@ theorem strictness_under_exact_and_exhaustive'
     · rw[← hx]
       rw[ch, add_zero] at xin
       exact Set.mem_image_of_mem (⇑g.toRingHom) xin
-    · obtain⟨z₀, hz₀⟩ : ∃ z , (Gf f (p + s)) z = ⟦⟨x, xin⟩⟧ := by
-        show ⟦⟨x, xin⟩⟧ ∈ (Gf f (p + s)).range
+    · obtain⟨z₀, hz₀⟩ : ∃ z , Gr(p + s)[f] z = ⟦⟨x, xin⟩⟧ := by
+        show ⟦⟨x, xin⟩⟧ ∈ (Gr(p + s)[f]).range
         rw[← Ggker_eq_Gfrange f g Gexact (p + s)]
         exact Gf_zero g hx (by sorry) hy1
-      obtain⟨z, hz⟩ : ∃ z , (Gf f (p + s)) ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
+      obtain⟨z, hz⟩ : ∃ z , Gr(p + s)[f] ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
         obtain⟨z, eq⟩ := Quotient.exists_rep z₀
         exact ⟨z, by rw[eq, hz₀]⟩
       obtain⟨x', hx'⟩ : ∃ x' ∈ FS (p + s - 1), y = g.toRingHom x' := by
@@ -215,7 +214,7 @@ theorem strictness_under_exact_and_exhaustive'
           have : - f.toRingHom z + x ∈ FS (p + s - 1) := hz
           rwa[neg_add_eq_sub (f.toRingHom ↑z) x] at this
         · have : g.toRingHom (f.toRingHom ↑z)= 0 := by
-            have : (G (g ∘ f)) = 0 := sorry
+            have : (Gr[g.comp f]) = 0 := sorry
             sorry
           rw[RingHom.map_sub g.toRingHom x (f.toRingHom z), this, sub_zero]
       have : ∃ u : FS p, y = g.toRingHom u := by
@@ -238,9 +237,7 @@ theorem strictness_under_exact_and_exhaustive'
     -- · exact this
 
 
-
-
-theorem strictness_under_exact_and_exhaustive (Gexact : Function.Exact (G f) (G g))
+theorem strictness_under_exact_and_exhaustive (Gexact : Function.Exact Gr[f] Gr[g])
 (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS <| n - 1)) : g.IsStrict :=
   ⟨fun p y ↦ strictness_under_exact_and_exhaustive' f g Gexact Exhaustive p y,
    fun p y ↦ strictness_under_exact_and_exhaustive' f g Gexact Exhaustive (p - 1) y⟩
