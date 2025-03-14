@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Huanyu Zheng, Weichen Jiao, Yi Yuan
 -/
 import Mathlib.Algebra.DirectSum.Module
-import Mathlib.Algebra.Ring.Subring.Basic
 
 open DirectSum
 section
