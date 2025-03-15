@@ -8,24 +8,22 @@ import Mathlib.Tactic.Linarith.Frontend
 
 variable {R S T σR σS σT : Type*}
 
-variable [Ring R] [SetLike σR R] [AddSubgroupClass σR R]
+variable [AddCommGroup R] [SetLike σR R] [AddSubgroupClass σR R]
 
-variable [Ring S] [SetLike σS S] [AddSubgroupClass σS S]
+variable [AddCommGroup S] [SetLike σS S] [AddSubgroupClass σS S]
 
-variable [Ring T] [SetLike σT T] [AddSubgroupClass σT T]
+variable [AddCommGroup T] [SetLike σT T] [AddSubgroupClass σT T]
 
 variable {FR : ℤ → σR} {FS : ℤ → σS} {FT : ℤ → σT}
 
-variable [IsRingFiltration FS (fun n ↦ FS (n - 1))] [IsRingFiltration FT (fun n ↦ FT (n - 1))]
+variable [IsFiltration FS (fun n ↦ FS (n - 1))] [IsFiltration FT (fun n ↦ FT (n - 1))]
 
-variable (f : FilteredRingHom FR (fun n ↦ FR (n - 1)) FS (fun n ↦ FS (n - 1)))
-variable (g : FilteredRingHom FS (fun n ↦ FS (n - 1)) FT (fun n ↦ FT (n - 1)))
-variable [hasGMul FR fun n ↦ FR (n - 1)] [hasGMul FT fun n ↦ FT (n - 1)]
-  [hasGMul FS fun n ↦ FS (n - 1)]
+variable (f : FilteredAddGroupHom FR (fun n ↦ FR (n - 1)) FS (fun n ↦ FS (n - 1)))
+variable (g : FilteredAddGroupHom FS (fun n ↦ FS (n - 1)) FT (fun n ↦ FT (n - 1)))
 
-open RingHom DirectSum DFinsupp FilteredRingHom FilteredAddGroupHom GradedPiece
+open DirectSum DFinsupp FilteredAddGroupHom GradedPiece
 
-
+omit [AddSubgroupClass σS S] in
 theorem exists_nonneg_x_in_filtration (x : S) (p : ℤ)
 (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS (n - 1)))
  : ∃ s, s ≥ 0 ∧ (x : S) ∈ FS (p + s) := by
@@ -62,9 +60,8 @@ lemma Int.decreasingInduction' (m n : ℤ) {P : ℤ → Prop}
 
 
 
-omit [IsRingFiltration FS fun n ↦ FS <| n - 1] [IsRingFiltration FT fun n ↦ FT <| n - 1] in
-lemma Ggker_eq_Gfrange (Gexact : Function.Exact Gr+*[f] Gr+*[g]) (i : ℤ) :
-    Gr+*(i)[g].ker = Set.range Gr(i)[f] := by
+lemma Ggker_eq_Gfrange (Gexact : Function.Exact Gr+[f] Gr+[g]) (i : ℤ) :
+    Gr+(i)[g].ker = Set.range Gr+(i)[f] := by
   ext u
 
   sorry
@@ -74,13 +71,13 @@ lemma Ggker_eq_Gfrange (Gexact : Function.Exact Gr+*[f] Gr+*[g]) (i : ℤ) :
 
 
 lemma induction_lemma (p s k: ℤ) (k_le : k ≤ p + s) (lt_k : p < k) (x : S) (xin : x ∈ FS k)
-    (fg_exact : Function.Exact f.toRingHom g.toRingHom) (GfGg_exact : Function.Exact Gr[f] Gr[g]) :
-    g.toRingHom x ∈ g.toRingHom '' (FS (k - 1)) := by
-  obtain⟨z₀, hz₀⟩ : ⟦⟨x, xin⟩⟧ ∈ Set.range Gr(k)[f] := by
+    (fg_exact : Function.Exact f.toAddMonoidHom g.toAddMonoidHom) (GfGg_exact : Function.Exact Gr+[f] Gr+[g]):
+    g.toAddMonoidHom x ∈ g.toAddMonoidHom '' (FS (k - 1)) := by
+  obtain⟨z₀, hz₀⟩ : ⟦⟨x, xin⟩⟧ ∈ Set.range Gr+(k)[f] := by
     rw[← Ggker_eq_Gfrange f g GfGg_exact k]
-    show Gr(k)[g] (mk FS (fun n ↦ FS (n - 1)) ⟨x, xin⟩) = 0
-    simp [GradedPieceHom_apply_mk_eq_mk_piece_wise_hom g ⟨x, xin⟩, eq_zero_iff]
-    show (g.toRingHom x) ∈ FT (k - 1)
+    show Gr+(k)[g] (mk FS (fun n ↦ FS (n - 1)) ⟨x, xin⟩) = 0
+    -- simp [GradedPieceHom_apply_mk_eq_mk_piece_wise_hom g ⟨x, xin⟩, eq_zero_iff]
+    -- show (g.toAddMonoidHom x) ∈ FT (k - 1)
 
 
 
@@ -88,41 +85,41 @@ lemma induction_lemma (p s k: ℤ) (k_le : k ≤ p + s) (lt_k : p < k) (x : S) (
 
     sorry
     -- refine Gf_zero g hx klt hy1
-  obtain⟨z, hz⟩ : ∃ z , Gr(k)[f] ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
+  obtain⟨z, hz⟩ : ∃ z , Gr+(k)[f] ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
     obtain⟨z, eq⟩ := Quotient.exists_rep z₀
     exact ⟨z, by rw[eq, hz₀]⟩
-  obtain⟨x', hx'⟩ : ∃ x' ∈ FS (k - 1), g.toRingHom x = g.toRingHom x' := by
-    use x - f.toRingHom ↑z
+  obtain⟨x', hx'⟩ : ∃ x' ∈ FS (k - 1), g.toAddMonoidHom x = g.toAddMonoidHom x' := by
+    use x - f.toAddMonoidHom ↑z
     sorry
   sorry
 
 
 lemma induction_lemma1 (p s : ℤ) (x : S)
-    (fg_exact : Function.Exact f.toRingHom g.toRingHom) (GfGg_exact : Function.Exact Gr[f] Gr[g]) :
-    ∀ k ≤ p + s, p < k → g.toRingHom x ∈ g.toRingHom '' (FS k) →
-    g.toRingHom x ∈ g.toRingHom '' (FS (k - 1)) := sorry
+    (fg_exact : Function.Exact f.toAddMonoidHom g.toAddMonoidHom) (GfGg_exact : Function.Exact Gr+[f] Gr+[g]) :
+    ∀ k ≤ p + s, p < k → g.toAddMonoidHom x ∈ g.toAddMonoidHom '' (FS k) →
+    g.toAddMonoidHom x ∈ g.toAddMonoidHom '' (FS (k - 1)) := sorry
 
 
 
 theorem strictness_under_exact_and_exhaustive'
-    (fg_exact : Function.Exact f.toRingHom g.toRingHom) (GfGg_exact : Function.Exact Gr[f] Gr[g])
+    (fg_exact : Function.Exact f.toAddMonoidHom g.toAddMonoidHom) (GfGg_exact : Function.Exact Gr+[f] Gr+[g])
     (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS (n - 1))) (p : ℤ) (y : T) :
- y ∈ FT p → y ∈ Set.range g.toRingHom → y ∈ g.toRingHom '' (FS p : Set S) := by
+ y ∈ FT p → y ∈ Set.range g.toAddMonoidHom → y ∈ g.toAddMonoidHom '' (FS p : Set S) := by
   intro yinFT ⟨x, hx⟩
   rw[← hx]
   obtain⟨s, sge0, xin⟩ : ∃s, s ≥ 0 ∧ x ∈ FS (p + s) := exists_nonneg_x_in_filtration x p Exhaustive
   rcases Or.symm (LE.le.gt_or_eq sge0) with ch | ch
   · rw[ch, add_zero] at xin
-    exact Set.mem_image_of_mem (⇑g.toRingHom) xin
-  · apply Int.decreasingInduction' (P := fun n ↦ g.toRingHom x ∈ g.toRingHom '' (FS n)) (n := p + s)
+    exact Set.mem_image_of_mem (⇑g.toAddMonoidHom) xin
+  · apply Int.decreasingInduction' (P := fun n ↦ g.toAddMonoidHom x ∈ g.toAddMonoidHom '' (FS n)) (n := p + s)
     · sorry
     · linarith
-    · exact Set.mem_image_of_mem (⇑g.toRingHom) xin
+    · exact Set.mem_image_of_mem (⇑g.toAddMonoidHom) xin
 
 
 
 theorem strictness_under_exact_and_exhaustive
-    (fg_exact : Function.Exact f.toRingHom g.toRingHom) (GfGg_exact : Function.Exact Gr[f] Gr[g])
+    (fg_exact : Function.Exact f.toAddMonoidHom g.toAddMonoidHom) (GfGg_exact : Function.Exact Gr+[f] Gr+[g])
     (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS (n - 1))) : g.IsStrict := by
   constructor
   · intro p y
