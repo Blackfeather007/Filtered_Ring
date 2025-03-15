@@ -1,143 +1,131 @@
 /-
 Copyright (c) 2025 Huanyu Zheng, Weichen Jiao, Yi Yuan. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Huanyu Zheng, Weichen Jiao, Yi Yuan
+Authors: Yi Yuan
 -/
-import Mathlib.Algebra.DirectSum.Module
-import Mathlib.Algebra.Exact
-import FilteredRing.FilteredHom
-import Mathlib.Algebra.Ring.Subring.Basic
-import FilteredRing.MissingCoersion
+import FilteredRing.Exactness
+import Mathlib.Tactic.Linarith.Frontend
 
-/-!
-# The property of exactness om AssociatedGradedRingHom
+variable {R S T σR σS σT : Type*}
 
-In this file, we define the concept of exhaustive filtrations.
+variable [Ring R] [SetLike σR R] [AddSubgroupClass σR R]
 
-We also prove a AssociatedGradedRingHom sequence is exact iff each GradedPieceHom is exact.
+variable [Ring S] [SetLike σS S] [AddSubgroupClass σS S]
 
-And when a sequence is strict exact, the corresponding AssociatedGradedRingHom sequence is also
-exact.
+variable [Ring T] [SetLike σT T] [AddSubgroupClass σT T]
 
-# Main definitions
+variable {FR : ℤ → σR} {FS : ℤ → σS} {FT : ℤ → σT}
 
-* `IsExhaustiveFiltration` : For `IsFiltration F F_lt`,
-  the filtration is exhaustive if `Set.univ = ⋃ F i`.
--/
+variable [IsRingFiltration FS (fun n ↦ FS (n - 1))] [IsRingFiltration FT (fun n ↦ FT (n - 1))]
 
-namespace FilteredAddGroupHom
+variable (f : FilteredRingHom FR (fun n ↦ FR (n - 1)) FS (fun n ↦ FS (n - 1)))
+variable (g : FilteredRingHom FS (fun n ↦ FS (n - 1)) FT (fun n ↦ FT (n - 1)))
+variable [hasGMul FR fun n ↦ FR (n - 1)] [hasGMul FT fun n ↦ FT (n - 1)]
+  [hasGMul FS fun n ↦ FS (n - 1)]
 
-variable {ι A B C σA σB σC: Type*} [SetLike σA A] [SetLike σB B] [SetLike σC C]
+open RingHom DirectSum DFinsupp FilteredRingHom FilteredAddGroupHom GradedPiece
 
-variable [AddCommGroup A] [AddCommGroup B] [AddCommGroup C]
-variable [AddSubgroupClass σA A] [AddSubgroupClass σB B] [AddSubgroupClass σC C]
 
-variable {FA : ι → σA} {FA_lt : outParam <| ι → σA}
-variable {FB : ι → σB} {FB_lt : outParam <| ι → σB}
-variable {FC : ι → σC} {FC_lt : outParam <| ι → σC}
-variable (f : FilteredAddGroupHom FA FA_lt FB FB_lt) (g : FilteredAddGroupHom FB FB_lt FC FC_lt)
+theorem exists_nonneg_x_in_filtration (x : S) (p : ℤ)
+(Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS (n - 1)))
+ : ∃ s, s ≥ 0 ∧ (x : S) ∈ FS (p + s) := by
+  obtain ⟨s₀, xin⟩ : ∃ s, (x : S) ∈ FS s := by
+    apply Set.mem_iUnion.mp
+    rw[IsExhaustiveFiltration.exhaustive (fun n ↦ FS (n - 1)) (F := FS) (A := S)]
+    trivial
+  rcases lt_or_le p s₀ with ch | ch
+  · exact ⟨s₀ - p, by simp only [ge_iff_le, sub_nonneg, add_sub_cancel, xin, and_true, le_of_lt ch]⟩
+  · exact ⟨0, by simp only [ge_iff_le, le_refl, add_zero, (IsFiltration.mono ch) xin, and_self]⟩
 
-open scoped FilteredAddGroupHom
 
-open DirectSum
 
-namespace AssociatedGradedAddMonoidHom
 
-theorem mem_ker_iff (x : AssociatedGraded FB FB_lt) :
-    x ∈ Gr+[g].ker ↔ ∀ i : ι, x i ∈ Gr+(i)[g].ker  :=
-  mem_map_ker_iff (fun i ↦ Gr+(i)[g]) x
+#check Int.le_induction_down
+#check Nat.decreasingInduction'
+--**It needs refactor**
+lemma Int.decreasingInduction' (m n : ℤ) {P : ℤ → Prop}
+    (h : (k : ℤ) → k ≤ n → m < k → P k → P (k - 1)) (mn : m ≤ n) (hP : P n) : P m := by
+  have (s : ℕ) (hs : s < n - m) : P (n - s) → P (n - s - 1) :=
+    h (n - s) (by linarith) (by linarith[hs])
+  obtain⟨r, hr⟩ : ∃ r : ℕ, r = n - m := CanLift.prf (n - m) (by linarith)
+  have : m = n - r := by simp only [hr, sub_sub_cancel]
+  rw[this]
+  have (t : ℕ) (hs : t ≤ n - m) : P (n - t) := by
+    induction' t with t ih
+    · simp[hP]
+    · have : n - (t : ℤ) - 1 = n - ((t + 1 : ℕ) : ℤ) := Int.sub_sub n (↑t) 1
+      rw[← this]
+      apply h (n - t) (by linarith) (by linarith[hs])
+      apply ih (by linarith[hs])
+  apply this
+  simp only [hr, le_refl]
 
-theorem associatedGraded_of_mem_ker_iff {i : ι} [DecidableEq ι] (u : GradedPiece FB FB_lt i) :
-    of (GradedPiece FB FB_lt) i u ∈ Gr+[g].ker ↔ u ∈ Gr+(i)[g].ker :=
-  of_mem_map_ker_iff (fun i ↦ Gr+(i)[g]) i u
 
-theorem mem_range_iff [DecidableEq ι]
-    (m : AssociatedGraded FB FB_lt) : m ∈ Gr+[f].range ↔ ∀ i : ι, m i ∈ Gr+(i)[f].range :=
-  mem_map_range_iff (fun i ↦ Gr+(i)[f]) m
 
-theorem associatedGraded_of_mem_range_iff {i : ι} [DecidableEq ι] (u : GradedPiece FB FB_lt i) :
-    (of (GradedPiece FB FB_lt) i u) ∈ Gr+[f].range ↔ u ∈ Gr+(i)[f].range :=
-  of_mem_map_range_iff (fun i ↦ Gr+(i)[f]) i u
-
-theorem GradedPieceHom_exact_of_AssociatedGradedAddMonoidHom_exact (i : ι) [DecidableEq ι]
-    (Gexact : Function.Exact Gr+[f] Gr+[g]) : Function.Exact Gr+(i)[f] Gr+(i)[g] := by
-  rw [AddMonoidHom.exact_iff]
+omit [IsRingFiltration FS fun n ↦ FS <| n - 1] [IsRingFiltration FT fun n ↦ FT <| n - 1] in
+lemma Ggker_eq_Gfrange (Gexact : Function.Exact Gr+*[f] Gr+*[g]) (i : ℤ) :
+    Gr+*(i)[g].ker = Set.range Gr(i)[f] := by
   ext u
-  rw [← associatedGraded_of_mem_ker_iff g u, Gexact.addMonoidHom_ker_eq,
-    ← associatedGraded_of_mem_range_iff f u]
 
-theorem AssociatedGradedAddMonoidHom_exact_of_GradedPieceHom_exact [DecidableEq ι]
-    (h : ∀ i, Function.Exact Gr+(i)[f] Gr+(i)[g]) : Function.Exact Gr+[f] Gr+[g] := by
-  rw [AddMonoidHom.exact_iff]
-  ext x
-  rw [mem_ker_iff, mem_range_iff]
-  exact forall_congr' (fun i ↦ h i (x i))
-
-end AssociatedGradedAddMonoidHom
-
-end FilteredAddGroupHom
-
-section ExhaustiveFiltration
-
-variable {ι A σ : Type*} [Preorder ι] [SetLike σ A]
-
-/-- For `IsFiltration F F_lt`, the filtration is exhaustive if `Set.univ = ⋃ F i`. -/
-class IsExhaustiveFiltration (F : ι → σ) (F_lt : ι → σ) [IsFiltration F F_lt] : Prop where
-  exhaustive : ⋃ i, (F i : Set A) = Set.univ
-
-end ExhaustiveFiltration
-
-section exactness
-
-open FilteredAddGroupHom
+  sorry
+  /-apply Iff.trans (Gf_zero_iff_of_in_ker g u) ?_
+  have := (Gf_in_range_iff_of_in_range f u).symm
+  exact Iff.trans (Gexact ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) this-/
 
 
-variable {ι R S T σR σS σT : Type*}
+lemma induction_lemma (p s k: ℤ) (k_le : k ≤ p + s) (lt_k : p < k) (x : S) (xin : x ∈ FS k)
+    (fg_exact : Function.Exact f.toRingHom g.toRingHom) (GfGg_exact : Function.Exact Gr[f] Gr[g]) :
+    g.toRingHom x ∈ g.toRingHom '' (FS (k - 1)) := by
+  obtain⟨z₀, hz₀⟩ : ⟦⟨x, xin⟩⟧ ∈ Set.range Gr(k)[f] := by
+    rw[← Ggker_eq_Gfrange f g GfGg_exact k]
+    show Gr(k)[g] (mk FS (fun n ↦ FS (n - 1)) ⟨x, xin⟩) = 0
+    simp [GradedPieceHom_apply_mk_eq_mk_piece_wise_hom g ⟨x, xin⟩, eq_zero_iff]
+    show (g.toRingHom x) ∈ FT (k - 1)
 
-variable [AddCommGroup R] [SetLike σR R] [AddSubgroupClass σR R]
 
-variable [AddCommGroup S] [SetLike σS S] [AddSubgroupClass σS S]
 
-variable [AddCommGroup T] [SetLike σT T] [AddSubgroupClass σT T]
 
-variable {FR : ι → σR} {FS : ι → σS} {FT : ι → σT}
 
-variable {FR_lt: outParam <| ι → σR} {FS_lt: outParam <| ι → σS} {FT_lt: outParam <| ι → σT}
+    sorry
+    -- refine Gf_zero g hx klt hy1
+  obtain⟨z, hz⟩ : ∃ z , Gr(k)[f] ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
+    obtain⟨z, eq⟩ := Quotient.exists_rep z₀
+    exact ⟨z, by rw[eq, hz₀]⟩
+  obtain⟨x', hx'⟩ : ∃ x' ∈ FS (k - 1), g.toRingHom x = g.toRingHom x' := by
+    use x - f.toRingHom ↑z
+    sorry
+  sorry
 
-variable (f : FilteredAddGroupHom FR FR_lt FS FS_lt) (g : FilteredAddGroupHom FS FS_lt FT FT_lt)
 
-open FilteredAddGroupHom AssociatedGradedAddMonoidHom
+lemma induction_lemma1 (p s : ℤ) (x : S)
+    (fg_exact : Function.Exact f.toRingHom g.toRingHom) (GfGg_exact : Function.Exact Gr[f] Gr[g]) :
+    ∀ k ≤ p + s, p < k → g.toRingHom x ∈ g.toRingHom '' (FS k) →
+    g.toRingHom x ∈ g.toRingHom '' (FS (k - 1)) := sorry
 
-variable [Preorder ι] [IsFiltration FS FS_lt]
 
-lemma exact_component_of_strict_exact_component (fstrict : f.IsStrict) (gstrict : g.IsStrict)
-    (fgexact : Function.Exact f.toAddMonoidHom g.toAddMonoidHom) (i : ι)
-    (x : GradedPiece FS FS_lt i) : Gr+(i)[g] x = 0 ↔ x ∈ Set.range Gr+(i)[f] :=
-    QuotientAddGroup.induction_on x <| fun s ↦ by
-  refine ⟨fun h ↦ ?_, fun ⟨y, hy⟩ ↦ ?_⟩
-  · simp only [← GradedPiece.mk_eq, Set.mem_range]
-    have : ((g.piece_wise_hom i) s).1 ∈ FT_lt i := by
-      simp only [← GradedPiece.mk_eq, GradedPieceHom_apply_mk_eq_mk_piece_wise_hom] at h
-      simpa [GradedPiece.mk] using h
-    rcases gstrict.strict_lt this (Set.mem_range_self s.1) with ⟨s', hs', eqs⟩
-    have := g.toAddMonoidHom.eq_iff.mp eqs.symm
-    rw [Function.Exact.addMonoidHom_ker_eq fgexact] at this
-    have mem := (add_mem (neg_mem (IsFiltration.F_lt_le_F FS FS_lt i hs')) s.2)
-    rcases fstrict.strict mem this with ⟨r, hr, eq⟩
-    have : f.toFun r + s' = s := by rw [eq, neg_add_cancel_comm]
-    use GradedPiece.mk FR FR_lt ⟨r, hr⟩
-    rw [GradedPieceHom_apply_mk_eq_mk_piece_wise_hom]
-    simp only [GradedPiece.mk, QuotientAddGroup.mk'_eq_mk']
-    use ⟨s', IsFiltration.F_lt_le_F FS FS_lt i hs'⟩
-    exact ⟨hs', SetCoe.ext this⟩
-  · induction y using QuotientAddGroup.induction_on
-    rename_i z
-    rw [← hy, GradedPieceHom_comp_apply]
-    exact congrArg (GradedPiece.mk FT FT_lt) (SetCoe.ext (fgexact.apply_apply_eq_zero z.1))
 
-theorem exact_of_strict_exact [DecidableEq ι] (fstrict : f.IsStrict) (gstrict : g.IsStrict)
-    (exact : Function.Exact f.toAddMonoidHom g.toAddMonoidHom) : Function.Exact Gr+[f] Gr+[g] :=
-  AssociatedGradedAddMonoidHom_exact_of_GradedPieceHom_exact f g
-    (fun i x ↦ exact_component_of_strict_exact_component f g fstrict gstrict exact i x)
+theorem strictness_under_exact_and_exhaustive'
+    (fg_exact : Function.Exact f.toRingHom g.toRingHom) (GfGg_exact : Function.Exact Gr[f] Gr[g])
+    (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS (n - 1))) (p : ℤ) (y : T) :
+ y ∈ FT p → y ∈ Set.range g.toRingHom → y ∈ g.toRingHom '' (FS p : Set S) := by
+  intro yinFT ⟨x, hx⟩
+  rw[← hx]
+  obtain⟨s, sge0, xin⟩ : ∃s, s ≥ 0 ∧ x ∈ FS (p + s) := exists_nonneg_x_in_filtration x p Exhaustive
+  rcases Or.symm (LE.le.gt_or_eq sge0) with ch | ch
+  · rw[ch, add_zero] at xin
+    exact Set.mem_image_of_mem (⇑g.toRingHom) xin
+  · apply Int.decreasingInduction' (P := fun n ↦ g.toRingHom x ∈ g.toRingHom '' (FS n)) (n := p + s)
+    · sorry
+    · linarith
+    · exact Set.mem_image_of_mem (⇑g.toRingHom) xin
 
-end exactness
+
+
+theorem strictness_under_exact_and_exhaustive
+    (fg_exact : Function.Exact f.toRingHom g.toRingHom) (GfGg_exact : Function.Exact Gr[f] Gr[g])
+    (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS (n - 1))) : g.IsStrict := by
+  constructor
+  · intro p y
+    exact strictness_under_exact_and_exhaustive' f g fg_exact GfGg_exact Exhaustive p y
+  · intro p y
+    exact strictness_under_exact_and_exhaustive' f g fg_exact GfGg_exact Exhaustive (p - 1) y
