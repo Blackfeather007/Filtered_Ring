@@ -23,7 +23,7 @@ variable (g : FilteredAddGroupHom FS (fun n ↦ FS (n - 1)) FT (fun n ↦ FT (n 
 
 open DirectSum DFinsupp FilteredAddGroupHom GradedPiece
 
-omit [AddSubgroupClass σS S] in
+omit [AddCommGroup S] in
 theorem exists_nonneg_x_in_filtration (x : S) (p : ℤ)
 (Exhaustive : IsExhaustiveFiltration FS (fun n ↦ FS (n - 1)))
  : ∃ s, s ≥ 0 ∧ (x : S) ∈ FS (p + s) := by
@@ -59,46 +59,12 @@ lemma Int.decreasingInduction' (m n : ℤ) {P : ℤ → Prop}
   simp only [hr, le_refl]
 
 
+open AssociatedGradedAddMonoidHom
 
+ omit [IsFiltration FS fun n ↦ FS (n - 1)] [IsFiltration FT fun n ↦ FT (n - 1)] in
 lemma Ggker_eq_Gfrange (Gexact : Function.Exact Gr+[f] Gr+[g]) (i : ℤ) :
-    Gr+(i)[g].ker = Set.range Gr+(i)[f] := by
-  ext u
-
-  sorry
-  /-apply Iff.trans (Gf_zero_iff_of_in_ker g u) ?_
-  have := (Gf_in_range_iff_of_in_range f u).symm
-  exact Iff.trans (Gexact ((of (GradedPiece FS fun n ↦ FS (n - 1)) i) u)) this-/
-
-
-lemma induction_lemma (p s k: ℤ) (k_le : k ≤ p + s) (lt_k : p < k) (x : S) (xin : x ∈ FS k)
-    (fg_exact : Function.Exact f.toAddMonoidHom g.toAddMonoidHom) (GfGg_exact : Function.Exact Gr+[f] Gr+[g]):
-    g.toAddMonoidHom x ∈ g.toAddMonoidHom '' (FS (k - 1)) := by
-  obtain⟨z₀, hz₀⟩ : ⟦⟨x, xin⟩⟧ ∈ Set.range Gr+(k)[f] := by
-    rw[← Ggker_eq_Gfrange f g GfGg_exact k]
-    show Gr+(k)[g] (mk FS (fun n ↦ FS (n - 1)) ⟨x, xin⟩) = 0
-    -- simp [GradedPieceHom_apply_mk_eq_mk_piece_wise_hom g ⟨x, xin⟩, eq_zero_iff]
-    -- show (g.toAddMonoidHom x) ∈ FT (k - 1)
-
-
-
-
-
-    sorry
-    -- refine Gf_zero g hx klt hy1
-  obtain⟨z, hz⟩ : ∃ z , Gr+(k)[f] ⟦z⟧ = ⟦⟨x, xin⟩⟧ := by
-    obtain⟨z, eq⟩ := Quotient.exists_rep z₀
-    exact ⟨z, by rw[eq, hz₀]⟩
-  obtain⟨x', hx'⟩ : ∃ x' ∈ FS (k - 1), g.toAddMonoidHom x = g.toAddMonoidHom x' := by
-    use x - f.toAddMonoidHom ↑z
-    sorry
-  sorry
-
-
-lemma induction_lemma1 (p s : ℤ) (x : S)
-    (fg_exact : Function.Exact f.toAddMonoidHom g.toAddMonoidHom) (GfGg_exact : Function.Exact Gr+[f] Gr+[g]) :
-    ∀ k ≤ p + s, p < k → g.toAddMonoidHom x ∈ g.toAddMonoidHom '' (FS k) →
-    g.toAddMonoidHom x ∈ g.toAddMonoidHom '' (FS (k - 1)) := sorry
-
+    Gr+(i)[g].ker = Set.range Gr+(i)[f] :=
+  Set.ext <| GradedPieceHom_exact_of_AssociatedGradedAddMonoidHom_exact f g i Gexact
 
 
 theorem strictness_under_exact_and_exhaustive'
@@ -111,11 +77,7 @@ theorem strictness_under_exact_and_exhaustive'
   rcases Or.symm (LE.le.gt_or_eq sge0) with ch | ch
   · rw[ch, add_zero] at xin
     exact Set.mem_image_of_mem (⇑g.toAddMonoidHom) xin
-  · apply Int.decreasingInduction' (P := fun n ↦ g.toAddMonoidHom x ∈ g.toAddMonoidHom '' (FS n)) (n := p + s)
-    · sorry
-    · linarith
-    · exact Set.mem_image_of_mem (⇑g.toAddMonoidHom) xin
-
+  · sorry
 
 
 theorem strictness_under_exact_and_exhaustive
